@@ -1,0 +1,219 @@
+.login-card {
+  width: 100%;
+  max-width: 480px;
+  background-color: rgba(10, 11, 13, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 36px 40px;
+  z-index: 10;
+  opacity: 0;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.field-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.field-label {
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.25em;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  height: 52px;
+}
+
+.input-wrapper:focus-within {
+  border-color: var(--text-subtle);
+  background: var(--bg-input-focus);
+}
+
+.icon-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 52px;
+  height: 100%;
+  color: var(--text-subtle);
+  transition: color 0.3s ease;
+}
+
+.input-wrapper:focus-within .icon-container {
+  color: var(--text-primary);
+}
+
+.input-divider {
+  width: 1px;
+  height: 24px;
+  background-color: var(--border-color);
+}
+
+.input-wrapper input {
+  flex: 1;
+  height: 100%;
+  padding: 0 16px;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.input-wrapper input::placeholder {
+  color: var(--text-subtle);
+}
+
+.password-toggle {
+  background: transparent;
+  border: none;
+  color: var(--text-subtle);
+  width: 52px;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.password-toggle:hover {
+  color: var(--text-primary);
+}
+
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  margin-top: -4px;
+}
+
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.checkbox-container input {
+  display: none;
+}
+
+.custom-checkbox {
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--text-subtle);
+  border-radius: 3px;
+  background-color: transparent;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.checkbox-container input:checked ~ .custom-checkbox {
+  background-color: var(--accent-green);
+  border-color: var(--accent-green);
+}
+
+.checkbox-container input:checked ~ .custom-checkbox::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  width: 4px;
+  height: 8px;
+  border: solid var(--bg-primary);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.forgot-link {
+  color: var(--accent-green);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.forgot-link:hover {
+  color: var(--accent-hover);
+}
+
+.submit-btn {
+  margin-top: 8px;
+  padding: 0;
+  height: 52px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #0f4c3a;
+  border: none;
+  border-radius: 8px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.submit-btn .btn-text {
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+}
+
+.submit-btn .btn-icon {
+  position: absolute;
+  right: 24px;
+  color: var(--text-primary);
+  transition: transform 0.3s ease;
+}
+
+.submit-btn:hover:not(:disabled) {
+  background: #14634c;
+  box-shadow: 0 4px 20px rgba(15, 76, 58, 0.4);
+}
+
+.submit-btn:hover:not(:disabled) .btn-icon {
+  transform: translateX(4px);
+}
+
+.submit-btn.loading {
+  cursor: default;
+  background: #0b3a2c;
+  box-shadow: 0 4px 15px rgba(15, 76, 58, 0.2);
+}
+
+.auth-status {
+  display: flex;
+  align-items: center;
+  font-size: 0.85rem;
+  letter-spacing: 0.15em;
+  color: var(--text-primary);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}

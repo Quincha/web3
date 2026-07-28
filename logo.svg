@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Fondo blanco -->
+  <rect width="100%" height="100%" fill="#ffffff" />
+
+  <defs>
+    <!-- MÁSCARA para crear la separación SOLO en la parte superior derecha -->
+    <mask id="rightGapMask">
+      <!-- Blanco = mantener todo -->
+      <rect width="100%" height="100%" fill="white" />
+      <!-- Negro = borrar un espacio de 25px a la derecha de la cola -->
+      <!-- Borde izquierdo del polígono alineado perfectamente con el borde derecho de la cola -->
+      <polygon points="447.6,500 959.6,900 984.6,900 472.6,500" fill="black" />
+    </mask>
+  </defs>
+
+  <!-- ARO PRINCIPAL -->
+  <!-- Se dibuja con la máscara para separarlo de la cola en el lado derecho -->
+  <path d="M 512,172 
+           A 300,340 0 1,1 511.9,172 Z 
+           M 512,212 
+           A 200,300 0 1,0 512.1,212 Z" 
+        fill="#1a1a1a" 
+        mask="url(#rightGapMask)" 
+        id="ring" />
+
+  <!-- COLA -->
+  <!-- Al dibujarse sin máscara, queda PEGADA perfectamente al aro en la parte inferior izquierda -->
+  <polygon points="450,580 550,580 934,880 834,880" 
+           fill="#737373" 
+           id="tail" />
+
+</svg>
