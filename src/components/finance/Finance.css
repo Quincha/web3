@@ -3,10 +3,8 @@
 .finance-module-container {
   display: flex;
   flex-direction: column;
-  height: 100%;
   width: 100%;
-  overflow: hidden;
-  padding: 24px 32px;
+  padding: 0 32px 32px 32px;
   gap: 24px;
 }
 
@@ -62,7 +60,6 @@
 /* Content Area */
 .finance-content-area {
   flex: 1;
-  overflow-y: auto;
   border-radius: 16px;
 }
 

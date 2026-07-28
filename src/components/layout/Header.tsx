@@ -24,7 +24,6 @@ export const Header: React.FC = () => {
           placeholder="Buscar en Quincha Systems..." 
           className="search-field-input"
         />
-        <kbd className="keyboard-shortcut-tag">⌘K</kbd>
       </div>
 
       {/* Action Toolbar */}

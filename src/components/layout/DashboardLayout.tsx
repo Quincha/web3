@@ -4,8 +4,8 @@ import { Header } from './Header';
 import { DashboardSkeleton } from '../ui/SkeletonLoader';
 import { WidgetContainer } from '../dashboard/WidgetContainer';
 import { DashboardHero } from '../dashboard/DashboardHero';
-import { MetricsRow } from '../dashboard/MetricsRow';
 import { WidgetRegistry } from '../../widgets/WidgetRegistry';
+import { FinanceSummaryBanner } from '../finance/dashboard/FinanceSummaryBanner';
 import { useUser } from '../../context/UserContext';
 import { Eye, Plus, Settings } from 'lucide-react';
 import '../../Dashboard.css';
@@ -87,11 +87,8 @@ export const DashboardLayout: React.FC = () => {
 
     return (
       <div className="dashboard-content-area">
-        {/* Dashboard Hero */}
+        {/* Dashboard Hero (now includes KPIs) */}
         <DashboardHero />
-        
-        {/* Metrics Row */}
-        <MetricsRow />
 
         {/* Floating Customization Panel */}
         {showConfigurator && (
@@ -149,6 +146,11 @@ export const DashboardLayout: React.FC = () => {
           <WidgetContainer config={{ id: 'bujo', visible: true, order: 5, size: 'medium' }} name="Bullet Journal">
             {React.createElement(WidgetRegistry.get('bujo')?.component || 'div')}
           </WidgetContainer>
+        </div>
+
+        {/* Finance Executive Summary Banner */}
+        <div style={{ marginTop: '16px' }}>
+          <FinanceSummaryBanner />
         </div>
       </div>
     );

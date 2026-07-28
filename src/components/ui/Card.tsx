@@ -40,21 +40,7 @@ export const Card: React.FC<CardProps> = ({
   return (
     <div
       style={baseStyles}
-      className={`premium-card ${className}`}
-      onMouseEnter={(e) => {
-        if (hoverEffect) {
-          e.currentTarget.style.transform = 'translateY(-2px)';
-          e.currentTarget.style.boxShadow = hoverShadow;
-          e.currentTarget.style.border = '1px solid rgba(255, 255, 255, 0.06)';
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (hoverEffect) {
-          e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.boxShadow = baseShadow;
-          e.currentTarget.style.border = '1px solid rgba(255, 255, 255, 0.03)';
-        }
-      }}
+      className={`premium-card ${hoverEffect ? 'premium-card-hover' : ''} ${className}`}
       {...props}
     >
       {children}
