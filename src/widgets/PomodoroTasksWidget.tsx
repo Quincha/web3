@@ -1,0 +1,134 @@
+import React from 'react';
+import { Settings, Play, CheckCircle2, Circle } from 'lucide-react';
+import { usePomodoro } from '../context/PomodoroContext';
+import { useTasks } from '../context/TasksContext';
+import { tokens } from '../theme/tokens';
+import { Button } from '../components/ui/Button';
+
+export const PomodoroTasksWidget: React.FC = () => {
+  const { timeRemaining, totalDuration, isActive, startSession } = usePomodoro();
+  const { getPendingTasks } = useTasks();
+
+  const pendingTasks = getPendingTasks();
+  const recentPending = pendingTasks.slice(0, 3);
+
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const getProgressPercentage = (): number => {
+    if (totalDuration === 0) return 0;
+    return ((totalDuration - timeRemaining) / totalDuration) * 100;
+  };
+
+  const strokeDashoffset = 282.6 - (282.6 * getProgressPercentage()) / 100;
+
+  const handleStart = () => {
+    startSession('work', 'Enfoque general', 'Sesión iniciada desde widget unificado');
+  };
+
+  return (
+    <div style={{
+      background: 'linear-gradient(180deg, rgba(16, 42, 45, 0.4) 0%, rgba(6, 8, 11, 0.9) 100%)',
+      borderRadius: '24px',
+      padding: '24px',
+      border: `1px solid ${tokens.colors.accent.green}30`,
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <h3 style={{ fontSize: '13px', fontWeight: 700, color: '#fff', letterSpacing: '0.1em', margin: 0 }}>
+          POMODORO & DAILY TASKS
+        </h3>
+        <button style={{ background: 'transparent', border: 'none', color: tokens.colors.text.muted, cursor: 'pointer' }}>
+          <Settings size={16} />
+        </button>
+      </div>
+
+      {/* Pomodoro Section */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '32px', marginBottom: '32px' }}>
+        {/* Progress Circular Timer */}
+        <div style={{ position: 'relative', width: '120px', height: '120px', flexShrink: 0 }}>
+          <svg width="120" height="120" viewBox="0 0 100 100">
+            {/* Base Circle */}
+            <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(0, 208, 132, 0.15)" strokeWidth="4" />
+            {/* Progress Circle */}
+            <circle 
+              cx="50" cy="50" r="45" fill="none" 
+              stroke={tokens.colors.accent.green} strokeWidth="4" strokeLinecap="round"
+              strokeDasharray="282.6" strokeDashoffset={strokeDashoffset}
+              transform="rotate(-90 50 50)" style={{ transition: 'stroke-dashoffset 1s linear' }}
+            />
+          </svg>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <span className="outfit" style={{ fontSize: '24px', fontWeight: 700, color: '#fff', lineHeight: 1.1 }}>
+              {formatTime(timeRemaining)}
+            </span>
+            <span style={{ fontSize: '11px', color: tokens.colors.accent.green, fontWeight: 600, letterSpacing: '0.1em', marginTop: '4px' }}>
+              ENFOQUE
+            </span>
+          </div>
+        </div>
+
+        {/* Action Button */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center' }}>
+          <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}>No hay ninguna action activa.</span>
+          <Button 
+            onClick={handleStart}
+            variant="primary" 
+            style={{ 
+              width: '100%', 
+              justifyContent: 'center', 
+              background: `linear-gradient(90deg, ${tokens.colors.accent.green}, ${tokens.colors.accent.bright})`,
+              color: '#000',
+              fontWeight: 600,
+              boxShadow: `0 8px 24px ${tokens.colors.accent.green}40`,
+              border: 'none',
+              borderRadius: '30px'
+            }}
+          >
+            Iniciar 25 min
+          </Button>
+        </div>
+      </div>
+
+      <div style={{ width: '100%', height: '1px', background: 'rgba(255,255,255,0.05)', marginBottom: '24px' }} />
+
+      {/* Tasks Section */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <h3 style={{ fontSize: '13px', fontWeight: 600, color: '#fff', letterSpacing: '0.05em', margin: 0 }}>
+          TAREAS DEL DÍA
+        </h3>
+        <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>
+          {pendingTasks.length} pendientes
+        </span>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {recentPending.length === 0 ? (
+          <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', textAlign: 'center', padding: '12px' }}>
+            No hay tareas pendientes.
+          </div>
+        ) : (
+          recentPending.map(task => (
+            <div key={task.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <Circle size={16} color="rgba(255,255,255,0.2)" />
+                <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.85)' }}>{task.title}</span>
+              </div>
+              {task.priority === 'high' && <span style={{ fontSize: '12px', color: tokens.colors.accent.danger }}>• Alta</span>}
+              {task.priority === 'medium' && <span style={{ fontSize: '12px', color: tokens.colors.accent.warning }}>• Media</span>}
+              {task.priority === 'low' && <span style={{ fontSize: '12px', color: tokens.colors.accent.cyan }}>• Baja</span>}
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+};

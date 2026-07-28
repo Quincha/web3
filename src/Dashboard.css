@@ -147,6 +147,8 @@
 .brand-text-container {
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  margin-top: 2px;
 }
 
 .brand-name {
@@ -705,7 +707,7 @@
 }
 .premium-card-hover:hover {
   transform: translateY(-3px) scale(1.01);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15), 0 0 0 1px var(--border-hover);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35), 0 0 0 1px var(--border-hover);
 }
 
 /* Widget Card Outer Wrapper */

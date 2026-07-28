@@ -62,7 +62,9 @@
 
   /* Body background gradients */
   --bg-gradient-center: rgba(16, 42, 45, 0.5);
-  --bg-gradient-edge: rgba(6, 8, 11, 1);
+  --bg-gradient-edge: #050608;
+  --bg-gradient-deep: #090c11;
+  --bg-gradient-darkest: #0d1016;
   --grid-line: rgba(22, 240, 181, 0.03);
 }
 
@@ -115,12 +117,15 @@
 
 body {
   font-family: 'Inter', sans-serif;
-  background-color: var(--bg-primary);
+  background-color: var(--bg-gradient-edge);
   background-image: 
-    radial-gradient(circle at center, var(--bg-gradient-center) 0%, var(--bg-gradient-edge) 100%),
+    radial-gradient(circle at 15% 15%, rgba(0, 208, 132, 0.06) 0%, transparent 45%),
+    radial-gradient(circle at 85% 85%, rgba(22, 240, 181, 0.04) 0%, transparent 45%),
+    linear-gradient(135deg, var(--bg-gradient-edge) 0%, var(--bg-gradient-deep) 50%, var(--bg-gradient-darkest) 100%),
     linear-gradient(var(--grid-line) 1px, transparent 1px),
     linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-  background-size: 100% 100%, 40px 40px, 40px 40px;
+  background-size: 100vw 100vh, 100vw 100vh, 100vw 100vh, 40px 40px, 40px 40px;
+  background-attachment: fixed;
   background-position: center center;
   color: var(--text-primary);
   overflow: hidden;

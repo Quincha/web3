@@ -46,14 +46,14 @@ export const OfficialLogo: React.FC<OfficialLogoProps> = ({
         </mask>
         
         <filter id={subtleGlowId} x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="24" result="blur" />
+          <feGaussianBlur stdDeviation="32" result="blur" />
           <feComposite in="SourceGraphic" in2="blur" operator="over" />
         </filter>
       </defs>
 
       {/* GLOW LAYER */}
       {showGlow && (
-        <g filter={`url(#${subtleGlowId})`} style={{ opacity: 0.25 }}>
+        <g filter={`url(#${subtleGlowId})`} style={{ opacity: 0.75 }}>
           <path 
             d="M 512,172 A 300,340 0 1,1 511.9,172 Z M 512,212 A 200,300 0 1,0 512.1,212 Z" 
             fill="#FFFFFF" 

@@ -1,77 +1,92 @@
 import React from 'react';
 import { WidgetRegistry } from './WidgetRegistry';
 import { tokens } from '../theme/tokens';
-import { Badge } from '../components/ui/Badge';
+import { Clock } from 'lucide-react';
 
-const CalendarWidget: React.FC = () => {
+export const CalendarWidget: React.FC = () => {
   const events = [
-    { id: 1, time: '09:00', title: 'Daily Sync', duration: '25 min', color: tokens.colors.accent.green },
-    { id: 2, time: '10:30', title: 'Diseño UX/UI', duration: '60 min', color: tokens.colors.accent.cyan },
-    { id: 3, time: '14:30', title: 'Revisión de proyecto', duration: '45 min', color: tokens.colors.accent.warning },
-    { id: 4, time: '16:00', title: 'Desarrollo Frontend', duration: '90 min', color: '#B388FF' },
+    { id: 1, time: '09:00', title: 'Daily Sync', tag: 'TEAM', duration: '25 min', color: tokens.colors.accent.green },
+    { id: 2, time: '12:30', title: 'Diseño UX/UI', tag: 'PROJECT', duration: '60 min', color: tokens.colors.accent.cyan },
+    { id: 3, time: '16:20', title: 'Revisión', tag: 'REVIEW', duration: '45 min', color: tokens.colors.accent.warning },
+    { id: 4, time: '18:00', title: 'Dev Frontend', tag: 'CODE', duration: '90 min', color: '#B388FF' },
   ];
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: tokens.spacing.space6 }}>
-        <h3 style={{ fontSize: tokens.typography.sizes.title, fontWeight: tokens.typography.weights.medium, color: tokens.colors.text.primary }}>
-          Calendario
+    <div className="premium-card-hover" style={{
+      background: 'rgba(15, 23, 42, 0.3)',
+      backdropFilter: 'blur(16px)',
+      WebkitBackdropFilter: 'blur(16px)',
+      borderRadius: '24px',
+      padding: '24px',
+      border: `1px solid rgba(56, 189, 248, 0.15)`,
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
+      {/* Soft gradient orb in background */}
+      <div style={{
+        position: 'absolute', top: '-50px', right: '-50px',
+        width: '150px', height: '150px',
+        background: 'radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, rgba(0,0,0,0) 70%)',
+        borderRadius: '50%', pointerEvents: 'none'
+      }}></div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', position: 'relative', zIndex: 1 }}>
+        <h3 style={{ fontSize: '13px', fontWeight: 700, color: '#fff', letterSpacing: '0.1em', margin: 0 }}>
+          CALENDARIO
         </h3>
-        <Badge variant="default" style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>Hoy, 24 Jul</Badge>
+        <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', padding: '4px 10px', borderRadius: '12px', fontSize: '11px', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>
+          Hoy, 24 Jul
+        </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflowY: 'auto', paddingLeft: tokens.spacing.space2 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: '14px', position: 'relative', zIndex: 1 }}>
+        
+        {/* Current Time Indicator (mocked position between 12:30 and 16:20) */}
+        <div style={{ position: 'absolute', top: '122px', left: 0, right: 0, display: 'flex', alignItems: 'center', zIndex: 2, pointerEvents: 'none' }}>
+          <div style={{ fontSize: '11px', color: '#F43F5E', fontWeight: 700, width: '44px' }}>14:15</div>
+          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#F43F5E', boxShadow: '0 0 12px #F43F5E', marginLeft: '4px' }}></div>
+          <div style={{ flex: 1, height: '2px', background: 'linear-gradient(90deg, #F43F5E 0%, rgba(244, 63, 94, 0) 100%)', boxShadow: '0 0 8px #F43F5E' }}></div>
+        </div>
+
         {events.map((event, index) => (
-          <div key={event.id} style={{ display: 'flex', gap: tokens.spacing.space4, minHeight: '60px' }}>
-            {/* Timeline Column */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '40px' }}>
-              <span style={{ color: tokens.colors.text.secondary, fontSize: tokens.typography.sizes.small, fontWeight: tokens.typography.weights.medium }}>
-                {event.time}
-              </span>
+          <div key={event.id} style={{ display: 'flex', gap: '12px', minHeight: '52px' }}>
+            {/* Time */}
+            <div style={{ width: '44px', color: 'rgba(255,255,255,0.5)', fontSize: '12px', fontWeight: 600, paddingTop: '10px' }}>
+              {event.time}
             </div>
             
-            {/* Line and Content */}
-            <div style={{ display: 'flex', gap: tokens.spacing.space4, flex: 1, position: 'relative' }}>
-              {/* Elegant Bar */}
-              <div style={{ 
-                width: '4px', 
-                backgroundColor: event.color, 
-                borderRadius: '4px',
-                opacity: 0.85,
-                margin: '2px 0 12px 0',
-                boxShadow: `0 0 10px ${event.color}40`
-              }} />
+            {/* Event Pill */}
+            <div style={{ 
+              display: 'flex', 
+              flex: 1, 
+              background: `linear-gradient(90deg, ${event.color}15 0%, rgba(0,0,0,0.2) 100%)`,
+              border: `1px solid ${event.color}30`,
+              borderRadius: '12px',
+              padding: '10px 14px',
+              position: 'relative',
+              overflow: 'hidden',
+              cursor: 'pointer'
+            }} className="event-pill-hover">
+              {/* Left Color Bar */}
+              <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '4px', backgroundColor: event.color, boxShadow: `0 0 8px ${event.color}80` }} />
               
-              {/* Event Details */}
-              <div style={{ display: 'flex', flexDirection: 'column', paddingTop: '2px' }}>
-                <span style={{ color: tokens.colors.text.primary, fontSize: tokens.typography.sizes.body, fontWeight: tokens.typography.weights.medium }}>
-                  {event.title}
-                </span>
-                <span style={{ color: event.color, fontSize: tokens.typography.sizes.small }}>
-                  {event.duration}
-                </span>
+              <div style={{ display: 'flex', flexDirection: 'column', width: '100%', paddingLeft: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                  <span style={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>{event.title}</span>
+                  {event.tag && <span style={{ background: `${event.color}20`, border: `1px solid ${event.color}40`, color: event.color, padding: '2px 6px', borderRadius: '6px', fontSize: '9px', fontWeight: 700, letterSpacing: '0.05em' }}>{event.tag}</span>}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Clock size={10} color={event.color} />
+                  <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', fontWeight: 500 }}>{event.duration}</span>
+                </div>
               </div>
             </div>
           </div>
         ))}
       </div>
-
-      <div style={{ marginTop: 'auto', borderTop: `1px solid ${tokens.colors.border.primary}`, paddingTop: tokens.spacing.space4 }}>
-        <a href="#" style={{ color: tokens.colors.accent.green, fontSize: tokens.typography.sizes.small, textDecoration: 'none', fontWeight: tokens.typography.weights.medium }}>
-          Ver calendario completo →
-        </a>
-      </div>
     </div>
   );
 };
-
-// Register widget
-WidgetRegistry.register({
-  id: 'calendario_widget',
-  name: 'Calendario',
-  description: 'Eventos y reuniones programadas para el día.',
-  defaultSize: 'medium',
-  component: CalendarWidget
-});
-
-export default CalendarWidget;

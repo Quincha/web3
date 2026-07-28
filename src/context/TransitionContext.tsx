@@ -37,7 +37,7 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     // Step 2: Sincronizando configuración...
     tl.to({}, {
-      duration: 0.3,
+      duration: 0.15,
       onStart: () => {
         setTransitionMessage('Sincronizando configuración...');
         setProgress(45);
@@ -46,8 +46,8 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     // Step 3: Cargando módulos...
     tl.to({}, {
-      duration: 0.3,
-      delay: 0.1,
+      duration: 0.15,
+      delay: 0.05,
       onStart: () => {
         setTransitionMessage('Cargando módulos...');
         setProgress(75);
@@ -56,8 +56,8 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     // Step 4: Preparando Dashboard...
     tl.to({}, {
-      duration: 0.3,
-      delay: 0.1,
+      duration: 0.15,
+      delay: 0.05,
       onStart: () => {
         setTransitionMessage('Preparando Dashboard...');
         setProgress(100);
@@ -65,7 +65,7 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
 
     // Final buffer delay to let the user see the completed load before transition
-    tl.to({}, { duration: 0.2 });
+    tl.to({}, { duration: 0.1 });
 
   }, []);
 

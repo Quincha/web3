@@ -15,7 +15,7 @@ export default function LoginForm() {
     // Reveal form after logo animation finishes shrinking (approx 4.5s)
     gsap.fromTo(formRef.current, 
       { opacity: 0, y: 30 }, 
-      { opacity: 1, y: 0, duration: 1, delay: 4.5, ease: 'power3.out' }
+      { opacity: 1, y: 0, duration: 0.5, delay: 2.25, ease: 'power3.out' }
     );
   }, []);
 
@@ -28,7 +28,7 @@ export default function LoginForm() {
     gsap.to(formRef.current, {
       opacity: 0,
       y: -20,
-      duration: 0.5,
+      duration: 0.25,
       ease: 'power3.in',
       onComplete: () => {
         startLoginTransition(() => {

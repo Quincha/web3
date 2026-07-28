@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { DashboardSkeleton } from '../ui/SkeletonLoader';
-import { WidgetContainer } from '../dashboard/WidgetContainer';
 import { DashboardHero } from '../dashboard/DashboardHero';
+import { ProactiveAIAssistant } from '../dashboard/ProactiveAIAssistant';
+import { PomodoroTasksWidget } from '../../widgets/PomodoroTasksWidget';
 import { WidgetRegistry } from '../../widgets/WidgetRegistry';
 import { FinanceSummaryBanner } from '../finance/dashboard/FinanceSummaryBanner';
 import { useUser } from '../../context/UserContext';
@@ -118,38 +119,37 @@ export const DashboardLayout: React.FC = () => {
           </div>
         )}
 
-        {/* Widget Grid */}
+        {/* Asymmetrical Bento Box Grid */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: '16px',
-          paddingBottom: '40px'
+          gridTemplateColumns: '1fr 1fr 1fr',
+          gap: '24px',
+          paddingBottom: '0'
         }}>
-          {/* Row 1 */}
-          <WidgetContainer config={{ id: 'pomodoro', visible: true, order: 0, size: 'medium' }} name="Pomodoro">
-            {React.createElement(WidgetRegistry.get('pomodoro')?.component || 'div')}
-          </WidgetContainer>
-          <WidgetContainer config={{ id: 'tareas', visible: true, order: 1, size: 'medium' }} name="Tareas">
-            {React.createElement(WidgetRegistry.get('tareas')?.component || 'div')}
-          </WidgetContainer>
-          <WidgetContainer config={{ id: 'calendario_widget', visible: true, order: 2, size: 'medium' }} name="Calendario">
-            {React.createElement(WidgetRegistry.get('calendario_widget')?.component || 'div')}
-          </WidgetContainer>
+          {/* Column 1: AI Assistant */}
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <ProactiveAIAssistant />
+          </div>
 
-          {/* Row 2 */}
-          <WidgetContainer config={{ id: 'activity', visible: true, order: 3, size: 'medium' }} name="Actividad Reciente">
-            {React.createElement(WidgetRegistry.get('activity')?.component || 'div')}
-          </WidgetContainer>
-          <WidgetContainer config={{ id: 'habitos', visible: true, order: 4, size: 'medium' }} name="Hábitos">
-            {React.createElement(WidgetRegistry.get('habitos')?.component || 'div')}
-          </WidgetContainer>
-          <WidgetContainer config={{ id: 'bujo', visible: true, order: 5, size: 'medium' }} name="Bullet Journal">
-            {React.createElement(WidgetRegistry.get('bujo')?.component || 'div')}
-          </WidgetContainer>
+          {/* Column 2: Productivity (Pomodoro & Tasks + Habits) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <PomodoroTasksWidget />
+            <div style={{ flex: 1 }}>
+              {React.createElement(WidgetRegistry.get('habitos')?.component || 'div')}
+            </div>
+          </div>
+
+          {/* Column 3: Time & Log (Calendar + Bujo) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {React.createElement(WidgetRegistry.get('calendario_widget')?.component || 'div')}
+            <div style={{ flex: 1 }}>
+              {React.createElement(WidgetRegistry.get('bujo')?.component || 'div')}
+            </div>
+          </div>
         </div>
 
-        {/* Finance Executive Summary Banner */}
-        <div style={{ marginTop: '16px' }}>
+        {/* Static Finance Banner Footer */}
+        <div style={{ marginTop: '0px' }}>
           <FinanceSummaryBanner />
         </div>
       </div>
@@ -179,7 +179,7 @@ export const DashboardLayout: React.FC = () => {
       <Sidebar activeView={activeView} onViewChange={setActiveView} />
 
       {/* Main Container Frame */}
-      <div className="dashboard-main-frame">
+      <div className="dashboard-main-frame" style={{ position: 'relative' }}>
         <Header />
         <main className="dashboard-body-scroller">
           {activeView === 'dashboard' ? renderDashboardHome() : 

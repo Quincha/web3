@@ -52,8 +52,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
       {/* Brand Header */}
       <div className="sidebar-brand-container">
         <div className="brand-logo-wrapper">
-          <div className="brand-logo-q" style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}>
-            <OfficialLogo size={32} showGlow={true} />
+          <div className="brand-logo-q" style={{ background: 'transparent', border: 'none', boxShadow: 'none', display: 'flex', alignItems: 'center' }}>
+            <OfficialLogo size={36} showGlow={true} />
           </div>
           {!userConfig.sidebarCollapsed && (
             <div className="brand-text-container">
