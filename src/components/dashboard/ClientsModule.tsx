@@ -83,7 +83,9 @@ export const ClientsModule: React.FC = () => {
           display: 'grid', 
           gridTemplateColumns: selectedClientId ? '1fr' : 'repeat(auto-fill, minmax(320px, 1fr))', 
           gap: '16px',
-          overflowY: 'auto'
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          padding: '8px' // Da espacio para el efecto hover (scale) sin desencadenar scroll
         }}>
           {clients.map(client => (
             <Card 
@@ -92,7 +94,6 @@ export const ClientsModule: React.FC = () => {
               onClick={() => setSelectedClientId(client.id)}
               style={{ 
                 cursor: 'pointer', 
-                borderLeft: `4px solid ${client.color}`,
                 background: selectedClientId === client.id ? 'rgba(255,255,255,0.05)' : undefined,
                 borderColor: selectedClientId === client.id ? client.color : undefined
               }}

@@ -10,7 +10,7 @@ export type Module =
   | 'estadisticas' 
   | 'mensajes' 
   | 'documentos' 
-  | 'equipo' 
+  | 'clientes' 
   | 'ajustes'
   | 'pomodoro'
   | 'bujo'
@@ -69,11 +69,11 @@ const PERMISSIONS: Record<Module, Record<Role, Action[]>> = {
     'user': ['view', 'create', 'edit'],
     'guest': ['view'],
   },
-  equipo: {
+  clientes: {
     'super-admin': ['view', 'create', 'edit', 'delete', 'share', 'export', 'admin'],
     'admin': ['view', 'create', 'edit', 'delete', 'share', 'admin'],
-    'supervisor': ['view'],
-    'user': [],
+    'supervisor': ['view', 'create', 'edit'],
+    'user': ['view', 'create'],
     'guest': [],
   },
   ajustes: {

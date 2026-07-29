@@ -46,7 +46,7 @@ const ProjectsWidget: React.FC = () => {
             const stats = projectStats[proj.id];
             
             return (
-              <div key={proj.id} className="project-card" style={{ borderLeft: `3px solid ${proj.color || tokens.colors.accent.primary}` }}>
+              <div key={proj.id} className="project-card">
                 <div className="project-card-header">
                   <h4 className="project-title">{proj.name}</h4>
                   <span className="status-badge" style={{ background: `${proj.color || tokens.colors.accent.primary}20`, color: proj.color || tokens.colors.accent.primary }}>

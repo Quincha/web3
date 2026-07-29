@@ -34,6 +34,8 @@ export interface Task {
   category: string;
   priority: Priority;
   status: TaskStatus;
+  isBillable?: boolean;
+  price?: number;
   dueDate: string | null;
   subtasks: Subtask[];
   tags: string[];
@@ -136,6 +138,8 @@ const INITIAL_TASKS: Task[] = [
     category: 'desarrollo',
     priority: 'urgent',
     status: 'in-progress',
+    isBillable: false,
+    price: 0,
     dueDate: today(),
     subtasks: [
       { id: 'st_1', content: 'Extender startSession() con taskId', completed: true, createdAt: isoNow() },

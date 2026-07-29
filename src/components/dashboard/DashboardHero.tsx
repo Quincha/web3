@@ -4,7 +4,7 @@ import { useTheme } from '../../context/ThemeContext';
 import type { Theme } from '../../context/ThemeContext';
 import { SyncStatusBar } from '../layout/SyncStatusBar';
 import { WeatherWidget } from './WeatherWidget';
-import { CheckCircle2, Search, Bell, Mail, Sparkles, Moon, Sun, Calendar, DollarSign, Phone, CloudRain } from 'lucide-react';
+import { CheckCircle2, Search, Bell, Mail, Sparkles, Moon, Sun, Calendar, DollarSign, Phone, CloudRain, Plus } from 'lucide-react';
 import { tokens } from '../../theme/tokens';
 
 export const DashboardHero: React.FC = () => {
@@ -204,28 +204,61 @@ export const DashboardHero: React.FC = () => {
       <div style={{ ...columnStyle, flex: '0.8', minWidth: '180px', alignItems: 'center' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', width: '100%' }}>
           
-          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <CheckCircle2 size={18} color="rgba(255,255,255,0.6)" />
-            <div>
-              <div style={{ fontSize: '16px', fontWeight: 700, color: '#fff', lineHeight: 1 }}>5</div>
-              <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>Tareas</div>
+          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <CheckCircle2 size={18} color="rgba(255,255,255,0.6)" />
+              <div>
+                <div style={{ fontSize: '16px', fontWeight: 700, color: '#fff', lineHeight: 1 }}>5</div>
+                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>Tareas</div>
+              </div>
             </div>
+            <button 
+              onClick={() => window.dispatchEvent(new CustomEvent('change-view', { detail: 'tareas' }))}
+              style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', transition: 'all 0.2s' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+              title="Ir a Tareas"
+            >
+              <Plus size={14} />
+            </button>
           </div>
           
-          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Calendar size={18} color="rgba(255,255,255,0.6)" />
-            <div>
-              <div style={{ fontSize: '16px', fontWeight: 700, color: '#fff', lineHeight: 1 }}>2</div>
-              <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>Reuniones</div>
+          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <Calendar size={18} color="rgba(255,255,255,0.6)" />
+              <div>
+                <div style={{ fontSize: '16px', fontWeight: 700, color: '#fff', lineHeight: 1 }}>2</div>
+                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>Reuniones</div>
+              </div>
             </div>
+            <button 
+              onClick={() => window.dispatchEvent(new CustomEvent('change-view', { detail: 'calendario' }))}
+              style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', transition: 'all 0.2s' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+              title="Ir a Calendario"
+            >
+              <Plus size={14} />
+            </button>
           </div>
           
-          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <DollarSign size={18} color={tokens.colors.accent.green} style={{ filter: 'drop-shadow(0 0 6px rgba(16, 185, 129, 0.4))'}} />
-            <div>
-              <div style={{ fontSize: '16px', fontWeight: 700, color: '#fff', lineHeight: 1 }}>1</div>
-              <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>Cobro</div>
+          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <DollarSign size={18} color={tokens.colors.accent.green} style={{ filter: 'drop-shadow(0 0 6px rgba(16, 185, 129, 0.4))'}} />
+              <div>
+                <div style={{ fontSize: '16px', fontWeight: 700, color: '#fff', lineHeight: 1 }}>1</div>
+                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>Cobro</div>
+              </div>
             </div>
+            <button 
+              onClick={() => window.dispatchEvent(new CustomEvent('change-view', { detail: 'finanzas' }))}
+              style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', transition: 'all 0.2s' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+              title="Ir a Finanzas"
+            >
+              <Plus size={14} />
+            </button>
           </div>
           
           <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>

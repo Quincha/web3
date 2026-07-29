@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
-import {
-  CheckCircle2, Circle, Clock, AlertTriangle,
-  ChevronDown, ChevronRight, Trash2, Plus, Flame,
-  Briefcase, Tag, Calendar, Filter
+import { 
+  CheckCircle2, Plus, Clock, Circle, XCircle, MoreVertical, 
+  Briefcase, Tag, Calendar, Filter, User, DollarSign, Building2,
+  ChevronDown, ChevronRight, Trash2, Flame
 } from 'lucide-react';
 import { useTasks } from '../../context/TasksContext';
 import { useClients } from '../../context/ClientsContext';
 import type { Task, Priority, TaskStatus, Project } from '../../context/TasksContext';
+import { TaskDetailSidebar } from './TaskDetailSidebar';
 
 // ─────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────
 
+const tokens = { colors: { accent: { primary: '#3B82F6', green: '#10B981', orange: '#F59E0B' } } };
+
 const PRIORITY_CONFIG: Record<Priority, { label: string; color: string; icon: React.ReactNode }> = {
-  urgent: { label: 'Urgente', color: '#EF4444', icon: <AlertTriangle size={11} /> },
+  urgent: { label: 'Urgente', color: '#EF4444', icon: <div /> },
   high:   { label: 'Alta',    color: '#F59E0B', icon: <ChevronDown size={11} style={{ transform: 'rotate(180deg)' }} /> },
   medium: { label: 'Media',   color: '#3B82F6', icon: <ChevronDown size={11} /> },
   low:    { label: 'Baja',    color: '#6B7280', icon: <ChevronDown size={11} /> },
@@ -30,99 +33,74 @@ function formatDueDate(iso: string | null): { label: string; urgent: boolean } {
 }
 
 // ─────────────────────────────────────────────
-// ADD TASK FORM
+// QUICK ENTRY BAR
 // ─────────────────────────────────────────────
 
-const AddTaskForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-  const { addTask, getActiveProjects } = useTasks();
+const QuickEntryBar: React.FC = () => {
+  const { addTask } = useTasks();
   const { getActiveClients } = useClients();
-  const projects = getActiveProjects();
   const clients = getActiveClients();
   
   const [title, setTitle] = useState('');
-  const [desc, setDesc] = useState('');
-  const [priority, setPriority] = useState<Priority>('medium');
-  const [projectId, setProjectId] = useState<string>(projects[0]?.id || '');
-  const [clientId, setClientId] = useState<string>('');
-  const [dueDate, setDueDate] = useState('');
-  const [pomodoros, setPomodoros] = useState(1);
+  const [defaultClientId, setDefaultClientId] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title.trim()) return;
-    addTask({
-      title: title.trim(),
-      description: desc.trim(),
-      project_id: projectId || null,
-      client_id: clientId || null,
-      category: 'general',
-      priority,
-      status: 'pending',
-      dueDate: dueDate || null,
-      tags: [],
-      estimatedPomodoros: pomodoros,
-    });
-    onClose();
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && title.trim()) {
+      addTask({
+        title: title.trim(),
+        description: '',
+        project_id: null,
+        client_id: defaultClientId || null,
+        category: 'general',
+        priority: 'medium',
+        status: 'pending',
+        dueDate: null,
+        tags: [],
+        estimatedPomodoros: 1,
+        isBillable: false,
+        price: 0,
+        subtasks: [],
+        completedPomodoros: 0,
+        createdAt: new Date().toISOString()
+      });
+      setTitle('');
+    }
   };
 
   return (
-    <div className="add-task-form-card">
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          className="task-form-input task-form-title-input"
-          placeholder="Título de la tarea..."
-          value={title}
-          onChange={e => setTitle(e.target.value)}
-          autoFocus
-          required
-        />
-        <textarea
-          className="task-form-input task-form-textarea"
-          placeholder="Descripción (opcional)"
-          value={desc}
-          onChange={e => setDesc(e.target.value)}
-          rows={2}
-        />
-        <div className="task-form-row">
-          <div className="task-form-field">
-            <label>Prioridad</label>
-            <select className="task-form-select" value={priority} onChange={e => setPriority(e.target.value as Priority)}>
-              {(Object.entries(PRIORITY_CONFIG) as [Priority, typeof PRIORITY_CONFIG[Priority]][]).map(([k, v]) => (
-                <option key={k} value={k}>{v.label}</option>
-              ))}
-            </select>
-          </div>
-          <div className="task-form-field">
-            <label>Proyecto</label>
-            <select className="task-form-select" value={projectId} onChange={e => setProjectId(e.target.value)}>
-              <option value="">Sin proyecto</option>
-              {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
-          </div>
-          <div className="task-form-field">
-            <label>Cliente</label>
-            <select className="task-form-select" value={clientId} onChange={e => setClientId(e.target.value)}>
-              <option value="">Sin cliente</option>
-              {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-          </div>
-          <div className="task-form-field">
-            <label>Vence</label>
-            <input type="date" className="task-form-select" value={dueDate} onChange={e => setDueDate(e.target.value)} />
-          </div>
-          <div className="task-form-field">
-            <label>🍅 Estimados</label>
-            <input type="number" className="task-form-select" min={0} max={10} value={pomodoros} onChange={e => setPomodoros(+e.target.value)} />
-          </div>
-        </div>
-        <div className="task-form-actions">
-          <button type="button" className="outline-action-btn" onClick={onClose}>Cancelar</button>
-          <button type="submit" className="action-green-btn">
-            <Plus size={14} /> Agregar Tarea
-          </button>
-        </div>
-      </form>
+    <div style={{ 
+      background: 'rgba(0,0,0,0.4)', border: `1px solid ${tokens.colors.accent.primary}40`, 
+      borderRadius: '12px', padding: '8px 12px', display: 'flex', gap: '12px', alignItems: 'center',
+      marginBottom: '24px', boxShadow: `0 4px 24px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.05)`
+    }}>
+      <div style={{ color: tokens.colors.accent.primary, display: 'flex', alignItems: 'center' }}>
+        <Plus size={20} />
+      </div>
+      <input 
+        type="text"
+        placeholder="Escribe una tarea y presiona Enter para guardar..."
+        value={title}
+        onChange={e => setTitle(e.target.value)}
+        onKeyDown={handleKeyDown}
+        style={{
+          flex: 1, background: 'transparent', border: 'none', color: 'white', 
+          fontSize: '15px', outline: 'none', padding: '8px 0'
+        }}
+      />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '12px' }}>
+        <User size={16} color="rgba(255,255,255,0.5)" />
+        <select 
+          value={defaultClientId} 
+          onChange={e => setDefaultClientId(e.target.value)}
+          style={{
+            background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '6px', 
+            color: 'white', padding: '4px 8px', fontSize: '13px', outline: 'none', cursor: 'pointer'
+          }}
+        >
+          <option value="">Sin Cliente</option>
+          {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+      </div>
     </div>
   );
 };
@@ -135,55 +113,107 @@ const TaskRow: React.FC<{
   task: Task;
   project?: Project;
   onComplete: (id: string) => void;
-  onDelete: (id: string) => void;
-  onStartPomodoro: (task: Task) => void;
+  onUpdate: (id: string, updates: Partial<Task>) => void;
   onToggleSubtask: (taskId: string, subtaskId: string) => void;
   onAddSubtask: (taskId: string, content: string) => void;
-}> = ({ task, project, onComplete, onDelete, onStartPomodoro, onToggleSubtask, onAddSubtask }) => {
-  const [expanded, setExpanded] = useState(false);
-  const [newSubtask, setNewSubtask] = useState('');
+  onClick: (taskId: string) => void;
+}> = ({ task, project, onComplete, onUpdate, onClick }) => {
+  const { getClientById, getActiveClients } = useClients();
+  const clients = getActiveClients();
+  
+  const [isEditingPrice, setIsEditingPrice] = useState(false);
+  const [inlinePrice, setInlinePrice] = useState(task.price || 0);
+  
   const pCfg = PRIORITY_CONFIG[task.priority];
   const due = formatDueDate(task.dueDate);
-  const subtasksDone = task.subtasks.filter(s => s.completed).length;
-
-  const handleAddSubtask = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newSubtask.trim()) return;
-    onAddSubtask(task.id, newSubtask.trim());
-    setNewSubtask('');
-  };
+  const client = task.client_id ? getClientById(task.client_id) : null;
 
   return (
-    <div className={`task-row-card ${task.status === 'completed' ? 'task-completed' : ''} ${task.status === 'in-progress' ? 'task-in-progress' : ''}`}>
+    <div className={`task-row-card ${task.status === 'completed' ? 'task-completed' : ''}`}>
       <div className="task-row-main">
-        {/* Complete toggle */}
-        <button
-          className="task-check-btn"
-          onClick={() => onComplete(task.id)}
-          title={task.status === 'completed' ? 'Marcar pendiente' : 'Completar tarea'}
-        >
-          {task.status === 'completed'
-            ? <CheckCircle2 size={18} style={{ color: 'var(--accent-green)' }} />
-            : <Circle size={18} style={{ color: 'var(--text-subtle)' }} />
-          }
+        <button className="task-check-btn" onClick={() => onComplete(task.id)}>
+          {task.status === 'completed' ? <CheckCircle2 size={18} color="var(--accent-green)" /> : <Circle size={18} />}
         </button>
 
-        {/* Task content */}
-        <div className="task-row-content" onClick={() => setExpanded(!expanded)}>
-          <div className="task-row-title-line">
+        <div className="task-row-content" onClick={() => onClick(task.id)} style={{ cursor: 'pointer' }}>
+          <div className="task-row-title-bar">
             <span className="task-row-title">{task.title}</span>
-            {task.subtasks.length > 0 && (
-              <span className="subtask-progress-badge">
-                {subtasksDone}/{task.subtasks.length}
-              </span>
-            )}
           </div>
           <div className="task-row-meta">
             {project && (
-              <span className="task-project-badge" style={{ borderColor: project.color, color: project.color }}>
-                <Briefcase size={10} /> {project.name}
+              <span className="task-meta-pill" style={{ color: project.color, background: `${project.color}15` }}>
+                <Briefcase size={12} /> {project.name}
               </span>
             )}
+            
+            {client ? (
+              <select 
+                value={task.client_id || ''} 
+                onChange={e => onUpdate(task.id, { client_id: e.target.value || null })}
+                onClick={e => e.stopPropagation()}
+                className="task-meta-pill" 
+                style={{ color: client.color, background: `${client.color}15`, border: 'none', appearance: 'none', cursor: 'pointer', paddingRight: '8px' }}
+              >
+                <option value={client.id}>{client.name}</option>
+                {clients.filter(c => c.id !== client.id).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                <option value="">Quitar Cliente</option>
+              </select>
+            ) : (
+              <select 
+                value="" 
+                onChange={e => onUpdate(task.id, { client_id: e.target.value || null })}
+                onClick={e => e.stopPropagation()}
+                className="task-meta-pill" 
+                style={{ color: tokens.colors.accent.orange, background: `${tokens.colors.accent.orange}15`, border: 'none', appearance: 'none', cursor: 'pointer' }}
+              >
+                <option value="" disabled>+ Añadir Cliente</option>
+                {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            )}
+
+            {task.isBillable ? (
+              isEditingPrice ? (
+                <span className="task-meta-pill" style={{ color: tokens.colors.accent.green, background: `${tokens.colors.accent.green}15` }}>
+                  <DollarSign size={12} /> 
+                  <input 
+                    type="number" 
+                    value={inlinePrice}
+                    autoFocus
+                    onClick={e => e.stopPropagation()}
+                    onChange={e => setInlinePrice(Number(e.target.value))}
+                    onBlur={() => {
+                      setIsEditingPrice(false);
+                      onUpdate(task.id, { price: inlinePrice });
+                    }}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        setIsEditingPrice(false);
+                        onUpdate(task.id, { price: inlinePrice });
+                      }
+                    }}
+                    style={{ background: 'transparent', border: 'none', color: 'inherit', width: '60px', outline: 'none', fontWeight: 600, fontSize: '12px' }}
+                  />
+                </span>
+              ) : (
+                <span 
+                  className="task-meta-pill" 
+                  onClick={(e) => { e.stopPropagation(); setIsEditingPrice(true); setInlinePrice(task.price || 0); }}
+                  style={{ color: tokens.colors.accent.green, background: `${tokens.colors.accent.green}15`, fontWeight: 600, cursor: 'pointer' }}
+                >
+                  <DollarSign size={12} /> ${task.price?.toLocaleString()}
+                </span>
+              )
+            ) : (
+              <span 
+                className="task-meta-pill" 
+                onClick={(e) => { e.stopPropagation(); onUpdate(task.id, { isBillable: true, price: 0 }); }}
+                style={{ color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.05)', cursor: 'pointer' }}
+                title="Hacer facturable"
+              >
+                <Tag size={12} /> Recordatorio
+              </span>
+            )}
+
             <span className="task-priority-badge" style={{ color: pCfg.color }}>
               {pCfg.icon} {pCfg.label}
             </span>
@@ -192,65 +222,9 @@ const TaskRow: React.FC<{
                 <Calendar size={10} /> {due.label}
               </span>
             )}
-            {task.estimatedPomodoros > 0 && (
-              <span className="task-pomodoro-badge">
-                🍅 {task.completedPomodoros}/{task.estimatedPomodoros}
-              </span>
-            )}
           </div>
         </div>
-
-        {/* Expand toggle */}
-        {task.subtasks.length > 0 && (
-          <button className="task-expand-btn" onClick={() => setExpanded(!expanded)}>
-            {expanded ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
-          </button>
-        )}
-
-        {/* Actions */}
-        <div className="task-actions-group">
-          {task.status !== 'completed' && (
-            <button
-              className="task-action-btn task-pomodoro-btn"
-              onClick={() => onStartPomodoro(task)}
-              title="Iniciar sesión Pomodoro para esta tarea"
-            >
-              <Flame size={14} />
-            </button>
-          )}
-          <button
-            className="task-action-btn task-delete-btn"
-            onClick={() => onDelete(task.id)}
-            title="Eliminar tarea"
-          >
-            <Trash2 size={13} />
-          </button>
-        </div>
       </div>
-
-      {/* Subtasks panel */}
-      {expanded && (
-        <div className="subtasks-panel">
-          {task.subtasks.map(st => (
-            <div key={st.id} className={`subtask-row ${st.completed ? 'subtask-done' : ''}`}>
-              <button className="subtask-check-btn" onClick={() => onToggleSubtask(task.id, st.id)}>
-                {st.completed ? <CheckCircle2 size={14} style={{ color: 'var(--accent-green)' }} /> : <Circle size={14} />}
-              </button>
-              <span className="subtask-text">{st.content}</span>
-            </div>
-          ))}
-          <form onSubmit={handleAddSubtask} className="subtask-add-row">
-            <Plus size={13} style={{ color: 'var(--text-subtle)' }} />
-            <input
-              type="text"
-              className="subtask-add-input"
-              placeholder="Añadir subtarea..."
-              value={newSubtask}
-              onChange={e => setNewSubtask(e.target.value)}
-            />
-          </form>
-        </div>
-      )}
     </div>
   );
 };
@@ -268,14 +242,10 @@ const FILTER_OPTIONS: { id: TaskFilter; label: string }[] = [
 ];
 
 export const TasksModule: React.FC = () => {
-  const {
-    tasks, projects,
-    completeTask, deleteTask, addSubtask, toggleSubtask, getTodayTasks
-  } = useTasks();
-
+  const { tasks, getActiveProjects, completeTask, updateTask, getTodayTasks } = useTasks();
   const [filter, setFilter] = useState<TaskFilter>('today');
-  const [projectFilter, setProjectFilter] = useState<string>('all');
-  const [showAddForm, setShowAddForm] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const projects = getActiveProjects();
 
   const getFilteredTasks = (): Task[] => {
     let base: Task[] = [];
@@ -283,49 +253,15 @@ export const TasksModule: React.FC = () => {
     else if (filter === 'urgent') base = tasks.filter(t => t.priority === 'urgent' && t.status !== 'completed');
     else if (filter === 'completed') base = tasks.filter(t => t.status === 'completed');
     else base = tasks.filter(t => t.status !== 'cancelled');
-
-    if (projectFilter !== 'all') {
-      base = base.filter(t => t.project_id === projectFilter);
-    }
     return base;
   };
 
   const filteredTasks = getFilteredTasks();
-  const todayCount = getTodayTasks().length;
-  const urgentCount = tasks.filter(t => t.priority === 'urgent' && t.status !== 'completed').length;
-
-  const handleStartPomodoro = (task: Task) => {
-    const project = projects.find(p => p.id === task.project_id);
-    window.dispatchEvent(new CustomEvent('start-pomodoro-for-task', {
-      detail: {
-        taskId: task.id,
-        taskTitle: task.title,
-        projectName: project?.name || 'Sin proyecto'
-      }
-    }));
-    window.dispatchEvent(new CustomEvent('change-view', { detail: 'pomodoro' }));
-  };
 
   return (
     <div className="tasks-module-container">
-      {/* Header */}
-      <div className="module-title-row">
-        <div>
-          <h2>Tareas & Proyectos</h2>
-          <p className="module-subtitle">
-            {todayCount} para hoy · {urgentCount} urgentes
-          </p>
-        </div>
-        <button className="action-green-btn" onClick={() => setShowAddForm(!showAddForm)}>
-          <Plus size={14} />
-          Nueva Tarea
-        </button>
-      </div>
+      <QuickEntryBar />
 
-      {/* Add task form */}
-      {showAddForm && <AddTaskForm onClose={() => setShowAddForm(false)} />}
-
-      {/* Filters */}
       <div className="tasks-filter-bar">
         <div className="tasks-filter-tabs">
           {FILTER_OPTIONS.map(opt => (
@@ -335,53 +271,13 @@ export const TasksModule: React.FC = () => {
               onClick={() => setFilter(opt.id)}
             >
               {opt.label}
-              {opt.id === 'today' && todayCount > 0 && (
-                <span className="filter-count-badge">{todayCount}</span>
-              )}
-              {opt.id === 'urgent' && urgentCount > 0 && (
-                <span className="filter-count-badge filter-count-urgent">{urgentCount}</span>
-              )}
             </button>
           ))}
         </div>
-
-        {/* Project filter */}
-        <div className="project-filter-row">
-          <Filter size={13} style={{ color: 'var(--text-subtle)' }} />
-          <select
-            className="task-form-select"
-            value={projectFilter}
-            onChange={e => setProjectFilter(e.target.value)}
-          >
-            <option value="all">Todos los proyectos</option>
-            {projects.filter(p => !p.archived).map(p => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
-        </div>
       </div>
 
-      {/* Project color legend */}
-      <div className="project-legend-row">
-        {projects.filter(p => !p.archived).map(p => (
-          <div key={p.id} className="project-legend-item">
-            <div className="project-legend-dot" style={{ backgroundColor: p.color }} />
-            <span>{p.name}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Task list */}
       <div className="tasks-list">
-        {filteredTasks.length === 0 ? (
-          <div className="tasks-empty-state">
-            <CheckCircle2 size={32} />
-            <p>
-              {filter === 'today' ? '¡Todo al día! No hay tareas pendientes para hoy.' : 'Sin tareas en esta categoría.'}
-            </p>
-          </div>
-        ) : (
-          filteredTasks.map(task => {
+        {filteredTasks.map(task => {
             const project = projects.find(p => p.id === task.project_id);
             return (
               <TaskRow
@@ -389,15 +285,19 @@ export const TasksModule: React.FC = () => {
                 task={task}
                 project={project}
                 onComplete={completeTask}
-                onDelete={deleteTask}
-                onStartPomodoro={handleStartPomodoro}
-                onToggleSubtask={toggleSubtask}
-                onAddSubtask={addSubtask}
+                onUpdate={updateTask}
+                onAddSubtask={(taskId, content) => {
+                  const t = tasks.find(x => x.id === taskId);
+                  if (t) updateTask(taskId, { subtasks: [...t.subtasks, { id: 'st_'+Date.now(), content, completed: false, createdAt: new Date().toISOString() }] });
+                }}
+                onToggleSubtask={() => {}}
+                onClick={taskId => setSelectedTaskId(taskId)}
               />
             );
-          })
-        )}
+        })}
       </div>
+
+      <TaskDetailSidebar taskId={selectedTaskId} onClose={() => setSelectedTaskId(null)} />
     </div>
   );
 };

@@ -73,6 +73,8 @@ export const ProjectsModule: React.FC = () => {
         gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', 
         gap: '24px',
         overflowY: 'auto',
+        overflowX: 'hidden',
+        padding: '8px',
         paddingBottom: '40px'
       }}>
         {projects.length === 0 ? (
@@ -90,7 +92,6 @@ export const ProjectsModule: React.FC = () => {
                 display: 'flex', 
                 flexDirection: 'column', 
                 gap: '20px',
-                borderLeft: `4px solid ${proj.color || tokens.colors.accent.primary}`,
                 transition: 'all 0.3s ease',
                 cursor: 'pointer'
               }}
