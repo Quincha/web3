@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Clock, Briefcase, User, Calendar, DollarSign, Tag, Play } from 'lucide-react';
+import { X, Save, Clock, Briefcase, User, Calendar, DollarSign, Tag, Play, CheckCircle2, Circle, Plus, ListTodo } from 'lucide-react';
 import { useTasks } from '../../context/TasksContext';
 import { useClients } from '../../context/ClientsContext';
 import type { Task, Priority } from '../../context/TasksContext';
@@ -34,6 +34,9 @@ export const TaskDetailSidebar: React.FC<TaskDetailSidebarProps> = ({ taskId, on
   const [pomodoros, setPomodoros] = useState(0);
   const [isBillable, setIsBillable] = useState(false);
   const [price, setPrice] = useState(0);
+  const [subtasks, setSubtasks] = useState<{ id: string, content: string, completed: boolean }[]>([]);
+  const [newSubtask, setNewSubtask] = useState('');
+  const [createdAt, setCreatedAt] = useState('');
 
   useEffect(() => {
     if (task) {
@@ -46,6 +49,8 @@ export const TaskDetailSidebar: React.FC<TaskDetailSidebarProps> = ({ taskId, on
       setPomodoros(task.estimatedPomodoros);
       setIsBillable(task.isBillable || false);
       setPrice(task.price || 0);
+      setSubtasks(task.subtasks || []);
+      setCreatedAt(new Date(task.createdAt).toLocaleDateString());
     }
   }, [task]);
 
@@ -62,9 +67,19 @@ export const TaskDetailSidebar: React.FC<TaskDetailSidebarProps> = ({ taskId, on
       dueDate: dueDate || null,
       estimatedPomodoros: pomodoros,
       isBillable,
-      price: isBillable ? price : 0
+      price: isBillable ? price : 0,
+      subtasks
     });
     onClose();
+  };
+
+  const handleAddSubtask = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (!newSubtask.trim()) return;
+      setSubtasks([...subtasks, { id: 'st_' + Date.now(), content: newSubtask.trim(), completed: false }]);
+      setNewSubtask('');
+    }
   };
 
   const inputStyle: React.CSSProperties = {
@@ -99,13 +114,17 @@ export const TaskDetailSidebar: React.FC<TaskDetailSidebarProps> = ({ taskId, on
           overflowY: 'auto'
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
           <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'white', margin: 0 }}>
             Detalles de Tarea
           </h2>
           <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', padding: '4px' }}>
             <X size={20} />
           </button>
+        </div>
+        
+        <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '24px' }}>
+          Creada el: {createdAt}
         </div>
 
         <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '20px', flex: 1 }}>
@@ -212,10 +231,49 @@ export const TaskDetailSidebar: React.FC<TaskDetailSidebarProps> = ({ taskId, on
           <div>
             <label style={labelStyle}>Descripción / Notas</label>
             <textarea 
-              value={description} onChange={e => setDescription(e.target.value)} rows={4}
+              value={description} onChange={e => setDescription(e.target.value)} rows={3}
               style={{ ...inputStyle, resize: 'vertical' }} 
               placeholder="Agrega notas o detalles adicionales..."
             />
+          </div>
+
+          <div>
+            <label style={labelStyle}><ListTodo size={14} /> Sub-tareas</label>
+            <div style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {subtasks.map(st => (
+                <div key={st.id} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <button 
+                    type="button"
+                    onClick={() => setSubtasks(subtasks.map(s => s.id === st.id ? { ...s, completed: !s.completed } : s))}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', color: st.completed ? tokens.colors.accent.green : 'rgba(255,255,255,0.5)', padding: 0 }}
+                  >
+                    {st.completed ? <CheckCircle2 size={16} /> : <Circle size={16} />}
+                  </button>
+                  <span style={{ fontSize: '14px', color: st.completed ? 'rgba(255,255,255,0.4)' : 'white', textDecoration: st.completed ? 'line-through' : 'none', flex: 1 }}>
+                    {st.content}
+                  </span>
+                  <button 
+                    type="button"
+                    onClick={() => setSubtasks(subtasks.filter(s => s.id !== st.id))}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.3)' }}
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ))}
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: subtasks.length > 0 ? '8px' : 0 }}>
+                <Plus size={16} color="rgba(255,255,255,0.4)" />
+                <input 
+                  type="text" 
+                  value={newSubtask}
+                  onChange={e => setNewSubtask(e.target.value)}
+                  onKeyDown={handleAddSubtask}
+                  placeholder="Agregar subtarea (Presiona Enter)..."
+                  style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '14px', flex: 1, outline: 'none' }}
+                />
+              </div>
+            </div>
           </div>
 
           <div style={{ marginTop: 'auto', paddingTop: '24px', display: 'flex', gap: '12px' }}>
