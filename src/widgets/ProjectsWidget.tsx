@@ -1,59 +1,31 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Plus } from 'lucide-react';
 import { WidgetRegistry } from './WidgetRegistry';
 import { useUser } from '../context/UserContext';
+import { useTasks } from '../context/TasksContext';
+import { tokens } from '../theme/tokens';
 
 const ProjectsWidget: React.FC = () => {
   const { hasPermission } = useUser();
+  const { getActiveProjects, tasks } = useTasks();
 
-  const projects = [
-    {
-      title: 'QuinchaDoro Platform',
-      status: 'En progreso',
-      statusClass: 'in-progress',
-      desc: 'Plataforma multiplataforma para gestión de tareas y hábitos',
-      progress: 75,
-      avatars: [
-        'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&fit=crop',
-        'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&fit=crop',
-        'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=80&fit=crop',
-      ],
-      extraMembers: 3,
-    },
-    {
-      title: 'EcoVertical System',
-      status: 'En desarrollo',
-      statusClass: 'development',
-      desc: 'Sistema de cultivo vertical automatizado con IA',
-      progress: 60,
-      avatars: [
-        'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&fit=crop',
-        'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=80&fit=crop',
-      ],
-      extraMembers: 2,
-    },
-    {
-      title: 'Galtec Web',
-      status: 'En revisión',
-      statusClass: 'review',
-      desc: 'Sitio web corporativo para Constructora GALTEC',
-      progress: 90,
-      avatars: [
-        'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&fit=crop',
-        'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&fit=crop',
-        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&fit=crop',
-      ],
-      extraMembers: 1,
-    },
-  ];
+  const allProjects = getActiveProjects();
+  const displayProjects = allProjects.slice(0, 3); // Solo mostrar los últimos 3
 
-  const handleCreateProject = () => {
-    if (!hasPermission('proyectos', 'create')) {
-      alert('Error: No tienes permiso para crear proyectos con tu rol actual.');
-      return;
-    }
-    alert('Acción permitida: Abriendo creador de proyectos...');
-  };
+  const projectStats = useMemo(() => {
+    const stats: Record<string, { total: number, completed: number, progress: number }> = {};
+    
+    displayProjects.forEach(p => {
+      const projectTasks = tasks.filter(t => t.project_id === p.id);
+      const total = projectTasks.length;
+      const completed = projectTasks.filter(t => t.status === 'completed').length;
+      const progress = total === 0 ? 0 : Math.round((completed / total) * 100);
+      
+      stats[p.id] = { total, completed, progress };
+    });
+    
+    return stats;
+  }, [displayProjects, tasks]);
 
   const canCreate = hasPermission('proyectos', 'create');
 
@@ -65,38 +37,39 @@ const ProjectsWidget: React.FC = () => {
       </div>
 
       <div className="projects-grid">
-        {projects.map((proj, i) => (
-          <div key={i} className="project-card">
-            <div className="project-card-header">
-              <h4 className="project-title">{proj.title}</h4>
-              <span className={`status-badge status-${proj.statusClass}`}>
-                {proj.status}
-              </span>
-            </div>
-            <p className="project-desc">{proj.desc}</p>
+        {displayProjects.length === 0 ? (
+           <div style={{ textAlign: 'center', padding: '20px', color: 'rgba(255,255,255,0.4)', gridColumn: '1 / -1' }}>
+             Sin proyectos activos
+           </div>
+        ) : (
+          displayProjects.map((proj) => {
+            const stats = projectStats[proj.id];
             
-            <div className="project-progress-container">
-              <div className="progress-bar-wrapper">
-                <div 
-                  className="progress-bar-fill" 
-                  style={{ width: `${proj.progress}%` }} 
-                />
+            return (
+              <div key={proj.id} className="project-card" style={{ borderLeft: `3px solid ${proj.color || tokens.colors.accent.primary}` }}>
+                <div className="project-card-header">
+                  <h4 className="project-title">{proj.name}</h4>
+                  <span className="status-badge" style={{ background: `${proj.color || tokens.colors.accent.primary}20`, color: proj.color || tokens.colors.accent.primary }}>
+                    Activo
+                  </span>
+                </div>
+                <p className="project-desc" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                  {proj.description || 'Sin descripción'}
+                </p>
+                
+                <div className="project-progress-container">
+                  <div className="progress-bar-wrapper">
+                    <div 
+                      className="progress-bar-fill" 
+                      style={{ width: `${stats?.progress || 0}%`, background: proj.color || tokens.colors.accent.primary }} 
+                    />
+                  </div>
+                  <span className="progress-text">{stats?.progress || 0}%</span>
+                </div>
               </div>
-              <span className="progress-text">{proj.progress}%</span>
-            </div>
-
-            <div className="project-footer">
-              <div className="member-avatars">
-                {proj.avatars.map((url, index) => (
-                  <img key={index} src={url} alt="member" className="member-avatar" />
-                ))}
-                {proj.extraMembers > 0 && (
-                  <div className="avatar-extra">+{proj.extraMembers}</div>
-                )}
-              </div>
-            </div>
-          </div>
-        ))}
+            );
+          })
+        )}
 
         {/* New Project creation card - conditional check demo */}
         <div 

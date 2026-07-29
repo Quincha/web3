@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { ExternalLink, Clock, Plus, Circle, CheckCircle2, Minus, Calendar } from 'lucide-react';
 import { WidgetRegistry } from './WidgetRegistry';
 import { tokens } from '../theme/tokens';
-import { useBujo, BujoEntryType } from '../context/BujoContext';
+import { useBujo } from '../context/BujoContext';
+import type { BujoEntryType } from '../context/BujoContext';
 
 const getBujoIcon = (type: BujoEntryType, color: string) => {
   switch (type) {
