@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { ConfigService } from '../services/ConfigService';
+import { useTasks } from './TasksContext';
 
 export const SESSION_TYPES = {
   WORK: 'work',
@@ -53,7 +54,10 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [notes, setNotes] = useState('');
   const [completedSessions, setCompletedSessions] = useState<PomodoroSessionRecord[]>([]);
   
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const { addTimeSpent } = useTasks();
+
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const accumulatedSecondsRef = useRef<number>(0);
 
   // Load initial logs from cache
   useEffect(() => {
@@ -75,11 +79,19 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     ConfigService.saveConfig(config);
   };
 
+  const flushTimeSpent = useCallback(() => {
+    if (activeTaskId && accumulatedSecondsRef.current > 0) {
+      addTimeSpent(activeTaskId, accumulatedSecondsRef.current);
+      accumulatedSecondsRef.current = 0;
+    }
+  }, [activeTaskId, addTimeSpent]);
+
   // Timer Tick implementation
   useEffect(() => {
     if (isActive && !isPaused) {
       timerRef.current = setInterval(() => {
         setTimeRemaining(prev => {
+          accumulatedSecondsRef.current += 1;
           if (prev <= 1) {
             clearInterval(timerRef.current!);
             handleSessionEnd();
@@ -100,6 +112,7 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [isActive, isPaused]);
 
   const handleSessionEnd = () => {
+    flushTimeSpent();
     setIsActive(false);
     setIsPaused(false);
     
@@ -144,23 +157,26 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setNotes('');
     setTotalDuration(duration);
     setTimeRemaining(duration);
+    accumulatedSecondsRef.current = 0;
     setIsActive(true);
     setIsPaused(false);
   }, []);
 
   const pauseSession = useCallback(() => {
+    flushTimeSpent();
     setIsPaused(true);
-  }, []);
+  }, [flushTimeSpent]);
 
   const resumeSession = useCallback(() => {
     setIsPaused(false);
   }, []);
 
   const cancelSession = useCallback(() => {
+    flushTimeSpent();
     setIsActive(false);
     setIsPaused(false);
     setTimeRemaining(25 * 60);
-  }, []);
+  }, [flushTimeSpent]);
 
   const finishSession = useCallback(() => {
     handleSessionEnd();

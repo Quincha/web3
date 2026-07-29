@@ -10,7 +10,12 @@ const PomodoroWidget: React.FC = () => {
     timeRemaining, 
     totalDuration, 
     isActive, 
+    isPaused,
+    task: currentTaskTitle,
     startSession, 
+    pauseSession,
+    resumeSession,
+    cancelSession
   } = usePomodoro();
 
   const formatTime = (seconds: number): string => {
@@ -102,7 +107,17 @@ const PomodoroWidget: React.FC = () => {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: tokens.spacing.space4 }}>
           {isActive ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacing.space2 }}>
-              <p style={{ color: tokens.colors.text.primary, fontSize: tokens.typography.sizes.subtitle }}>Sesión en progreso...</p>
+              <p style={{ color: tokens.colors.text.primary, fontSize: tokens.typography.sizes.subtitle }}>
+                {currentTaskTitle || 'Sesión en progreso...'}
+              </p>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <Button size="sm" variant="ghost" onClick={isPaused ? resumeSession : pauseSession} style={{ flex: 1, justifyContent: 'center' }}>
+                  {isPaused ? 'Reanudar' : 'Pausar'}
+                </Button>
+                <Button size="sm" variant="ghost" onClick={cancelSession} style={{ flex: 1, justifyContent: 'center', color: tokens.colors.accent.danger, borderColor: tokens.colors.accent.danger }}>
+                  Detener
+                </Button>
+              </div>
             </div>
           ) : (
             <>

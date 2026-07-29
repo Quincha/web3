@@ -37,6 +37,7 @@ export interface Task {
   tags: string[];
   estimatedPomodoros: number;
   completedPomodoros: number;
+  timeSpentSeconds: number;
   createdAt: string;
   completedAt: string | null;
   syncId: string | null;
@@ -51,7 +52,7 @@ interface TasksContextType {
   projects: Project[];
 
   // Tasks CRUD
-  addTask: (task: Omit<Task, 'id' | 'createdAt' | 'completedAt' | 'syncId' | 'subtasks' | 'completedPomodoros'>) => string;
+  addTask: (task: Omit<Task, 'id' | 'createdAt' | 'completedAt' | 'syncId' | 'subtasks' | 'completedPomodoros' | 'timeSpentSeconds'>) => string;
   updateTask: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string) => void;
   completeTask: (id: string) => void;
@@ -69,6 +70,7 @@ interface TasksContextType {
 
   // Pomodoro integration
   incrementTaskPomodoro: (taskId: string) => void;
+  addTimeSpent: (taskId: string, seconds: number) => void;
 
   // Queries
   getTodayTasks: () => Task[];
@@ -137,6 +139,7 @@ const INITIAL_TASKS: Task[] = [
     tags: ['frontend', 'context'],
     estimatedPomodoros: 3,
     completedPomodoros: 1,
+    timeSpentSeconds: 1500, // 25 min
     createdAt: isoNow(),
     completedAt: null,
     syncId: null
@@ -158,6 +161,7 @@ const INITIAL_TASKS: Task[] = [
     tags: ['portal', 'cliente'],
     estimatedPomodoros: 5,
     completedPomodoros: 0,
+    timeSpentSeconds: 0,
     createdAt: isoNow(),
     completedAt: null,
     syncId: null
@@ -175,6 +179,7 @@ const INITIAL_TASKS: Task[] = [
     tags: ['health', 'qa'],
     estimatedPomodoros: 1,
     completedPomodoros: 0,
+    timeSpentSeconds: 0,
     createdAt: isoNow(),
     completedAt: null,
     syncId: null
@@ -192,6 +197,7 @@ const INITIAL_TASKS: Task[] = [
     tags: ['docs'],
     estimatedPomodoros: 2,
     completedPomodoros: 0,
+    timeSpentSeconds: 0,
     createdAt: isoNow(),
     completedAt: null,
     syncId: null
@@ -212,6 +218,7 @@ const INITIAL_TASKS: Task[] = [
     tags: ['cliente', 'presentación'],
     estimatedPomodoros: 3,
     completedPomodoros: 0,
+    timeSpentSeconds: 0,
     createdAt: isoNow(),
     completedAt: null,
     syncId: null
@@ -229,6 +236,7 @@ const INITIAL_TASKS: Task[] = [
     tags: ['salud', 'rutina'],
     estimatedPomodoros: 0,
     completedPomodoros: 0,
+    timeSpentSeconds: 0,
     createdAt: isoNow(),
     completedAt: null,
     syncId: null
@@ -276,13 +284,14 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // ── TASKS ─────────────────────────────────────────
 
-  const addTask = useCallback((task: Omit<Task, 'id' | 'createdAt' | 'completedAt' | 'syncId' | 'subtasks' | 'completedPomodoros'>): string => {
+  const addTask = useCallback((task: Omit<Task, 'id' | 'createdAt' | 'completedAt' | 'syncId' | 'subtasks' | 'completedPomodoros' | 'timeSpentSeconds'>): string => {
     const id = genId('task');
     const newTask: Task = {
       ...task,
       id,
       subtasks: [],
       completedPomodoros: 0,
+      timeSpentSeconds: 0,
       createdAt: isoNow(),
       completedAt: null,
       syncId: null
@@ -407,6 +416,19 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // ── POMODORO INTEGRATION ──────────────────────────
 
+  const addTimeSpent = useCallback((taskId: string, seconds: number) => {
+    setTasks(prev => {
+      const updated = prev.map(t => {
+        if (t.id === taskId) {
+          return { ...t, timeSpentSeconds: (t.timeSpentSeconds || 0) + seconds };
+        }
+        return t;
+      });
+      saveTasks(updated);
+      return updated;
+    });
+  }, []);
+
   const incrementTaskPomodoro = useCallback((taskId: string) => {
     setTasks(prev => {
       const updated = prev.map(t =>
@@ -457,9 +479,8 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       addTask, updateTask, deleteTask, completeTask, setTaskInProgress,
       addSubtask, toggleSubtask, deleteSubtask,
       addProject, updateProject, archiveProject,
-      incrementTaskPomodoro,
-      getTodayTasks, getTasksByProject, getTasksByPriority,
-      getPendingTasks, getActiveProjects
+      incrementTaskPomodoro, addTimeSpent,
+      getTodayTasks, getTasksByProject, getTasksByPriority, getPendingTasks, getActiveProjects
     }}>
       {children}
     </TasksContext.Provider>

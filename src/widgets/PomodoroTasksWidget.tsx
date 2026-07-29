@@ -1,13 +1,14 @@
-import React from 'react';
-import { Settings, Play, CheckCircle2, Circle } from 'lucide-react';
+import React, { useState } from 'react';
+import { Settings, Play, CheckCircle2, Circle, Pause, Square } from 'lucide-react';
 import { usePomodoro } from '../context/PomodoroContext';
 import { useTasks } from '../context/TasksContext';
 import { tokens } from '../theme/tokens';
 import { Button } from '../components/ui/Button';
 
 export const PomodoroTasksWidget: React.FC = () => {
-  const { timeRemaining, totalDuration, isActive, startSession } = usePomodoro();
-  const { getPendingTasks } = useTasks();
+  const { timeRemaining, totalDuration, isActive, isPaused, task: currentTaskTitle, activeTaskId, startSession, pauseSession, resumeSession, cancelSession } = usePomodoro();
+  const { getPendingTasks, completeTask } = useTasks();
+  const [taskToConfirm, setTaskToConfirm] = useState<string | null>(null);
 
   const pendingTasks = getPendingTasks();
   const recentPending = pendingTasks.slice(0, 3);
@@ -16,6 +17,13 @@ export const PomodoroTasksWidget: React.FC = () => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const formatSpentTime = (seconds: number | undefined): string => {
+    if (!seconds) return '0h 0m';
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    return `${hrs}h ${mins}m`;
   };
 
   const getProgressPercentage = (): number => {
@@ -92,23 +100,67 @@ export const PomodoroTasksWidget: React.FC = () => {
 
         {/* Action Button */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center' }}>
-          <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}>No hay ninguna action activa.</span>
-          <Button 
-            onClick={handleStart}
-            variant="primary" 
-            style={{ 
-              width: '100%', 
-              justifyContent: 'center', 
-              background: `linear-gradient(90deg, ${tokens.colors.accent.green}, ${tokens.colors.accent.bright})`,
-              color: '#000',
-              fontWeight: 600,
-              boxShadow: `0 8px 24px ${tokens.colors.accent.green}40`,
-              border: 'none',
-              borderRadius: '30px'
-            }}
-          >
-            Iniciar 25 min
-          </Button>
+          <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)', textAlign: 'center' }}>
+            {isActive ? (currentTaskTitle || 'Sesión en progreso') : 'No hay ninguna sesión activa.'}
+          </span>
+          
+          {!isActive ? (
+            <Button 
+              onClick={handleStart}
+              variant="primary" 
+              style={{ 
+                width: '100%', 
+                justifyContent: 'center', 
+                background: `linear-gradient(90deg, ${tokens.colors.accent.green}, ${tokens.colors.accent.bright})`,
+                color: '#000',
+                fontWeight: 600,
+                boxShadow: `0 8px 24px ${tokens.colors.accent.green}40`,
+                border: 'none',
+                borderRadius: '30px'
+              }}
+            >
+              Iniciar 25 min
+            </Button>
+          ) : (
+            <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+              <Button 
+                onClick={isPaused ? resumeSession : pauseSession}
+                variant="ghost" 
+                style={{ 
+                  flex: 1, 
+                  justifyContent: 'center', 
+                  borderColor: tokens.colors.accent.cyan,
+                  color: tokens.colors.accent.cyan,
+                  backgroundColor: 'transparent',
+                  borderRadius: '30px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                {isPaused ? <Play size={16} /> : <Pause size={16} />}
+                {isPaused ? 'Reanudar' : 'Pausar'}
+              </Button>
+              <Button 
+                onClick={cancelSession}
+                variant="ghost" 
+                style={{ 
+                  flex: 1, 
+                  justifyContent: 'center', 
+                  borderColor: tokens.colors.accent.danger,
+                  color: tokens.colors.accent.danger,
+                  backgroundColor: 'transparent',
+                  borderRadius: '30px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <Square size={16} />
+                Detener
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -130,17 +182,78 @@ export const PomodoroTasksWidget: React.FC = () => {
             No hay tareas pendientes.
           </div>
         ) : (
-          recentPending.map(task => (
-            <div key={task.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <Circle size={16} color="rgba(255,255,255,0.2)" />
-                <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.85)' }}>{task.title}</span>
+          recentPending.map(task => {
+            const isTaskActive = activeTaskId === task.id;
+            
+            return (
+              <div 
+                key={task.id} 
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between', 
+                  padding: '8px 12px', 
+                  cursor: 'pointer', 
+                  transition: 'all 0.2s',
+                  background: isTaskActive ? 'rgba(0, 208, 132, 0.1)' : 'transparent',
+                  border: `1px solid ${isTaskActive ? 'rgba(0, 208, 132, 0.3)' : 'transparent'}`,
+                  borderRadius: '8px'
+                }}
+                onClick={() => {
+                  if (!isTaskActive) {
+                    startSession('work', 'General', task.title, 25, task.id);
+                  }
+                }}
+                onMouseEnter={(e) => {
+                  if (!isTaskActive) e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                }}
+                onMouseLeave={(e) => {
+                  if (!isTaskActive) e.currentTarget.style.background = 'transparent';
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%' }}>
+                  {taskToConfirm === task.id ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+                      <span style={{ fontSize: '13px', color: tokens.colors.text.primary, fontWeight: 500 }}>¿Marcar como completada?</span>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setTaskToConfirm(null); }} style={{ flex: 1, padding: '4px' }}>
+                          Cancelar
+                        </Button>
+                        <Button size="sm" onClick={(e) => { e.stopPropagation(); completeTask(task.id); setTaskToConfirm(null); }} style={{ flex: 1, padding: '4px', background: tokens.colors.accent.green, color: '#000' }}>
+                          Sí, Completar
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setTaskToConfirm(task.id); }}
+                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
+                      >
+                        <Circle size={16} color="rgba(255,255,255,0.2)" />
+                      </button>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontSize: '14px', color: isTaskActive ? tokens.colors.accent.green : 'rgba(255,255,255,0.85)', fontWeight: isTaskActive ? 600 : 400 }}>
+                          {task.title}
+                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {isTaskActive && (
+                            <span style={{ fontSize: '10px', color: tokens.colors.accent.green, fontWeight: 700, letterSpacing: '0.05em' }}>EN PROCESO</span>
+                          )}
+                          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>
+                            {formatSpentTime(task.timeSpentSeconds)}
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+                {taskToConfirm !== task.id && task.priority === 'high' && <span style={{ fontSize: '12px', color: tokens.colors.accent.danger }}>• Alta</span>}
+                {taskToConfirm !== task.id && task.priority === 'medium' && <span style={{ fontSize: '12px', color: tokens.colors.accent.warning }}>• Media</span>}
+                {taskToConfirm !== task.id && task.priority === 'low' && <span style={{ fontSize: '12px', color: tokens.colors.accent.cyan }}>• Baja</span>}
               </div>
-              {task.priority === 'high' && <span style={{ fontSize: '12px', color: tokens.colors.accent.danger }}>• Alta</span>}
-              {task.priority === 'medium' && <span style={{ fontSize: '12px', color: tokens.colors.accent.warning }}>• Media</span>}
-              {task.priority === 'low' && <span style={{ fontSize: '12px', color: tokens.colors.accent.cyan }}>• Baja</span>}
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
