@@ -3,7 +3,8 @@ import { useUser } from '../../context/UserContext';
 import { useTheme } from '../../context/ThemeContext';
 import type { Theme } from '../../context/ThemeContext';
 import { SyncStatusBar } from '../layout/SyncStatusBar';
-import { CheckCircle2, Calendar, DollarSign, CloudRain, Phone, Thermometer, ChevronRight, Sun, CloudSun, Cloud, Search, Bell, Mail, Sparkles, Moon } from 'lucide-react';
+import { WeatherWidget } from './WeatherWidget';
+import { CheckCircle2, Search, Bell, Mail, Sparkles, Moon, Sun, Calendar, DollarSign, Phone, CloudRain } from 'lucide-react';
 import { tokens } from '../../theme/tokens';
 
 export const DashboardHero: React.FC = () => {
@@ -239,101 +240,7 @@ export const DashboardHero: React.FC = () => {
       </div>
 
       {/* ZONA 3: Tiempo y Pronóstico Interactivo */}
-      <div style={{ ...columnStyle, flex: '1', minWidth: '220px' }}>
-        <div className="premium-card-hover" style={{ 
-          background: 'rgba(15, 23, 42, 0.3)', 
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          border: '1px solid rgba(56, 189, 248, 0.15)',
-          borderRadius: '16px', 
-          padding: '16px',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          cursor: 'pointer'
-        }}>
-          
-          {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.7)', fontWeight: 600, letterSpacing: '0.08em' }}>TIEMPO Y PRONÓSTICO</div>
-            <ChevronRight size={14} color="rgba(255,255,255,0.4)" />
-          </div>
-
-          {/* Temp */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
-            <Thermometer size={32} color={tokens.colors.accent.cyan} style={{ filter: 'drop-shadow(0 0 8px rgba(56, 189, 248, 0.6))'}} />
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <div style={{ fontSize: '28px', fontWeight: 700, color: '#fff', lineHeight: 1 }}>12°C</div>
-              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>Los Angeles</div>
-            </div>
-            <CloudRain size={24} color="rgba(255,255,255,0.6)" style={{ marginLeft: 'auto' }} />
-          </div>
-
-          {/* 5-Day Forecast Grid */}
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(5, 1fr)', 
-            gap: '8px',
-            borderTop: '1px solid rgba(255,255,255,0.1)',
-            borderBottom: '1px solid rgba(255,255,255,0.1)',
-            padding: '12px 0',
-            marginBottom: '16px',
-            textAlign: 'center'
-          }}>
-            {/* Day 1 */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-              <div style={{ fontSize: '9px', color: '#fff', fontWeight: 600 }}>Mar 29</div>
-              <Sun size={16} color="#FBBF24" />
-              <div style={{ fontSize: '9px', color: '#fff', fontWeight: 700 }}>18°<span style={{color: 'rgba(255,255,255,0.5)'}}>/8°C</span></div>
-              <div style={{ fontSize: '8px', color: 'rgba(255,255,255,0.5)' }}>Soleado</div>
-            </div>
-            
-            {/* Day 2 */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-              <div style={{ fontSize: '9px', color: '#fff', fontWeight: 600 }}>Mié 30</div>
-              <CloudSun size={16} color="#FBBF24" />
-              <div style={{ fontSize: '9px', color: '#fff', fontWeight: 700 }}>16°<span style={{color: 'rgba(255,255,255,0.5)'}}>/7°C</span></div>
-              <div style={{ fontSize: '8px', color: 'rgba(255,255,255,0.5)' }}>Parcial</div>
-            </div>
-            
-            {/* Day 3 */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-              <div style={{ fontSize: '9px', color: '#fff', fontWeight: 600 }}>Jue 31</div>
-              <CloudRain size={16} color="#38BDF8" />
-              <div style={{ fontSize: '9px', color: '#fff', fontWeight: 700 }}>14°<span style={{color: 'rgba(255,255,255,0.5)'}}>/6°C</span></div>
-              <div style={{ fontSize: '8px', color: 'rgba(255,255,255,0.5)' }}>Lluvia</div>
-            </div>
-            
-            {/* Day 4 */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-              <div style={{ fontSize: '9px', color: '#fff', fontWeight: 600 }}>Vie 1</div>
-              <Cloud size={16} color="rgba(255,255,255,0.8)" />
-              <div style={{ fontSize: '9px', color: '#fff', fontWeight: 700 }}>15°<span style={{color: 'rgba(255,255,255,0.5)'}}>/7°C</span></div>
-              <div style={{ fontSize: '8px', color: 'rgba(255,255,255,0.5)' }}>Cubierto</div>
-            </div>
-            
-            {/* Day 5 */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-              <div style={{ fontSize: '9px', color: '#fff', fontWeight: 600 }}>Sáb 2</div>
-              <Sun size={16} color="#FBBF24" />
-              <div style={{ fontSize: '9px', color: '#fff', fontWeight: 700 }}>19°<span style={{color: 'rgba(255,255,255,0.5)'}}>/10°C</span></div>
-              <div style={{ fontSize: '8px', color: 'rgba(255,255,255,0.5)' }}>Despejado</div>
-            </div>
-          </div>
-
-          {/* AI Forecast Text Blocks */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '6px', padding: '8px 10px', fontSize: '9px', color: 'rgba(56, 189, 248, 0.8)', fontWeight: 600, letterSpacing: '0.02em', lineHeight: 1.4 }}>
-              ESTAMOS LIBRES DE LLUVIA HASTA LAS 16:30 APROX. (PROBABILIDAD: 10%)
-            </div>
-            <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '6px', padding: '8px 10px', fontSize: '9px', color: 'rgba(56, 189, 248, 0.8)', fontWeight: 600, letterSpacing: '0.02em', lineHeight: 1.4 }}>
-              SE AVECINA LLUVIA A LAS 18:00 APROX. (PROBABILIDAD: 80%)
-            </div>
-          </div>
-
-        </div>
-      </div>
+      <WeatherWidget />
 
       {/* ZONA 4: Multi-Ring Progress */}
       <div style={{ ...columnStyle, flex: '1.2', alignItems: 'center', justifyContent: 'center' }}>
