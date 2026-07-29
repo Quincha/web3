@@ -3,10 +3,19 @@ import { Card } from '../../ui/Card';
 import { ArrowUpRight, ArrowDownRight, RefreshCw, Search, Filter } from 'lucide-react';
 import { useFinance } from '../../../context/FinanceContext';
 import type { TransactionType } from '../../../types/finance';
+import { TransactionSidebar } from './TransactionSidebar';
 
 export const CashFlowView: React.FC = () => {
   const { movimientos } = useFinance();
   const [activeType, setActiveType] = useState<TransactionType | 'todos'>('todos');
+  
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [sidebarType, setSidebarType] = useState<TransactionType>('ingreso');
+
+  const openSidebar = (type: TransactionType) => {
+    setSidebarType(type);
+    setIsSidebarOpen(true);
+  };
 
   const filteredMovimientos = activeType === 'todos' 
     ? movimientos 
@@ -52,15 +61,23 @@ export const CashFlowView: React.FC = () => {
         </div>
 
         <div style={{ display: 'flex', gap: '12px' }}>
-          <button className="primary-btn" style={{ background: 'var(--accent-green)', color: 'var(--bg-primary)' }}>
+          <button 
+            className="primary-btn" 
+            style={{ background: 'var(--accent-green)', color: 'var(--bg-primary)' }}
+            onClick={() => openSidebar('ingreso')}
+          >
             <ArrowUpRight size={16} />
             Ingreso
           </button>
-          <button className="primary-btn" style={{ background: 'var(--accent-red)', color: '#fff' }}>
+          <button 
+            className="primary-btn" 
+            style={{ background: 'var(--accent-red)', color: '#fff' }}
+            onClick={() => openSidebar('gasto')}
+          >
             <ArrowDownRight size={16} />
             Gasto
           </button>
-          <button className="secondary-btn">
+          <button className="secondary-btn" onClick={() => openSidebar('transferencia')}>
             <RefreshCw size={16} />
             Transferir
           </button>
@@ -169,21 +186,28 @@ export const CashFlowView: React.FC = () => {
                     {mov.status}
                   </span>
                 </div>
-
-                <span style={{ 
-                  textAlign: 'right', 
-                  fontWeight: 600, 
-                  color: mov.type === 'ingreso' ? 'var(--accent-green)' : 
-                         mov.type === 'gasto' ? 'var(--accent-red)' : 'var(--text-primary)'
-                }}>
-                  {mov.type === 'ingreso' ? '+' : mov.type === 'gasto' ? '-' : ''}
-                  {formatCurrency(mov.amount)}
-                </span>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ 
+                    color: mov.type === 'ingreso' ? 'var(--accent-green)' : (mov.type === 'gasto' ? 'var(--accent-red)' : 'var(--text-primary)'), 
+                    fontWeight: 600, 
+                    fontSize: '16px' 
+                  }}>
+                    {mov.type === 'ingreso' ? '+' : (mov.type === 'gasto' ? '-' : '')}
+                    {formatCurrency(mov.amount)}
+                  </div>
+                  <span style={{ color: 'var(--text-tertiary)', fontSize: '12px' }}>{mov.status}</span>
+                </div>
               </div>
             ))}
           </div>
         )}
       </Card>
+      
+      <TransactionSidebar 
+        isOpen={isSidebarOpen} 
+        onClose={() => setIsSidebarOpen(false)} 
+        defaultType={sidebarType} 
+      />
     </div>
   );
 };

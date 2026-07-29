@@ -40,17 +40,74 @@ const mockInsights: FinanceInsight[] = [
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
 
+const CACHE_KEY = 'quincha_finance_movimientos';
+
+function loadMovimientosFromCache(): Movimiento[] {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveMovimientosToCache(movs: Movimiento[]) {
+  localStorage.setItem(CACHE_KEY, JSON.stringify(movs));
+}
+
+const computeStats = (movs: Movimiento[], deudas: Deuda[]): FinanceDashboardStats => {
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+
+  let income = 0;
+  let expenses = 0;
+  
+  movs.forEach(m => {
+    const d = new Date(m.date);
+    if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+      if (m.type === 'ingreso') income += m.amount;
+      if (m.type === 'gasto') expenses += m.amount;
+    }
+  });
+
+  const totalReceivables = deudas.filter(d => d.type === 'Por Cobrar' && d.status !== 'Pagada').reduce((sum, d) => sum + (d.amount - d.paidAmount), 0);
+  const receivablesCount = deudas.filter(d => d.type === 'Por Cobrar' && d.status !== 'Pagada').length;
+
+  const totalPayables = deudas.filter(d => d.type === 'Por Pagar' && d.status !== 'Pagada').reduce((sum, d) => sum + (d.amount - d.paidAmount), 0);
+  const payablesCount = deudas.filter(d => d.type === 'Por Pagar' && d.status !== 'Pagada').length;
+
+  // Static mock base + computed for demo purposes
+  const baseBalance = 4820000; 
+
+  return {
+    ...mockStats, // carry over static variations/nextDueCard
+    availableBalance: baseBalance + income - expenses,
+    monthlyIncome: income,
+    monthlyExpenses: expenses,
+    monthlyResult: income - expenses,
+    totalReceivables: totalReceivables || mockStats.totalReceivables,
+    receivablesCount: receivablesCount || mockStats.receivablesCount,
+    totalPayables: totalPayables || mockStats.totalPayables,
+    payablesCount: payablesCount || mockStats.payablesCount,
+  };
+};
+
 export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [stats] = useState<FinanceDashboardStats>(mockStats);
   const [cuentas] = useState<Cuenta[]>([]);
-  const [movimientos, setMovimientos] = useState<Movimiento[]>([]);
+  const [movimientos, setMovimientos] = useState<Movimiento[]>(() => loadMovimientosFromCache());
   const [deudas] = useState<Deuda[]>([]);
   const [insights, setInsights] = useState<FinanceInsight[]>(mockInsights);
+  
+  const stats = computeStats(movimientos, deudas);
 
   const addMovimiento = (mov: Omit<Movimiento, 'id'>) => {
-    const newMov = { ...mov, id: Date.now().toString() };
-    setMovimientos(prev => [newMov, ...prev]);
-    // In a real app, we would update stats and cuentas balances here
+    const newMov: Movimiento = { ...mov, id: Date.now().toString() } as Movimiento;
+    setMovimientos(prev => {
+      const updated = [newMov, ...prev];
+      saveMovimientosToCache(updated);
+      return updated;
+    });
   };
 
   const markInsightAsRead = (id: string) => {
