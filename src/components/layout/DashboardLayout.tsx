@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Sidebar } from './Sidebar';
-import { Header } from './Header';
 import { DashboardSkeleton } from '../ui/SkeletonLoader';
 import { DashboardHero } from '../dashboard/DashboardHero';
 import { ProactiveAIAssistant } from '../dashboard/ProactiveAIAssistant';
@@ -192,7 +191,6 @@ export const DashboardLayout: React.FC = () => {
 
       {/* Main Container Frame */}
       <div className="dashboard-main-frame" style={{ position: 'relative' }}>
-        <Header />
         <main className="dashboard-body-scroller">
           {activeView === 'dashboard' ? renderDashboardHome() : 
            activeView === 'pomodoro' ? <PomodoroModule /> :

@@ -1,27 +1,37 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useUser } from '../../context/UserContext';
-import { CheckCircle2, Calendar, DollarSign, CloudRain, Phone, Thermometer, ChevronRight, Sun, CloudSun, Cloud } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
+import type { Theme } from '../../context/ThemeContext';
+import { SyncStatusBar } from '../layout/SyncStatusBar';
+import { CheckCircle2, Calendar, DollarSign, CloudRain, Phone, Thermometer, ChevronRight, Sun, CloudSun, Cloud, Search, Bell, Mail, Sparkles, Moon } from 'lucide-react';
 import { tokens } from '../../theme/tokens';
 
 export const DashboardHero: React.FC = () => {
   const { userConfig } = useUser();
   const firstName = userConfig.userName.split(' ')[0];
 
+  const { theme, setTheme } = useTheme();
+  const [showThemeMenu, setShowThemeMenu] = useState(false);
+
+  const themeOptions = [
+    { id: 'dark' as Theme, label: 'Modo Oscuro', icon: <Moon size={16} /> },
+    { id: 'light' as Theme, label: 'Modo Claro', icon: <Sun size={16} /> },
+    { id: 'mixed' as Theme, label: 'Modo Mixto', icon: <Sparkles size={16} /> }
+  ];
+
   const heroStyle: React.CSSProperties = {
     position: 'relative',
     overflow: 'hidden',
     borderRadius: '24px',
-    padding: '36px 40px',
+    padding: '24px 40px 36px 40px', // Adjusted top padding for header
     background: 'transparent',
     border: `1px solid rgba(255,255,255,0.05)`,
     boxShadow: tokens.shadows.elevation2,
     display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'stretch',
+    flexDirection: 'column', // Changed to column to stack header and content
     marginBottom: 0,
-    minHeight: '260px',
-    gap: '24px' // Adjusted for 4 columns
+    minHeight: '320px', // Slightly taller to accommodate header
+    gap: '32px' // Gap between header and content
   };
 
   const backgroundGraphicsStyle: React.CSSProperties = {
@@ -71,8 +81,64 @@ export const DashboardHero: React.FC = () => {
         <div style={overlayStyle}></div>
       </div>
 
-      {/* ZONA 1: Welcome & AI Focus */}
-      <div style={{ ...columnStyle, flex: '1.2', minWidth: '320px' }}>
+      {/* Embedded Top Navigation Bar */}
+      <div style={{ position: 'relative', zIndex: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+        {/* Search */}
+        <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '8px 16px', width: '300px', backdropFilter: 'blur(10px)' }}>
+          <Search size={16} color="rgba(255,255,255,0.5)" />
+          <input 
+            type="text" 
+            placeholder="Buscar en Quincha Systems..." 
+            style={{ background: 'transparent', border: 'none', color: '#fff', outline: 'none', marginLeft: '12px', width: '100%', fontSize: '14px' }}
+          />
+        </div>
+
+        {/* Actions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <SyncStatusBar />
+          
+          <div style={{ position: 'relative' }}>
+            <button 
+              onClick={() => setShowThemeMenu(!showThemeMenu)}
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', cursor: 'pointer', backdropFilter: 'blur(10px)' }}
+            >
+              {theme === 'dark' && <Moon size={16} />}
+              {theme === 'light' && <Sun size={16} />}
+              {theme === 'mixed' && <Sparkles size={16} />}
+            </button>
+            
+            {showThemeMenu && (
+              <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '8px', background: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '150px', backdropFilter: 'blur(20px)' }}>
+                {themeOptions.map(opt => (
+                  <button
+                    key={opt.id}
+                    onClick={() => { setTheme(opt.id); setShowThemeMenu(false); }}
+                    style={{ background: theme === opt.id ? 'rgba(255,255,255,0.1)' : 'transparent', border: 'none', borderRadius: '8px', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '12px', color: '#fff', cursor: 'pointer', fontSize: '13px', textAlign: 'left' }}
+                  >
+                    {opt.icon}
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <button style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', cursor: 'pointer', position: 'relative', backdropFilter: 'blur(10px)' }}>
+            <Mail size={16} />
+            <span style={{ position: 'absolute', top: '-4px', right: '-4px', background: tokens.colors.accent.danger, color: '#fff', fontSize: '10px', fontWeight: 'bold', width: '16px', height: '16px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>2</span>
+          </button>
+
+          <button style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', cursor: 'pointer', position: 'relative', backdropFilter: 'blur(10px)' }}>
+            <Bell size={16} />
+            <span style={{ position: 'absolute', top: '-4px', right: '-4px', background: tokens.colors.accent.warning, color: '#111', fontSize: '10px', fontWeight: 'bold', width: '16px', height: '16px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>3</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Main Hero Content (Columns Row) */}
+      <div style={{ position: 'relative', zIndex: 3, display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'stretch', flex: 1, gap: '24px' }}>
+        {/* ZONA 1: Welcome & AI Focus */}
+        <div style={{ ...columnStyle, flex: '1.2', minWidth: '320px' }}>
         <h1 className="outfit" style={{
           fontSize: '40px',
           fontWeight: 700,
@@ -323,6 +389,7 @@ export const DashboardHero: React.FC = () => {
         </div>
       </div>
 
+      </div>
     </div>
   );
 };
