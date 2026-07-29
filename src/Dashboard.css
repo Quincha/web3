@@ -89,39 +89,50 @@
   flex: 1;
   height: 100%;
   overflow: hidden;
+  padding-left: 96px; /* Space for the floating sidebar */
 }
 
 .dashboard-body-scroller {
   flex: 1;
   overflow-y: auto;
-  padding: 16px 40px;
+  padding: 16px 24px;
   background-color: var(--bg-primary);
 }
 
-/* Sidebar Styles */
+/* Sidebar Styles - Floating VisionOS Style */
 .app-sidebar {
-  width: 260px;
-  height: 100%;
-  background-color: var(--sidebar-bg);
-  border-right: 1px solid var(--sidebar-border);
+  width: 72px; /* Collapsed by default */
+  height: calc(100% - 48px);
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
   display: flex;
   flex-direction: column;
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 100;
-  position: relative;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 1000;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
 }
 
-.app-sidebar.collapsed {
-  width: 72px;
+.app-sidebar:hover {
+  width: 260px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .sidebar-brand-container {
   height: 72px;
-  padding: 0 24px;
+  padding: 0 18px;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
-  border-bottom: 1px solid var(--sidebar-border);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  min-width: 260px;
 }
 
 .brand-logo-wrapper {
@@ -149,13 +160,20 @@
   flex-direction: column;
   justify-content: center;
   margin-top: 2px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  white-space: nowrap;
+}
+
+.app-sidebar:hover .brand-text-container {
+  opacity: 1;
 }
 
 .brand-name {
   font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: 0.15em;
-  color: var(--text-primary);
+  color: #fff;
 }
 
 .brand-sub {
@@ -187,6 +205,12 @@
   flex-direction: column;
   gap: 4px;
   overflow-y: auto;
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.sidebar-nav::-webkit-scrollbar {
+  display: none;
 }
 
 .nav-item {
@@ -197,8 +221,8 @@
   padding: 0 12px;
   background: transparent;
   border: none;
-  border-radius: 6px;
-  color: var(--sidebar-text);
+  border-radius: 12px;
+  color: rgba(255,255,255,0.6);
   cursor: pointer;
   transition: all 0.2s ease;
   width: 100%;
@@ -206,47 +230,70 @@
 }
 
 .nav-item:hover {
-  background-color: var(--sidebar-active-bg);
-  color: var(--sidebar-active-text);
+  background-color: rgba(255,255,255,0.05);
+  color: #fff;
 }
 
 .nav-item.active {
-  background-color: var(--sidebar-active-bg);
-  color: var(--sidebar-active-text);
-  font-weight: 500;
-  border-left: 2px solid var(--accent-green);
-  border-radius: 0 6px 6px 0;
+  background-color: rgba(56, 189, 248, 0.1);
+  color: #38bdf8;
+  font-weight: 600;
+  border-left: none;
+  box-shadow: inset 0 0 10px rgba(56, 189, 248, 0.05);
 }
 
 .nav-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 20px;
+  min-width: 24px;
+  width: 24px;
 }
 
 .nav-label {
   font-size: 0.9rem;
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+  transition: opacity 0.3s ease;
+  white-space: nowrap;
+}
+
+.app-sidebar:hover .nav-label {
+  opacity: 1;
+  width: auto;
 }
 
 .sidebar-user-section {
-  padding: 16px;
-  border-top: 1px solid var(--sidebar-border);
+  padding: 16px 12px;
+  border-top: 1px solid rgba(255,255,255,0.05);
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.app-sidebar:hover .sidebar-user-section {
+  align-items: flex-start;
 }
 
 .user-profile-card {
   display: flex;
   align-items: center;
-  gap: 12px;
   padding: 8px;
-  border-radius: 8px;
+  border-radius: 12px;
   cursor: pointer;
   transition: background-color 0.2s ease;
+  width: 100%;
+  justify-content: center;
+}
+
+.app-sidebar:hover .user-profile-card {
+  justify-content: flex-start;
 }
 
 .user-profile-card:hover {
-  background-color: var(--bg-input-focus);
+  background-color: rgba(255,255,255,0.05);
 }
 
 .user-avatar {
@@ -254,7 +301,7 @@
   height: 32px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1px solid var(--sidebar-border);
+  border: 1px solid rgba(255,255,255,0.1);
 }
 
 .user-info-text {
@@ -262,12 +309,22 @@
   flex-direction: column;
   flex: 1;
   overflow: hidden;
+  opacity: 0;
+  width: 0;
+  transition: all 0.3s ease;
+  margin-left: 0;
+}
+
+.app-sidebar:hover .user-info-text {
+  opacity: 1;
+  width: auto;
+  margin-left: 12px;
 }
 
 .user-name {
   font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--text-primary);
+  font-weight: 600;
+  color: #fff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -275,7 +332,7 @@
 
 .user-role {
   font-size: 0.7rem;
-  color: var(--text-subtle);
+  color: rgba(255,255,255,0.5);
 }
 
 .dropdown-indicator-icon {
@@ -285,8 +342,15 @@
 .system-status-indicator {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   margin-top: 16px;
+  padding: 0;
+  width: 100%;
+}
+
+.app-sidebar:hover .system-status-indicator {
+  justify-content: flex-start;
   padding: 0 8px;
 }
 

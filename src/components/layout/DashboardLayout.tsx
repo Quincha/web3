@@ -42,10 +42,10 @@ export const DashboardLayout: React.FC = () => {
 
   useEffect(() => {
     if (!isLoading && activeView === 'dashboard') {
-      // Smooth GSAP Stagger animation for widgets
-      gsap.fromTo('.dashboard-widget-wrapper-card', 
-        { opacity: 0, y: 15 },
-        { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, ease: 'power2.out', delay: 0.1 }
+      // Smooth GSAP Stagger animation for all main elements (Hero + Widgets + Footer)
+      gsap.fromTo('.gsap-stagger-item', 
+        { opacity: 0, y: 30, scale: 0.98 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.6, stagger: 0.08, ease: 'back.out(1.2)' }
       );
     }
   }, [isLoading, activeView]);
@@ -87,69 +87,81 @@ export const DashboardLayout: React.FC = () => {
       .sort((a, b) => a.order - b.order);
 
     return (
-      <div className="dashboard-content-area">
-        {/* Dashboard Hero (now includes KPIs) */}
-        <DashboardHero />
-
-        {/* Floating Customization Panel */}
-        {showConfigurator && (
-          <div className="widget-configurator-panel">
-            <span className="panel-title">Ajustes de Widgets</span>
-            {hiddenWidgets.length === 0 ? (
-              <span className="panel-empty-text">Todos los widgets están visibles.</span>
-            ) : (
-              <div className="hidden-widgets-list">
-                {hiddenWidgets.map(w => {
-                  const meta = WidgetRegistry.get(w.id);
-                  return (
-                    <div key={w.id} className="hidden-widget-row">
-                      <span>{meta?.name || w.id}</span>
-                      <button 
-                        className="show-widget-btn"
-                        onClick={() => handleShowWidget(w.id)}
-                      >
-                        <Plus size={14} />
-                        <span>Mostrar</span>
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Asymmetrical Bento Box Grid */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr 1fr',
-          gap: '24px',
-          paddingBottom: '0'
-        }}>
-          {/* Column 1: AI Assistant */}
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <ProactiveAIAssistant />
+      <div className="dashboard-content-area" style={{ display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginBottom: '24px' }}>
+          {/* Hero Section */}
+          <div className="gsap-stagger-item">
+            <DashboardHero />
           </div>
 
-          {/* Column 2: Productivity (Pomodoro & Tasks + Habits) */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <PomodoroTasksWidget />
-            <div style={{ flex: 1 }}>
-              {React.createElement(WidgetRegistry.get('habitos')?.component || 'div')}
+          {/* Floating Customization Panel */}
+          {showConfigurator && (
+            <div className="widget-configurator-panel">
+              <span className="panel-title">Ajustes de Widgets</span>
+              {hiddenWidgets.length === 0 ? (
+                <span className="panel-empty-text">Todos los widgets están visibles.</span>
+              ) : (
+                <div className="hidden-widgets-list">
+                  {hiddenWidgets.map(w => {
+                    const meta = WidgetRegistry.get(w.id);
+                    return (
+                      <div key={w.id} className="hidden-widget-row">
+                        <span>{meta?.name || w.id}</span>
+                        <button 
+                          className="show-widget-btn"
+                          onClick={() => handleShowWidget(w.id)}
+                        >
+                          <Plus size={14} />
+                          <span>Mostrar</span>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          </div>
+          )}
 
-          {/* Column 3: Time & Log (Calendar + Bujo) */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            {React.createElement(WidgetRegistry.get('calendario_widget')?.component || 'div')}
-            <div style={{ flex: 1 }}>
-              {React.createElement(WidgetRegistry.get('bujo')?.component || 'div')}
+          {/* Asymmetrical Bento Box Grid */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr 1fr',
+            gap: '24px'
+          }}>
+            {/* Column 1: AI Assistant */}
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }} className="gsap-stagger-item">
+              <ProactiveAIAssistant />
+            </div>
+
+            {/* Column 2: Productivity (Pomodoro & Tasks + Habits) */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', height: '100%' }}>
+              <div className="gsap-stagger-item" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                <PomodoroTasksWidget />
+              </div>
+              {userConfig.widgets.find(w => w.id === 'habitos')?.visible && (
+                <div style={{ flex: 1 }} className="gsap-stagger-item">
+                  {React.createElement(WidgetRegistry.get('habitos')?.component || 'div')}
+                </div>
+              )}
+            </div>
+
+            {/* Column 3: Time & Log (Calendar + Bujo) */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', height: '100%' }}>
+              {userConfig.widgets.find(w => w.id === 'calendario_widget')?.visible && (
+                <div className="gsap-stagger-item">
+                  {React.createElement(WidgetRegistry.get('calendario_widget')?.component || 'div')}
+                </div>
+              )}
+              <div className="gsap-stagger-item" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                {React.createElement(WidgetRegistry.get('bujo')?.component || 'div')}
+              </div>
             </div>
           </div>
         </div>
-
-        {/* Static Finance Banner Footer */}
-        <div style={{ marginTop: '0px' }}>
+        
+        {/* Full-width sticky-style (but static) footer */}
+        <div style={{ width: '100%', margin: '0 0 8px 0', flexShrink: 0 }} className="gsap-stagger-item">
           <FinanceSummaryBanner />
         </div>
       </div>

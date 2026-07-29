@@ -30,22 +30,36 @@ export const PomodoroTasksWidget: React.FC = () => {
   };
 
   return (
-    <div style={{
-      background: 'linear-gradient(180deg, rgba(16, 42, 45, 0.4) 0%, rgba(6, 8, 11, 0.9) 100%)',
+    <div className="premium-card-hover" style={{
+      background: 'linear-gradient(145deg, rgba(16, 42, 45, 0.4) 0%, rgba(6, 8, 11, 0.9) 100%)',
       borderRadius: '24px',
-      padding: '24px',
-      border: `1px solid ${tokens.colors.accent.green}30`,
+      padding: '28px',
+      border: `1px solid ${tokens.colors.accent.green}40`,
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
       position: 'relative',
       overflow: 'hidden'
     }}>
+      {/* Decorative Glow */}
+      <div style={{
+        position: 'absolute',
+        top: '-50px',
+        right: '-50px',
+        width: '150px',
+        height: '150px',
+        background: `radial-gradient(circle, ${tokens.colors.accent.green}30 0%, transparent 70%)`,
+        filter: 'blur(30px)',
+        zIndex: 0
+      }}></div>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h3 style={{ fontSize: '13px', fontWeight: 700, color: '#fff', letterSpacing: '0.1em', margin: 0 }}>
-          POMODORO & DAILY TASKS
-        </h3>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', zIndex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Play size={20} color={tokens.colors.accent.green} />
+          <h3 style={{ fontSize: '13px', fontWeight: 700, color: tokens.colors.accent.green, letterSpacing: '0.1em', margin: 0 }}>
+            POMODORO & DAILY TASKS
+          </h3>
+        </div>
         <button style={{ background: 'transparent', border: 'none', color: tokens.colors.text.muted, cursor: 'pointer' }}>
           <Settings size={16} />
         </button>
@@ -110,7 +124,7 @@ export const PomodoroTasksWidget: React.FC = () => {
         </span>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: 'auto' }}>
         {recentPending.length === 0 ? (
           <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', textAlign: 'center', padding: '12px' }}>
             No hay tareas pendientes.

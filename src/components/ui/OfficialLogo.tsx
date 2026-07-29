@@ -4,21 +4,22 @@ interface OfficialLogoProps {
   size?: number | string;
   className?: string;
   showGlow?: boolean;
+  variant?: 'default' | 'white';
 }
 
 export const OfficialLogo: React.FC<OfficialLogoProps> = ({ 
   size = 40, 
   className = '', 
-  showGlow = false 
+  showGlow = false,
+  variant = 'default'
 }) => {
-  // We use unique IDs or just standard ones. 
-  // Since it might be rendered multiple times or in different places, let's make sure gradient IDs are stable or unique.
-  // Using standard IDs is fine if they are identical, but appending a random suffix prevents conflicts when multiple logos exist.
   const suffix = React.useId().replace(/:/g, '');
   const ringGradId = `ringGrad-${suffix}`;
   const tailGradId = `tailGrad-${suffix}`;
   const rightGapMaskId = `rightGapMask-${suffix}`;
   const subtleGlowId = `subtleGlow-${suffix}`;
+
+  const isWhite = variant === 'white';
 
   return (
     <svg 
@@ -31,13 +32,13 @@ export const OfficialLogo: React.FC<OfficialLogoProps> = ({
     >
       <defs>
         <linearGradient id={ringGradId} x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#FFFFFF" />
-          <stop offset="50%" stopColor="#3EFCDB" />
-          <stop offset="100%" stopColor="#16F0B5" />
+          <stop offset="0%" stopColor={isWhite ? "#FFFFFF" : "#FFFFFF"} />
+          <stop offset="50%" stopColor={isWhite ? "#E2E8F0" : "#3EFCDB"} />
+          <stop offset="100%" stopColor={isWhite ? "#94A3B8" : "#16F0B5"} />
         </linearGradient>
         <linearGradient id={tailGradId} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#3EFCDB" />
-          <stop offset="100%" stopColor="#16F0B5" />
+          <stop offset="0%" stopColor={isWhite ? "#E2E8F0" : "#3EFCDB"} />
+          <stop offset="100%" stopColor={isWhite ? "#94A3B8" : "#16F0B5"} />
         </linearGradient>
 
         <mask id={rightGapMaskId}>
@@ -53,29 +54,29 @@ export const OfficialLogo: React.FC<OfficialLogoProps> = ({
 
       {/* GLOW LAYER */}
       {showGlow && (
-        <g filter={`url(#${subtleGlowId})`} style={{ opacity: 0.75 }}>
+        <g filter={`url(#${subtleGlowId})`} style={{ opacity: isWhite ? 0.3 : 0.75 }}>
           <path 
-            d="M 512,172 A 300,340 0 1,1 511.9,172 Z M 512,212 A 200,300 0 1,0 512.1,212 Z" 
+            d="M 512,140 A 340,360 0 1,1 511.9,140 Z M 512,250 A 180,240 0 1,0 512.1,250 Z" 
             fill="#FFFFFF" 
             mask={`url(#${rightGapMaskId})`} 
           />
           <polygon 
-            points="450,580 550,580 934,880 834,880" 
+            points="420,540 580,540 984,880 824,880" 
             fill="#FFFFFF" 
           />
         </g>
       )}
 
-      {/* ARO PRINCIPAL */}
+      {/* ARO PRINCIPAL (Thicker by reducing inner hole size and expanding outer) */}
       <path 
-        d="M 512,172 A 300,340 0 1,1 511.9,172 Z M 512,212 A 200,300 0 1,0 512.1,212 Z" 
+        d="M 512,140 A 340,360 0 1,1 511.9,140 Z M 512,250 A 180,240 0 1,0 512.1,250 Z" 
         fill={`url(#${ringGradId})`}
         mask={`url(#${rightGapMaskId})`} 
       />
 
-      {/* COLA */}
+      {/* COLA (Thicker to match ring) */}
       <polygon 
-        points="450,580 550,580 934,880 834,880" 
+        points="420,540 580,540 984,880 824,880" 
         fill={`url(#${tailGradId})`}
       />
     </svg>

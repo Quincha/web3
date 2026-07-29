@@ -12,25 +12,40 @@ export const BujoWidget: React.FC = () => {
 
   return (
     <div className="premium-card-hover" style={{
-      background: 'linear-gradient(135deg, #1C1305 0%, #0F0A02 100%)',
+      background: 'linear-gradient(145deg, rgba(16, 42, 45, 0.4) 0%, rgba(6, 8, 11, 0.9) 100%)',
       borderRadius: '24px',
-      padding: '24px',
-      border: `1px solid rgba(251, 191, 36, 0.15)`,
+      padding: '28px',
+      border: `1px solid ${tokens.colors.accent.green}40`,
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
-      position: 'relative'
+      position: 'relative',
+      overflow: 'hidden'
     }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h3 style={{ fontSize: '13px', fontWeight: 700, color: '#fff', letterSpacing: '0.1em', margin: 0 }}>
-          Daily Log (Bujo)
-        </h3>
+      {/* Decorative Glow */}
+      <div style={{
+        position: 'absolute',
+        top: '-50px',
+        right: '-50px',
+        width: '150px',
+        height: '150px',
+        background: `radial-gradient(circle, ${tokens.colors.accent.green}30 0%, transparent 70%)`,
+        filter: 'blur(30px)',
+        zIndex: 0
+      }}></div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', zIndex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Clock size={20} color={tokens.colors.accent.green} />
+          <h3 style={{ fontSize: '13px', fontWeight: 700, color: tokens.colors.accent.green, letterSpacing: '0.1em', margin: 0 }}>
+            DAILY LOG (BUJO)
+          </h3>
+        </div>
         <button style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}>
           <ExternalLink size={16} />
         </button>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, paddingLeft: '8px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, paddingLeft: '8px', zIndex: 1 }}>
         {logs.map((log, index) => (
           <div key={log.id} style={{ display: 'flex', gap: '16px', minHeight: '52px', position: 'relative' }}>
             {/* Timeline line */}
@@ -81,7 +96,7 @@ export const BujoWidget: React.FC = () => {
         ))}
       </div>
 
-      <div style={{ marginTop: '24px', paddingTop: '16px' }}>
+      <div style={{ marginTop: 'auto', paddingTop: '16px' }}>
         <a href="#" style={{ color: tokens.colors.accent.green, fontSize: '12px', textDecoration: 'none', fontWeight: 500 }}>
           Abrir Bullet Journal ▾
         </a>

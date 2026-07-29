@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
    LayoutDashboard, Briefcase, CheckSquare, Calendar, 
-   BarChart3, Mail, FileText, Users, Settings, ChevronDown, Activity, ChevronLeft, ChevronRight, Flame, BookOpen, Heart, Wallet
+   BarChart3, Mail, FileText, Users, Settings, Activity, Flame, BookOpen, Heart, Wallet
 } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
 import { PermissionService } from '../../services/PermissionService';
@@ -43,28 +43,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
     return PermissionService.getRoles().find(r => r.id === role)?.label || role;
   };
 
-  const toggleSidebar = () => {
-    updateConfig({ sidebarCollapsed: !userConfig.sidebarCollapsed });
-  };
-
   return (
-    <div className={`app-sidebar ${userConfig.sidebarCollapsed ? 'collapsed' : ''}`}>
+    <div className="app-sidebar gsap-stagger-item">
       {/* Brand Header */}
       <div className="sidebar-brand-container">
         <div className="brand-logo-wrapper">
           <div className="brand-logo-q" style={{ background: 'transparent', border: 'none', boxShadow: 'none', display: 'flex', alignItems: 'center' }}>
-            <OfficialLogo size={36} showGlow={true} />
+            <OfficialLogo size={36} showGlow={true} variant="white" />
           </div>
-          {!userConfig.sidebarCollapsed && (
-            <div className="brand-text-container">
-              <span className="brand-name">QUINCHA</span>
-              <span className="brand-sub">SYSTEMS</span>
-            </div>
-          )}
+          <div className="brand-text-container">
+            <span className="brand-name">QUINCHA</span>
+            <span className="brand-sub" style={{ fontSize: '0.6rem', letterSpacing: '0.3em', color: '#38bdf8' }}>SYSTEMS</span>
+          </div>
         </div>
-        <button className="sidebar-toggle-btn" onClick={toggleSidebar}>
-          {userConfig.sidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-        </button>
       </div>
 
       {/* Navigation Menu */}
@@ -78,15 +69,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
               key={item.id}
               className={`nav-item ${activeView === item.id ? 'active' : ''}`}
               onClick={() => onViewChange(item.id)}
-              title={userConfig.sidebarCollapsed ? item.label : ''}
               style={{ justifyContent: 'space-between' }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <div className="nav-icon">{item.icon}</div>
-                {!userConfig.sidebarCollapsed && <span className="nav-label">{item.label}</span>}
+                <span className="nav-label">{item.label}</span>
               </div>
-              {!userConfig.sidebarCollapsed && (item as any).badge && (
-                <div style={{ 
+              {(item as any).badge && (
+                <div className="nav-label" style={{ 
                   background: 'var(--accent-green)', 
                   color: 'var(--bg-primary)', 
                   fontSize: '10px', 
@@ -106,52 +96,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
         })}
       </nav>
 
-      {/* User Profile / Role Switcher */}
+      {/* User Info & Settings Footer */}
       <div className="sidebar-user-section">
-        <div 
-          className="user-profile-card"
-          onClick={() => setShowRoleMenu(!showRoleMenu)}
-        >
+        <div className="user-profile-card" onClick={() => setShowRoleMenu(!showRoleMenu)}>
           <img 
-            src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&fit=crop" 
-            alt="User avatar" 
+            src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=32&h=32&q=80" 
+            alt="Daniel"
             className="user-avatar"
           />
-          {!userConfig.sidebarCollapsed && (
-            <div className="user-info-text">
-              <span className="user-name" style={{ color: '#FFFFFF' }}>{userConfig.userName}</span>
-              <span className="user-role">{getRoleLabel(userConfig.userRole)}</span>
-            </div>
-          )}
-          {!userConfig.sidebarCollapsed && <ChevronDown size={14} className="dropdown-indicator-icon" />}
+          <div className="user-info-text">
+            <span className="user-name">Daniel</span>
+            <span className="user-role">{getRoleLabel(userConfig.userRole)}</span>
+          </div>
         </div>
-
-        {/* Floating Switcher Options for Demo */}
-        {showRoleMenu && (
-          <div className="role-dropdown-menu">
-            <span className="menu-title">Cambiar Rol (Demo)</span>
-            {PermissionService.getRoles().map(role => (
-              <button
-                key={role.id}
-                className={`role-option-btn ${userConfig.userRole === role.id ? 'selected' : ''}`}
-                onClick={() => handleRoleChange(role.id)}
-              >
-                {role.label}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Status Line */}
-        {!userConfig.sidebarCollapsed && (
-          <div className="system-status-indicator">
-            <div className="status-indicator-dot" />
-            <span className="status-label">Sistema en línea</span>
-            <div className="status-wave-line">
-              <Activity size={14} />
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
