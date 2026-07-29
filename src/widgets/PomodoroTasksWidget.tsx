@@ -211,7 +211,7 @@ export const PomodoroTasksWidget: React.FC = () => {
                   if (!isTaskActive) e.currentTarget.style.background = 'transparent';
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
                   {taskToConfirm === task.id ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
                       <span style={{ fontSize: '13px', color: tokens.colors.text.primary, fontWeight: 500 }}>¿Marcar como completada?</span>
@@ -232,8 +232,8 @@ export const PomodoroTasksWidget: React.FC = () => {
                       >
                         <Circle size={16} color="rgba(255,255,255,0.2)" />
                       </button>
-                      <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ fontSize: '14px', color: isTaskActive ? tokens.colors.accent.green : 'rgba(255,255,255,0.85)', fontWeight: isTaskActive ? 600 : 400 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                        <span style={{ fontSize: '14px', color: isTaskActive ? tokens.colors.accent.green : 'rgba(255,255,255,0.85)', fontWeight: isTaskActive ? 600 : 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {task.title}
                         </span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -248,9 +248,9 @@ export const PomodoroTasksWidget: React.FC = () => {
                     </>
                   )}
                 </div>
-                {taskToConfirm !== task.id && task.priority === 'high' && <span style={{ fontSize: '12px', color: tokens.colors.accent.danger }}>• Alta</span>}
-                {taskToConfirm !== task.id && task.priority === 'medium' && <span style={{ fontSize: '12px', color: tokens.colors.accent.warning }}>• Media</span>}
-                {taskToConfirm !== task.id && task.priority === 'low' && <span style={{ fontSize: '12px', color: tokens.colors.accent.cyan }}>• Baja</span>}
+                {taskToConfirm !== task.id && task.priority === 'high' && <span style={{ fontSize: '12px', color: tokens.colors.accent.danger, whiteSpace: 'nowrap' }}>• Alta</span>}
+                {taskToConfirm !== task.id && task.priority === 'medium' && <span style={{ fontSize: '12px', color: tokens.colors.accent.warning, whiteSpace: 'nowrap' }}>• Media</span>}
+                {taskToConfirm !== task.id && task.priority === 'low' && <span style={{ fontSize: '12px', color: tokens.colors.accent.cyan, whiteSpace: 'nowrap' }}>• Baja</span>}
               </div>
             );
           })

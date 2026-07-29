@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
 export type BujoEntryType = 'task' | 'completed' | 'migrated' | 'note' | 'event';
 
@@ -6,7 +6,8 @@ export interface BujoEntry {
   id: string;
   type: BujoEntryType;
   content: string;
-  date: string; // ISO date string
+  date: string; // ISO date string (YYYY-MM-DD)
+  timestamp: string; // Full ISO string for time
   tags: string[];
   pomodoroRef?: string; // Optional reference to a Pomodoro session
 }
@@ -51,6 +52,7 @@ export const BujoProvider: React.FC<{ children: React.ReactNode }> = ({ children
       type,
       content,
       date: todayISO(),
+      timestamp: new Date().toISOString(),
       tags,
     };
     setEntries(prev => {
@@ -96,6 +98,17 @@ export const BujoProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const getTodayEntries = useCallback(() => {
     return getEntriesForDate(todayISO());
   }, [getEntriesForDate]);
+
+  useEffect(() => {
+    const handleBujoEvent = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail && customEvent.detail.content && customEvent.detail.type) {
+        addEntry(customEvent.detail.content, customEvent.detail.type);
+      }
+    };
+    window.addEventListener('bujo-add-entry', handleBujoEvent);
+    return () => window.removeEventListener('bujo-add-entry', handleBujoEvent);
+  }, [addEntry]);
 
   return (
     <BujoContext.Provider value={{

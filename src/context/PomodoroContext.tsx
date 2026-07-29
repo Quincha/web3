@@ -139,6 +139,16 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         detail: { taskId: activeTaskId }
       }));
     }
+
+    // Dispatch event for BuJo logging
+    if (sessionType === 'work') {
+      window.dispatchEvent(new CustomEvent('bujo-add-entry', {
+        detail: {
+          content: `⏱️ Sesión completada: ${task || 'General'} (${durationMin}m)`,
+          type: 'event'
+        }
+      }));
+    }
   };
 
   const startSession = useCallback((type: SessionType, projName: string, taskName: string, durationMinutes?: number, taskId?: string) => {
