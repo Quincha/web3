@@ -5,6 +5,7 @@ import {
   Briefcase, Tag, Calendar, Filter
 } from 'lucide-react';
 import { useTasks } from '../../context/TasksContext';
+import { useClients } from '../../context/ClientsContext';
 import type { Task, Priority, TaskStatus, Project } from '../../context/TasksContext';
 
 // ─────────────────────────────────────────────
@@ -34,11 +35,15 @@ function formatDueDate(iso: string | null): { label: string; urgent: boolean } {
 
 const AddTaskForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const { addTask, getActiveProjects } = useTasks();
+  const { getActiveClients } = useClients();
   const projects = getActiveProjects();
+  const clients = getActiveClients();
+  
   const [title, setTitle] = useState('');
   const [desc, setDesc] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
   const [projectId, setProjectId] = useState<string>(projects[0]?.id || '');
+  const [clientId, setClientId] = useState<string>('');
   const [dueDate, setDueDate] = useState('');
   const [pomodoros, setPomodoros] = useState(1);
 
@@ -49,6 +54,7 @@ const AddTaskForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       title: title.trim(),
       description: desc.trim(),
       project_id: projectId || null,
+      client_id: clientId || null,
       category: 'general',
       priority,
       status: 'pending',
@@ -92,6 +98,13 @@ const AddTaskForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             <select className="task-form-select" value={projectId} onChange={e => setProjectId(e.target.value)}>
               <option value="">Sin proyecto</option>
               {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </div>
+          <div className="task-form-field">
+            <label>Cliente</label>
+            <select className="task-form-select" value={clientId} onChange={e => setClientId(e.target.value)}>
+              <option value="">Sin cliente</option>
+              {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
           <div className="task-form-field">

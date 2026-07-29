@@ -20,6 +20,7 @@ export interface Project {
   name: string;
   color: string;
   description: string;
+  client_id?: string | null;
   archived: boolean;
   createdAt: string;
 }
@@ -29,6 +30,7 @@ export interface Task {
   title: string;
   description: string;
   project_id: string | null;
+  client_id?: string | null;
   category: string;
   priority: Priority;
   status: TaskStatus;
@@ -100,6 +102,7 @@ const INITIAL_PROJECTS: Project[] = [
     name: 'QuinchaDoro',
     color: '#10B981',
     description: 'Desarrollo del sistema operativo personal Quincha Systems',
+    client_id: null,
     archived: false,
     createdAt: isoNow()
   },
@@ -108,6 +111,7 @@ const INITIAL_PROJECTS: Project[] = [
     name: 'Administración',
     color: '#3B82F6',
     description: 'Gestión interna y operaciones',
+    client_id: null,
     archived: false,
     createdAt: isoNow()
   },
@@ -116,6 +120,7 @@ const INITIAL_PROJECTS: Project[] = [
     name: 'Personal',
     color: '#8B5CF6',
     description: 'Objetivos y tareas personales',
+    client_id: null,
     archived: false,
     createdAt: isoNow()
   }
@@ -127,6 +132,7 @@ const INITIAL_TASKS: Task[] = [
     title: 'Integrar módulo de Tareas con Pomodoro',
     description: 'Conectar el selector de tareas en PomodoroModule con el TasksContext real.',
     project_id: 'proj_quincha',
+    client_id: null,
     category: 'desarrollo',
     priority: 'urgent',
     status: 'in-progress',
@@ -149,6 +155,7 @@ const INITIAL_TASKS: Task[] = [
     title: 'Diseñar Portal de Clientes',
     description: 'Crear el front-office comercial dual con semáforo de disponibilidad y formulario de solicitudes.',
     project_id: 'proj_quincha',
+    client_id: null,
     category: 'diseño',
     priority: 'high',
     status: 'pending',
@@ -168,10 +175,11 @@ const INITIAL_TASKS: Task[] = [
   },
   {
     id: 'task_3',
-    title: 'Revisar métricas del dashboard de salud',
-    description: 'Validar que las dosis y las citas próximas se muestren correctamente en los widgets.',
+    title: 'Llamar al contador',
+    description: 'Revisar balance trimestral',
     project_id: 'proj_admin',
-    category: 'qa',
+    client_id: null,
+    category: 'comunicación',
     priority: 'medium',
     status: 'pending',
     dueDate: today(),
@@ -207,6 +215,7 @@ const INITIAL_TASKS: Task[] = [
     title: 'Preparar presentación de avance del cliente',
     description: 'Deck de 10 slides con capturas del sistema y hoja de ruta.',
     project_id: 'proj_admin',
+    client_id: null,
     category: 'comunicación',
     priority: 'high',
     status: 'pending',
@@ -225,10 +234,11 @@ const INITIAL_TASKS: Task[] = [
   },
   {
     id: 'task_6',
-    title: 'Hacer ejercicio 30 min',
-    description: '',
-    project_id: 'proj_personal',
-    category: 'salud',
+    title: 'Pagar impuestos mensuales',
+    description: 'Declaración F29',
+    project_id: 'proj_admin',
+    client_id: null,
+    category: 'finanzas',
     priority: 'medium',
     status: 'pending',
     dueDate: today(),

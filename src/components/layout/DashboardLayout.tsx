@@ -31,6 +31,7 @@ import { CalendarModule } from '../dashboard/CalendarModule';
 import { DocumentsModule } from '../dashboard/DocumentsModule';
 import { FinanceModule } from '../finance/FinanceModule';
 import { ProjectsModule } from '../dashboard/ProjectsModule';
+import { ClientsModule } from '../dashboard/ClientsModule';
 import { CommandPalette } from './CommandPalette';
 import gsap from 'gsap';
 
@@ -203,6 +204,7 @@ export const DashboardLayout: React.FC = () => {
            activeView === 'documentos' ? <DocumentsModule /> :
            activeView === 'finanzas' ? <FinanceModule /> :
            activeView === 'proyectos' ? <ProjectsModule /> :
+           activeView === 'clientes' ? <ClientsModule /> :
            renderModulePlaceholder(activeView)}
         </main>
       </div>

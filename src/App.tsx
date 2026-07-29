@@ -16,7 +16,7 @@ import { DashboardLayout } from './components/layout/DashboardLayout';
 import { ClientPortal } from './components/portal/ClientPortal';
 import { InsightsProvider } from './context/InsightsContext';
 import { FinanceProvider } from './context/FinanceContext';
-
+import { ClientsProvider } from './context/ClientsContext';
 
 function MainAppContent() {
   const { currentView } = useTransition();
@@ -71,7 +71,9 @@ function App() {
                   <HealthProvider>
                     <FinanceProvider>
                       <InsightsProvider>
-                        <MainAppContent />
+                        <ClientsProvider>
+                          <MainAppContent />
+                        </ClientsProvider>
                       </InsightsProvider>
                     </FinanceProvider>
                   </HealthProvider>

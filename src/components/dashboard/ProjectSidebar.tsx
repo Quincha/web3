@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { X, Save, Palette } from 'lucide-react';
+import { X, Save, Palette, Building2 } from 'lucide-react';
 import { useTasks } from '../../context/TasksContext';
+import { useClients } from '../../context/ClientsContext';
 import { tokens } from '../../theme/tokens';
 
 interface ProjectSidebarProps {
@@ -21,16 +21,20 @@ const PRESET_COLORS = [
 
 export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({ isOpen, onClose }) => {
   const { addProject } = useTasks();
+  const { getActiveClients } = useClients();
+  const clients = getActiveClients();
   
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [color, setColor] = useState(PRESET_COLORS[0]);
+  const [clientId, setClientId] = useState<string>('');
 
   React.useEffect(() => {
     if (isOpen) {
       setName('');
       setDescription('');
       setColor(PRESET_COLORS[0]);
+      setClientId('');
     }
   }, [isOpen]);
 
@@ -44,6 +48,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({ isOpen, onClose 
       name: name.trim(),
       description: description.trim(),
       color,
+      client_id: clientId || null,
       archived: false,
     });
 
@@ -142,6 +147,32 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({ isOpen, onClose 
                 resize: 'none'
               }} 
             />
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <label style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Building2 size={14} /> Cliente (Opcional)
+            </label>
+            <select 
+              value={clientId}
+              onChange={e => setClientId(e.target.value)}
+              style={{ 
+                width: '100%', 
+                background: 'rgba(0,0,0,0.2)', 
+                border: '1px solid rgba(255,255,255,0.1)', 
+                borderRadius: '12px',
+                padding: '12px 16px',
+                color: 'white',
+                fontSize: '14px',
+                outline: 'none',
+                boxSizing: 'border-box'
+              }} 
+            >
+              <option value="">Ninguno</option>
+              {clients.map(c => (
+                <option key={c.id} value={c.id}>{c.name} {c.company ? `(${c.company})` : ''}</option>
+              ))}
+            </select>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
