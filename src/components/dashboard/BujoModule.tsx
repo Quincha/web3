@@ -1,15 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useBujo } from '../../context/BujoContext';
 import type { BujoEntryType } from '../../context/BujoContext';
-import { Trash2, Circle, CheckCircle2, ArrowRight, Minus, Calendar, Tag, Plus } from 'lucide-react';
+import { Trash2, Circle, X, ArrowRight, ArrowLeft, Minus, Tag, Plus } from 'lucide-react';
 
 // Bullet Journal entry type symbols
 const BUJO_SYMBOLS: Record<BujoEntryType, { icon: React.ReactNode; label: string; color: string }> = {
-  task:      { icon: <Circle size={14} />,       label: 'Tarea',    color: 'var(--text-primary)' },
-  completed: { icon: <CheckCircle2 size={14} />, label: 'Completada', color: 'var(--accent-green)' },
-  migrated:  { icon: <ArrowRight size={14} />,   label: 'Migrada',  color: '#3B82F6' },
-  note:      { icon: <Minus size={14} />,         label: 'Nota',     color: '#9CA3AF' },
-  event:     { icon: <Calendar size={14} />,      label: 'Evento',   color: '#8B5CF6' },
+  task:      { icon: <Circle size={10} fill="currentColor" />, label: 'Tarea',    color: 'var(--text-primary)' },
+  completed: { icon: <X size={14} strokeWidth={3} />,          label: 'Completada', color: 'var(--accent-green)' },
+  migrated:  { icon: <ArrowRight size={14} strokeWidth={2.5}/>, label: 'Migrada',  color: 'var(--accent-cyan)' },
+  scheduled: { icon: <ArrowLeft size={14} strokeWidth={2.5} />, label: 'Programada', color: 'var(--accent-warning)' },
+  note:      { icon: <Minus size={14} strokeWidth={3} />,       label: 'Nota',     color: '#9CA3AF' },
+  event:     { icon: <Circle size={12} />,                      label: 'Evento',   color: 'var(--text-primary)' },
 };
 
 export const BujoModule: React.FC = () => {

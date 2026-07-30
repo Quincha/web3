@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
-export type BujoEntryType = 'task' | 'completed' | 'migrated' | 'note' | 'event';
+export type BujoEntryType = 'task' | 'completed' | 'migrated' | 'scheduled' | 'note' | 'event';
 
 export interface BujoEntry {
   id: string;

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ExternalLink, Clock, Plus, Circle, CheckCircle2, Minus, Calendar } from 'lucide-react';
+import { ExternalLink, Clock, Plus, Circle, X, Minus, ArrowRight, ArrowLeft } from 'lucide-react';
 import { WidgetRegistry } from './WidgetRegistry';
 import { tokens } from '../theme/tokens';
 import { useBujo } from '../context/BujoContext';
@@ -7,11 +7,12 @@ import type { BujoEntryType } from '../context/BujoContext';
 
 const getBujoIcon = (type: BujoEntryType, color: string) => {
   switch (type) {
-    case 'task': return <Circle size={12} color={color} />;
-    case 'completed': return <CheckCircle2 size={12} color={color} />;
-    case 'note': return <Minus size={12} color={color} />;
-    case 'event': return <Calendar size={12} color={color} />;
-    case 'migrated': return <ExternalLink size={12} color={color} />;
+    case 'task': return <Circle size={10} color={color} fill={color} />;
+    case 'completed': return <X size={14} color={color} strokeWidth={3} />;
+    case 'note': return <Minus size={14} color={color} strokeWidth={3} />;
+    case 'event': return <Circle size={12} color={color} />;
+    case 'migrated': return <ArrowRight size={14} color={color} strokeWidth={2.5} />;
+    case 'scheduled': return <ArrowLeft size={14} color={color} strokeWidth={2.5} />;
     default: return <Circle size={12} color={color} />;
   }
 };
@@ -21,8 +22,9 @@ const getBujoColor = (type: BujoEntryType) => {
     case 'task': return tokens.colors.text.primary;
     case 'completed': return tokens.colors.accent.green;
     case 'note': return tokens.colors.text.secondary;
-    case 'event': return tokens.colors.accent.cyan;
-    case 'migrated': return tokens.colors.accent.warning;
+    case 'event': return tokens.colors.text.primary;
+    case 'migrated': return tokens.colors.accent.cyan;
+    case 'scheduled': return tokens.colors.accent.warning;
     default: return tokens.colors.text.primary;
   }
 };
@@ -46,7 +48,16 @@ export const BujoWidget: React.FC = () => {
     } else if (content.startsWith('o ')) {
       type = 'event';
       content = content.substring(2);
-    } else if (content.startsWith('• ')) {
+    } else if (content.startsWith('> ')) {
+      type = 'migrated';
+      content = content.substring(2);
+    } else if (content.startsWith('< ')) {
+      type = 'scheduled';
+      content = content.substring(2);
+    } else if (content.startsWith('x ') || content.startsWith('X ')) {
+      type = 'completed';
+      content = content.substring(2);
+    } else if (content.startsWith('• ') || content.startsWith('. ')) {
       type = 'task';
       content = content.substring(2);
     }
@@ -82,12 +93,9 @@ export const BujoWidget: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Clock size={20} color={tokens.colors.accent.green} />
           <h3 style={{ fontSize: '13px', fontWeight: 700, color: tokens.colors.accent.green, letterSpacing: '0.1em', margin: 0 }}>
-            DAILY LOG (BUJO)
+            DAILY LOG
           </h3>
         </div>
-        <button style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}>
-          <ExternalLink size={16} />
-        </button>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', flex: 1, paddingLeft: '8px', zIndex: 1 }}>
@@ -166,12 +174,12 @@ export const BujoWidget: React.FC = () => {
         )}
       </div>
 
-      <form onSubmit={handleAdd} style={{ marginTop: 'auto', paddingTop: '16px', display: 'flex', gap: '8px' }}>
+      <form onSubmit={handleAdd} style={{ marginTop: 'auto', paddingTop: '16px', display: 'flex', gap: '8px', zIndex: 1 }}>
         <input 
           type="text" 
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          placeholder="Añadir nota (- nota, o evento)..." 
+          placeholder="Añadir (- nota, o evento, < prog, > mig, x comp, . tar)..." 
           style={{ 
             flex: 1, 
             background: 'rgba(255,255,255,0.05)', 
@@ -179,28 +187,49 @@ export const BujoWidget: React.FC = () => {
             borderRadius: '16px',
             padding: '8px 12px',
             color: 'white',
-            fontSize: '12px',
+            fontSize: '13px',
             outline: 'none'
-          }} 
-        />
-        <button 
-          type="submit"
-          style={{ 
-            background: tokens.colors.accent.green, 
-            color: '#000', 
-            border: 'none', 
-            borderRadius: '50%', 
-            width: '32px', 
-            height: '32px', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            cursor: 'pointer'
           }}
-        >
+        />
+        <button type="submit" style={{ 
+          background: tokens.colors.accent.green, 
+          border: 'none', 
+          width: '36px', 
+          height: '36px', 
+          borderRadius: '50%', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          color: '#000',
+          cursor: 'pointer'
+        }}>
           <Plus size={16} />
         </button>
       </form>
+
+      {/* Footer "Index" Button */}
+      <button 
+        style={{
+          marginTop: '16px',
+          width: '100%',
+          background: 'rgba(255,255,255,0.05)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          padding: '10px',
+          borderRadius: '12px',
+          color: 'white',
+          fontSize: '13px',
+          cursor: 'pointer',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '8px',
+          zIndex: 1,
+          transition: 'all 0.2s'
+        }}
+        className="bujo-index-btn"
+      >
+        <ExternalLink size={14} /> Abrir Bullet Journal
+      </button>
     </div>
   );
 };
