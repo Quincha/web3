@@ -96,7 +96,7 @@ export const BujoWidget: React.FC = () => {
             Tu bitácora está vacía.
           </div>
         ) : (
-          entries.map((entry, index) => {
+          entries.slice(0, 5).map((entry, index) => {
             const timeStr = entry.timestamp ? new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '00:00';
             const color = getBujoColor(entry.type);
             const isCompleted = entry.type === 'completed';
