@@ -3,7 +3,6 @@ import { Sidebar } from './Sidebar';
 import { DashboardSkeleton } from '../ui/SkeletonLoader';
 import { DashboardHero } from '../dashboard/DashboardHero';
 import { ProactiveAIAssistant } from '../dashboard/ProactiveAIAssistant';
-import { PomodoroTasksWidget } from '../../widgets/PomodoroTasksWidget';
 import { WidgetRegistry } from '../../widgets/WidgetRegistry';
 import { FinanceSummaryBanner } from '../finance/dashboard/FinanceSummaryBanner';
 import { useUser } from '../../context/UserContext';
@@ -11,17 +10,17 @@ import { Eye, Plus, Settings } from 'lucide-react';
 import '../../Dashboard.css';
 
 // Make sure all widgets are registered by importing them
-import '../../widgets/StatsWidget';
-import '../../widgets/ActivityWidget';
-import '../../widgets/ProductivityWidget';
-import '../../widgets/TasksWidget';
-import '../../widgets/ProjectsWidget';
-import '../../widgets/PomodoroWidget';
-import '../../widgets/BujoWidget';
-import '../../widgets/HealthWidget';
-import '../../widgets/HabitsWidget';
-import '../../widgets/ProactiveInsightsWidget';
-import '../../widgets/CalendarWidget';
+import { StatsWidget } from '../../widgets/StatsWidget';
+import { ActivityWidget } from '../../widgets/ActivityWidget';
+import { ProductivityWidget } from '../../widgets/ProductivityWidget';
+import { TasksWidget } from '../../widgets/TasksWidget';
+import { ProjectsWidget } from '../../widgets/ProjectsWidget';
+import PomodoroWidget from '../../widgets/PomodoroWidget';
+import { BujoWidget } from '../../widgets/BujoWidget';
+import { HealthWidget } from '../../widgets/HealthWidget';
+import { HabitsWidget } from '../../widgets/HabitsWidget';
+import { ProactiveInsightsWidget } from '../../widgets/ProactiveInsightsWidget';
+import { CalendarWidget } from '../../widgets/CalendarWidget';
 import { PomodoroModule } from '../dashboard/PomodoroModule';
 import { BujoModule } from '../dashboard/BujoModule';
 import { HealthModule } from '../dashboard/HealthModule';
@@ -124,39 +123,32 @@ export const DashboardLayout: React.FC = () => {
             </div>
           )}
 
-          {/* Asymmetrical Bento Box Grid */}
+          {/* Classic 3x2 Grid */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: '1fr 1fr 1fr',
+            gridTemplateColumns: 'repeat(3, 1fr)',
             gap: '24px'
           }}>
-            {/* Column 1: AI Assistant */}
-            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }} className="gsap-stagger-item">
-              <ProactiveAIAssistant />
+            {/* Row 1 */}
+            <div className="gsap-stagger-item">
+              <PomodoroWidget />
+            </div>
+            <div className="gsap-stagger-item">
+              <TasksWidget />
+            </div>
+            <div className="gsap-stagger-item">
+              <CalendarWidget />
             </div>
 
-            {/* Column 2: Productivity (Pomodoro & Tasks + Habits) */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', height: '100%' }}>
-              <div className="gsap-stagger-item" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <PomodoroTasksWidget />
-              </div>
-              {userConfig.widgets.find(w => w.id === 'habitos')?.visible && (
-                <div style={{ flex: 1 }} className="gsap-stagger-item">
-                  {React.createElement(WidgetRegistry.get('habitos')?.component || 'div')}
-                </div>
-              )}
+            {/* Row 2 */}
+            <div className="gsap-stagger-item">
+              <ActivityWidget />
             </div>
-
-            {/* Column 3: Time & Log (Calendar + Bujo) */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', height: '100%' }}>
-              {userConfig.widgets.find(w => w.id === 'calendario_widget')?.visible && (
-                <div className="gsap-stagger-item">
-                  {React.createElement(WidgetRegistry.get('calendario_widget')?.component || 'div')}
-                </div>
-              )}
-              <div className="gsap-stagger-item" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                {React.createElement(WidgetRegistry.get('bujo')?.component || 'div')}
-              </div>
+            <div className="gsap-stagger-item">
+              <HabitsWidget />
+            </div>
+            <div className="gsap-stagger-item">
+              <BujoWidget />
             </div>
           </div>
         </div>
