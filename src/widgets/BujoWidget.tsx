@@ -207,7 +207,7 @@ export const BujoWidget: React.FC = () => {
                           <X size={12} strokeWidth={3} color={tokens.colors.accent.green} /> Completar
                         </button>
                         <button onClick={() => { toggleEntryType(entry.id, 'migrated'); setMenuOpenId(null); }} style={dropdownBtnStyle}>
-                          <ArrowRight size={12} color={tokens.colors.accent.cyan} /> Migrar (>)
+                          <ArrowRight size={12} color={tokens.colors.accent.cyan} /> Migrar ({">"})
                         </button>
                         <button onClick={() => { toggleEntryType(entry.id, 'scheduled'); setMenuOpenId(null); }} style={dropdownBtnStyle}>
                           <ArrowLeft size={12} color={tokens.colors.accent.warning} /> Programar ({"<"})

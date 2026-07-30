@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useBujo } from '../../context/BujoContext';
 import type { BujoEntryType } from '../../context/BujoContext';
-import { Trash2, Circle, X, ArrowRight, ArrowLeft, Minus, Tag, Plus } from 'lucide-react';
+import { Trash2, Circle, X, ArrowRight, ArrowLeft, Minus, Tag, Plus, Search } from 'lucide-react';
 
 // Bullet Journal entry type symbols
 const BUJO_SYMBOLS: Record<BujoEntryType, { icon: React.ReactNode; label: string; color: string }> = {
@@ -20,9 +20,13 @@ export const BujoModule: React.FC = () => {
   const [selectedType, setSelectedType] = useState<BujoEntryType>('task');
   const [activeView, setActiveView] = useState<'daily' | 'all'>('daily');
   const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const displayEntries = activeView === 'daily' ? getTodayEntries() : entries;
+  const baseEntries = activeView === 'daily' ? getTodayEntries() : entries;
+  const displayEntries = searchQuery.trim() 
+    ? baseEntries.filter(e => e.content.toLowerCase().includes(searchQuery.toLowerCase()))
+    : baseEntries;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +52,25 @@ export const BujoModule: React.FC = () => {
           <p className="module-subtitle">{formatDate(today)}</p>
         </div>
         <div className="bujo-view-toggle">
+          <div style={{ position: 'relative', marginRight: '16px' }}>
+            <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)' }} />
+            <input
+              type="text"
+              placeholder="Buscar..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '8px',
+                padding: '8px 12px 8px 32px',
+                color: 'white',
+                fontSize: '13px',
+                outline: 'none',
+                width: '200px'
+              }}
+            />
+          </div>
           <button
             className={`view-toggle-btn ${activeView === 'daily' ? 'active' : ''}`}
             onClick={() => setActiveView('daily')}
@@ -108,7 +131,7 @@ export const BujoModule: React.FC = () => {
       <div className="bujo-entries-card">
         {displayEntries.length === 0 ? (
           <div className="bujo-empty-state">
-            <p>No hay entradas para hoy.</p>
+            <p>{searchQuery.trim() ? 'No se encontraron resultados para tu búsqueda.' : 'No hay entradas para hoy.'}</p>
             <p className="bujo-hint">Usa el campo de arriba para comenzar tu registro diario.</p>
           </div>
         ) : (
