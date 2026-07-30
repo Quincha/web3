@@ -7,7 +7,7 @@ import { Button } from '../components/ui/Button';
 
 export const PomodoroTasksWidget: React.FC = () => {
   const { timeRemaining, totalDuration, isActive, isPaused, task: currentTaskTitle, activeTaskId, startSession, pauseSession, resumeSession, cancelSession } = usePomodoro();
-  const { getPendingTasks, completeTask } = useTasks();
+  const { getPendingTasks } = useTasks();
   const [taskToConfirm, setTaskToConfirm] = useState<string | null>(null);
 
   const pendingTasks = getPendingTasks();
@@ -219,7 +219,11 @@ export const PomodoroTasksWidget: React.FC = () => {
                         <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setTaskToConfirm(null); }} style={{ flex: 1, padding: '4px' }}>
                           Cancelar
                         </Button>
-                        <Button size="sm" onClick={(e) => { e.stopPropagation(); completeTask(task.id); setTaskToConfirm(null); }} style={{ flex: 1, padding: '4px', background: tokens.colors.accent.green, color: '#000' }}>
+                        <Button size="sm" onClick={(e) => { 
+                          e.stopPropagation(); 
+                          window.dispatchEvent(new CustomEvent('request-task-completion', { detail: { taskId: task.id } }));
+                          setTaskToConfirm(null); 
+                        }} style={{ flex: 1, padding: '4px', background: tokens.colors.accent.green, color: '#000' }}>
                           Sí, Completar
                         </Button>
                       </div>

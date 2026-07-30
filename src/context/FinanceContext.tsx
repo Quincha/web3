@@ -10,6 +10,7 @@ interface FinanceContextType {
   deudas: Deuda[];
   insights: FinanceInsight[];
   addMovimiento: (mov: Omit<Movimiento, 'id'>) => void;
+  addDeuda: (deuda: Omit<Deuda, 'id'>) => void;
   markInsightAsRead: (id: string) => void;
 }
 
@@ -41,6 +42,7 @@ const mockInsights: FinanceInsight[] = [
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
 
 const CACHE_KEY = 'quincha_finance_movimientos';
+const CACHE_KEY_DEUDAS = 'quincha_finance_deudas';
 
 function loadMovimientosFromCache(): Movimiento[] {
   try {
@@ -53,6 +55,19 @@ function loadMovimientosFromCache(): Movimiento[] {
 
 function saveMovimientosToCache(movs: Movimiento[]) {
   localStorage.setItem(CACHE_KEY, JSON.stringify(movs));
+}
+
+function loadDeudasFromCache(): Deuda[] {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY_DEUDAS);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveDeudasToCache(deudas: Deuda[]) {
+  localStorage.setItem(CACHE_KEY_DEUDAS, JSON.stringify(deudas));
 }
 
 const computeStats = (movs: Movimiento[], deudas: Deuda[]): FinanceDashboardStats => {
@@ -96,7 +111,7 @@ const computeStats = (movs: Movimiento[], deudas: Deuda[]): FinanceDashboardStat
 export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cuentas] = useState<Cuenta[]>([]);
   const [movimientos, setMovimientos] = useState<Movimiento[]>(() => loadMovimientosFromCache());
-  const [deudas] = useState<Deuda[]>([]);
+  const [deudas, setDeudas] = useState<Deuda[]>(() => loadDeudasFromCache());
   const [insights, setInsights] = useState<FinanceInsight[]>(mockInsights);
   
   const stats = computeStats(movimientos, deudas);
@@ -110,13 +125,22 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
   };
 
+  const addDeuda = (deuda: Omit<Deuda, 'id'>) => {
+    const newDeuda: Deuda = { ...deuda, id: Date.now().toString() };
+    setDeudas(prev => {
+      const updated = [newDeuda, ...prev];
+      saveDeudasToCache(updated);
+      return updated;
+    });
+  };
+
   const markInsightAsRead = (id: string) => {
     setInsights(prev => prev.map(i => i.id === id ? { ...i, read: true } : i));
   };
 
   return (
     <FinanceContext.Provider value={{
-      stats, cuentas, movimientos, deudas, insights, addMovimiento, markInsightAsRead
+      stats, cuentas, movimientos, deudas, insights, addMovimiento, addDeuda, markInsightAsRead
     }}>
       {children}
     </FinanceContext.Provider>

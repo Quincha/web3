@@ -90,8 +90,8 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   useEffect(() => {
     if (isActive && !isPaused) {
       timerRef.current = setInterval(() => {
+        accumulatedSecondsRef.current += 1;
         setTimeRemaining(prev => {
-          accumulatedSecondsRef.current += 1;
           if (prev <= 1) {
             clearInterval(timerRef.current!);
             handleSessionEnd();

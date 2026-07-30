@@ -17,6 +17,7 @@ import { ClientPortal } from './components/portal/ClientPortal';
 import { InsightsProvider } from './context/InsightsContext';
 import { FinanceProvider } from './context/FinanceContext';
 import { ClientsProvider } from './context/ClientsContext';
+import { GlobalTaskCompletionModal } from './components/dashboard/GlobalTaskCompletionModal';
 
 function MainAppContent() {
   const { currentView } = useTransition();
@@ -26,7 +27,12 @@ function MainAppContent() {
   }
 
   if (currentView === 'dashboard') {
-    return <DashboardLayout />;
+    return (
+      <>
+        <DashboardLayout />
+        <GlobalTaskCompletionModal />
+      </>
+    );
   }
 
   return (

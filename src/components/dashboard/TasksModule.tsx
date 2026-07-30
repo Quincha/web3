@@ -242,7 +242,7 @@ const FILTER_OPTIONS: { id: TaskFilter; label: string }[] = [
 ];
 
 export const TasksModule: React.FC = () => {
-  const { tasks, getActiveProjects, completeTask, updateTask, getTodayTasks } = useTasks();
+  const { tasks, getActiveProjects, updateTask, getTodayTasks } = useTasks();
   const [filter, setFilter] = useState<TaskFilter>('today');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const projects = getActiveProjects();
@@ -284,7 +284,9 @@ export const TasksModule: React.FC = () => {
                 key={task.id}
                 task={task}
                 project={project}
-                onComplete={completeTask}
+                onComplete={(id) => {
+                  window.dispatchEvent(new CustomEvent('request-task-completion', { detail: { taskId: id } }));
+                }}
                 onUpdate={updateTask}
                 onAddSubtask={(taskId, content) => {
                   const t = tasks.find(x => x.id === taskId);
