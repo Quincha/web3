@@ -11,6 +11,7 @@ interface FinanceContextType {
   insights: FinanceInsight[];
   addMovimiento: (mov: Omit<Movimiento, 'id'>) => void;
   addDeuda: (deuda: Omit<Deuda, 'id'>) => void;
+  removeDeudaByTaskId: (taskId: string) => void;
   markInsightAsRead: (id: string) => void;
 }
 
@@ -134,13 +135,21 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
   };
 
+  const removeDeudaByTaskId = (taskId: string) => {
+    setDeudas(prev => {
+      const updated = prev.filter(d => d.originTaskId !== taskId);
+      saveDeudasToCache(updated);
+      return updated;
+    });
+  };
+
   const markInsightAsRead = (id: string) => {
     setInsights(prev => prev.map(i => i.id === id ? { ...i, read: true } : i));
   };
 
   return (
     <FinanceContext.Provider value={{
-      stats, cuentas, movimientos, deudas, insights, addMovimiento, addDeuda, markInsightAsRead
+      stats, cuentas, movimientos, deudas, insights, addMovimiento, addDeuda, removeDeudaByTaskId, markInsightAsRead
     }}>
       {children}
     </FinanceContext.Provider>

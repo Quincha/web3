@@ -58,6 +58,7 @@ export interface Deuda {
   priority?: 'Alta' | 'Media' | 'Baja';
   projectId?: string;
   tags: string[];
+  originTaskId?: string; // Tarea que originó esta deuda
 }
 
 export interface Presupuesto {

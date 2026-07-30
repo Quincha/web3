@@ -59,7 +59,8 @@ export const GlobalTaskCompletionModal: React.FC = () => {
         status: 'Pendiente',
         priority: 'Alta',
         projectId: task.project_id || undefined,
-        tags: ['Facturable', 'Automático']
+        tags: ['Facturable', 'Automático'],
+        originTaskId: task.id
       });
     }
 

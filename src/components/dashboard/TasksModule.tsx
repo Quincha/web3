@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useTasks } from '../../context/TasksContext';
 import { useClients } from '../../context/ClientsContext';
+import { useFinance } from '../../context/FinanceContext';
 import type { Task, Priority, TaskStatus, Project } from '../../context/TasksContext';
 import { TaskDetailSidebar } from './TaskDetailSidebar';
 
@@ -243,6 +244,7 @@ const FILTER_OPTIONS: { id: TaskFilter; label: string }[] = [
 
 export const TasksModule: React.FC = () => {
   const { tasks, getActiveProjects, updateTask, getTodayTasks } = useTasks();
+  const { removeDeudaByTaskId } = useFinance();
   const [filter, setFilter] = useState<TaskFilter>('today');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const projects = getActiveProjects();
@@ -285,7 +287,14 @@ export const TasksModule: React.FC = () => {
                 task={task}
                 project={project}
                 onComplete={(id) => {
-                  window.dispatchEvent(new CustomEvent('request-task-completion', { detail: { taskId: id } }));
+                  const t = tasks.find(x => x.id === id);
+                  if (t?.status === 'completed') {
+                    // Uncomplete
+                    updateTask(id, { status: 'pending', completedAt: null });
+                    removeDeudaByTaskId(id);
+                  } else {
+                    window.dispatchEvent(new CustomEvent('request-task-completion', { detail: { taskId: id } }));
+                  }
                 }}
                 onUpdate={updateTask}
                 onAddSubtask={(taskId, content) => {
