@@ -9,6 +9,7 @@ const BUJO_SYMBOLS: Record<BujoEntryType, { icon: React.ReactNode; label: string
   completed: { icon: <X size={14} strokeWidth={3} />,          label: 'Completada', color: 'var(--accent-green)' },
   migrated:  { icon: <ArrowRight size={14} strokeWidth={2.5}/>, label: 'Migrada',  color: 'var(--accent-cyan)' },
   scheduled: { icon: <ArrowLeft size={14} strokeWidth={2.5} />, label: 'Programada', color: 'var(--accent-warning)' },
+  cancelled: { icon: <X size={14} strokeWidth={2.5} />,         label: 'Descartada', color: 'rgba(255,255,255,0.2)' },
   note:      { icon: <Minus size={14} strokeWidth={3} />,       label: 'Nota',     color: '#9CA3AF' },
   event:     { icon: <Circle size={12} />,                      label: 'Evento',   color: 'var(--text-primary)' },
 };
