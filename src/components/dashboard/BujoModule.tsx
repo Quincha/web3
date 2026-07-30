@@ -17,6 +17,7 @@ export const BujoModule: React.FC = () => {
   const [inputValue, setInputValue] = useState('');
   const [selectedType, setSelectedType] = useState<BujoEntryType>('task');
   const [activeView, setActiveView] = useState<'daily' | 'all'>('daily');
+  const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const displayEntries = activeView === 'daily' ? getTodayEntries() : entries;
@@ -139,21 +140,29 @@ export const BujoModule: React.FC = () => {
                     )}
                   </div>
 
-                  <div className="bujo-entry-meta">
-                    {entry.tags.map(tag => (
-                      <span key={tag} className="bujo-tag">
-                        <Tag size={10} />
-                        {tag}
-                      </span>
-                    ))}
-                    <button
-                      className="bujo-delete-btn"
-                      onClick={() => deleteEntry(entry.id)}
-                      title="Eliminar entrada"
-                    >
-                      <Trash2 size={12} />
-                    </button>
-                  </div>
+                  {entryToDelete === entry.id ? (
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <span style={{ fontSize: '11px', color: 'var(--accent-danger)' }}>¿Borrar?</span>
+                      <button className="bujo-delete-btn" onClick={() => setEntryToDelete(null)} style={{ background: 'rgba(255,255,255,0.1)', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '11px' }}>No</button>
+                      <button className="bujo-delete-btn" onClick={() => { deleteEntry(entry.id); setEntryToDelete(null); }} style={{ background: 'var(--accent-danger)', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '11px' }}>Sí</button>
+                    </div>
+                  ) : (
+                    <div className="bujo-entry-meta">
+                      {entry.tags.map(tag => (
+                        <span key={tag} className="bujo-tag">
+                          <Tag size={10} />
+                          {tag}
+                        </span>
+                      ))}
+                      <button
+                        className="bujo-delete-btn"
+                        onClick={() => setEntryToDelete(entry.id)}
+                        title="Eliminar entrada"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
             })}
