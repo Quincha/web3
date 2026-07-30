@@ -10,16 +10,16 @@ import { Eye, Plus, Settings } from 'lucide-react';
 import '../../Dashboard.css';
 
 // Make sure all widgets are registered by importing them
-import { StatsWidget } from '../../widgets/StatsWidget';
-import { ActivityWidget } from '../../widgets/ActivityWidget';
-import { ProductivityWidget } from '../../widgets/ProductivityWidget';
-import { TasksWidget } from '../../widgets/TasksWidget';
-import { ProjectsWidget } from '../../widgets/ProjectsWidget';
+import StatsWidget from '../../widgets/StatsWidget';
+import ActivityWidget from '../../widgets/ActivityWidget';
+import ProductivityWidget from '../../widgets/ProductivityWidget';
+import TasksWidget from '../../widgets/TasksWidget';
+import ProjectsWidget from '../../widgets/ProjectsWidget';
 import PomodoroWidget from '../../widgets/PomodoroWidget';
 import { BujoWidget } from '../../widgets/BujoWidget';
-import { HealthWidget } from '../../widgets/HealthWidget';
+import HealthWidget from '../../widgets/HealthWidget';
 import { HabitsWidget } from '../../widgets/HabitsWidget';
-import { ProactiveInsightsWidget } from '../../widgets/ProactiveInsightsWidget';
+import ProactiveInsightsWidget from '../../widgets/ProactiveInsightsWidget';
 import { CalendarWidget } from '../../widgets/CalendarWidget';
 import { PomodoroModule } from '../dashboard/PomodoroModule';
 import { BujoModule } from '../dashboard/BujoModule';
