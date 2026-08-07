@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
    LayoutDashboard, Briefcase, CheckSquare, Calendar, 
-   BarChart3, Mail, FileText, Users, Settings, Activity, Flame, BookOpen, Heart, Wallet
+   BarChart3, Mail, FileText, Users, Settings, Activity, Flame, BookOpen, Heart, Wallet, ShoppingBag
 } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
 import { PermissionService } from '../../services/PermissionService';
@@ -30,6 +30,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
     { id: 'mensajes', label: 'Mensajes', icon: <Mail size={20} strokeWidth={1.5} fill="currentColor" />, badge: 3, module: 'mensajes' as Module },
     { id: 'documentos', label: 'Documentos', icon: <FileText size={20} strokeWidth={1.5} fill="currentColor" />, module: 'documentos' as Module },
     { id: 'finanzas', label: 'Finanzas', icon: <Wallet size={20} strokeWidth={1.5} fill="currentColor" />, module: 'finanzas' as Module },
+    { id: 'shopping', label: 'Compras', icon: <ShoppingBag size={20} strokeWidth={1.5} fill="currentColor" />, module: 'shopping' as Module },
     { id: 'clientes', label: 'Clientes', icon: <Users size={20} strokeWidth={1.5} fill="currentColor" />, module: 'clientes' as Module },
     { id: 'ajustes', label: 'Ajustes', icon: <Settings size={20} strokeWidth={1.5} fill="currentColor" />, module: 'ajustes' as Module }
   ];

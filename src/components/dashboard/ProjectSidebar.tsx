@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { X, Save, Palette, Building2 } from 'lucide-react';
 import { useTasks } from '../../context/TasksContext';
 import { useClients } from '../../context/ClientsContext';

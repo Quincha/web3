@@ -36,7 +36,7 @@ export const BujoWidget: React.FC = () => {
   const { getTodayEntries, addEntry, toggleEntryType, getDailyMood, setDailyMood } = useBujo();
   const { habitsWithStats, toggleHabitCompletion } = useHabits();
   
-  const entries = getTodayEntries();
+  const entries = getTodayEntries().slice(0, 5);
   const [inputValue, setInputValue] = useState('');
   
   // Menu and Mood state
@@ -80,18 +80,7 @@ export const BujoWidget: React.FC = () => {
   }, []);
 
   return (
-    <div className="premium-card-hover" style={{
-      background: 'linear-gradient(145deg, rgba(16, 42, 45, 0.4) 0%, rgba(6, 8, 11, 0.9) 100%)',
-      border: '1px solid rgba(0, 230, 118, 0.1)',
-      borderRadius: '24px',
-      padding: '24px',
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      position: 'relative',
-      overflow: 'hidden',
-      boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
-    }}>
+    <div className="dashboard-card">
       {/* 1. CABECERA */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', zIndex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

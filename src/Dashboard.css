@@ -1831,296 +1831,643 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.bujo-title-block h2 {
-  font-size: 1.6rem;
-  font-weight: 600;
-}
-
-.bujo-view-toggle {
+.bujo-header-row {
   display: flex;
-  gap: 4px;
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 4px;
-}
-
-.view-toggle-btn {
-  background: transparent;
-  border: none;
-  padding: 6px 16px;
-  border-radius: 5px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.view-toggle-btn.active {
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-}
-
-.bujo-quick-input-card {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  box-shadow: var(--card-shadow);
-}
-
-.bujo-type-selector {
-  display: flex;
-  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
   flex-wrap: wrap;
+  gap: 16px;
 }
 
-.bujo-type-pill {
+.bujo-header-left h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 4px 0;
+  letter-spacing: -0.02em;
+}
+
+.bujo-header-left p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.bujo-header-stats {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.bujo-stat-badge {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 12px;
-  background: transparent;
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
-  font-size: 0.78rem;
+  font-size: 0.9rem;
   font-weight: 500;
-  cursor: pointer;
-  color: var(--text-secondary);
-  transition: all 0.15s ease;
 }
 
-.bujo-type-pill:hover {
-  border-color: var(--text-subtle);
-  color: var(--text-primary);
+.bujo-stat-badge .count {
+  font-size: 1.2rem;
+  font-weight: 700;
 }
 
-.bujo-type-pill.active {
-  border-color: var(--pill-color, var(--accent-green));
-  color: var(--pill-color, var(--accent-green));
-  background-color: color-mix(in srgb, var(--pill-color, var(--accent-green)) 10%, transparent);
+.bujo-grid-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
 }
 
-.pill-icon {
+@media (min-width: 1024px) {
+  .bujo-grid-layout {
+    grid-template-columns: 1fr 340px;
+  }
+}
+
+/* Columna Izquierda (Timeline) */
+.bujo-left-col {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 24px;
 }
 
-.bujo-input-row {
+/* Caja de Entrada Premium */
+.bujo-quick-input-premium {
+  background: linear-gradient(145deg, rgba(20, 24, 33, 0.6) 0%, rgba(10, 12, 17, 0.8) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 16px;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 12px;
-}
-
-.bujo-entry-symbol-badge {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 1px solid var(--border-color);
-  flex-shrink: 0;
-}
-
-.bujo-text-input {
-  flex: 1;
-  height: 44px;
-  background-color: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  padding: 0 16px;
-  color: var(--text-primary);
-  font-family: inherit;
-  font-size: 0.95rem;
-  outline: none;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   transition: border-color 0.2s ease;
 }
 
-.bujo-text-input:focus {
-  border-color: var(--text-subtle);
+.bujo-quick-input-premium:focus-within {
+  border-color: rgba(0, 230, 118, 0.3);
 }
 
-.bujo-entries-card {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 24px;
-  box-shadow: var(--card-shadow);
+.bujo-input-wrapper {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 10px 14px;
+  gap: 10px;
 }
 
-.bujo-empty-state {
-  text-align: center;
-  padding: 32px 0;
-  color: var(--text-subtle);
-  font-size: 0.9rem;
+.bujo-input-wrapper input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  outline: none;
 }
 
-.bujo-hint {
+.bujo-input-enter-btn {
+  font-size: 0.75rem;
+  color: var(--accent-green);
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.bujo-inline-pills {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.bujo-inline-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 20px;
+  padding: 6px 12px;
   font-size: 0.8rem;
-  margin-top: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
 }
 
-.bujo-entry-list {
+.bujo-inline-pill:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+.bujo-inline-pill.active {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--pill-color);
+  color: var(--text-primary);
+}
+
+/* Timeline */
+.bujo-timeline-card {
+  background: linear-gradient(145deg, rgba(20, 24, 33, 0.6) 0%, rgba(10, 12, 17, 0.8) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.bujo-timeline-list {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.bujo-timeline-item {
+  display: flex;
+  gap: 16px;
+  position: relative;
+  padding-bottom: 24px;
+}
+
+.bujo-timeline-item:last-child {
+  padding-bottom: 8px;
+}
+
+.bujo-timeline-line {
+  position: absolute;
+  left: 63px; /* 36px (time width) + 16px (gap) + 11px (half of 22px circle) */
+  top: 24px;
+  bottom: 0;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  z-index: 1;
+}
+
+.bujo-timeline-item:last-child .bujo-timeline-line {
+  display: none;
+}
+
+.bujo-time-col {
+  width: 48px;
+  font-size: 0.85rem;
+  color: var(--text-subtle);
+  font-weight: 500;
+  padding-top: 2px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.bujo-node-col {
+  width: 24px;
+  display: flex;
+  justify-content: center;
+  z-index: 2;
+}
+
+.bujo-node-circle {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid currentColor;
+  background-color: var(--bg-card);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.bujo-node-circle:hover {
+  transform: scale(1.15);
+}
+
+.bujo-content-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 1px;
+}
+
+.bujo-content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.bujo-item-title {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  line-height: 1.4;
+  font-weight: 400;
+}
+
+.bujo-item-completed .bujo-item-title {
+  text-decoration: line-through;
+  color: var(--text-subtle);
+}
+
+.bujo-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0.4;
+  transition: opacity 0.2s ease;
+}
+
+.bujo-timeline-item:hover .bujo-item-actions {
+  opacity: 1;
+}
+
+.bujo-action-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.bujo-action-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+}
+
+.bujo-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.bujo-badge-type {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: capitalize;
+}
+
+.bujo-meta-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+/* Columna Derecha (Sidebar) */
+.bujo-right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.bujo-sidebar-widget {
+  background: linear-gradient(145deg, rgba(20, 24, 33, 0.6) 0%, rgba(10, 12, 17, 0.8) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.bujo-sidebar-widget h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+  color: var(--text-primary);
+}
+
+/* Calendario */
+.bujo-calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.bujo-calendar-header span {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.bujo-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  text-align: center;
+}
+
+.bujo-calendar-day-header {
+  font-size: 0.75rem;
+  color: var(--text-subtle);
+  font-weight: 600;
+  padding: 4px 0;
+}
+
+.bujo-calendar-cell {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s ease;
+}
+
+.bujo-calendar-cell:hover:not(.empty) {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+.bujo-calendar-cell.active {
+  background: var(--accent-green);
+  color: #000 !important;
+  font-weight: 700;
+}
+
+.bujo-calendar-cell.other-month {
+  color: var(--text-subtle);
+  opacity: 0.3;
+}
+
+.bujo-calendar-dot {
+  position: absolute;
+  bottom: 2px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent-green);
+}
+
+.bujo-calendar-cell.active .bujo-calendar-dot {
+  background: #000;
+}
+
+/* Resumen del Día */
+.bujo-resumen-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bujo-resumen-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+}
+
+.bujo-resumen-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bujo-resumen-left span {
+  font-weight: 500;
+}
+
+.bujo-resumen-left small {
+  color: var(--text-subtle);
+  margin-top: 2px;
+}
+
+.bujo-resumen-right {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* Etiquetas */
+.bujo-tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.bujo-tag-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bujo-tag-pill:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
+.bujo-tag-pill.active {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: currentColor;
+  color: var(--text-primary);
+}
+
+.bujo-tag-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Filtros */
+.bujo-filtros-list {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.bujo-entry-row {
+.bujo-filtro-item {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 10px 8px;
-  border-radius: 6px;
-  transition: background-color 0.15s ease;
-}
-
-.bujo-entry-row:hover {
-  background-color: var(--bg-input-focus);
-}
-
-.bujo-symbol-btn {
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  cursor: pointer;
   background: transparent;
   border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  padding: 2px;
-  margin-top: 1px;
-  border-radius: 4px;
-  flex-shrink: 0;
-  transition: transform 0.1s ease;
+  width: 100%;
+  text-align: left;
+  transition: all 0.2s ease;
 }
 
-.bujo-symbol-btn:active { transform: scale(0.9); }
+.bujo-filtro-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+}
 
-.bujo-entry-content {
+.bujo-filtro-item.active {
+  background: rgba(0, 230, 118, 0.1);
+  color: var(--accent-green);
+  font-weight: 500;
+  border: 1px solid rgba(0, 230, 118, 0.2);
+}
+
+.bujo-filtro-count {
+  font-size: 0.78rem;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 6px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+}
+
+.bujo-filtro-item.active .bujo-filtro-count {
+  background: rgba(0, 230, 118, 0.2);
+  color: var(--accent-green);
+}
+
+/* Footer / Widgets */
+.bujo-footer-widgets {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 16px;
+  margin-top: 12px;
+}
+
+@media (min-width: 640px) {
+  .bujo-footer-widgets {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .bujo-footer-widgets {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.bujo-stat-card {
+  background: linear-gradient(145deg, rgba(20, 24, 33, 0.6) 0%, rgba(10, 12, 17, 0.8) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+.bujo-stat-card-left {
   display: flex;
   flex-direction: column;
-  flex: 1;
-  gap: 3px;
+  gap: 4px;
 }
 
-.bujo-entry-text {
-  font-size: 0.9rem;
-  color: var(--text-primary);
-  line-height: 1.5;
-}
-
-.entry-completed .bujo-entry-text {
-  text-decoration: line-through;
-  color: var(--text-subtle);
-}
-
-.bujo-pomodoro-ref {
-  font-size: 0.72rem;
-  color: var(--text-subtle);
-}
-
-.bujo-entry-date {
-  font-size: 0.72rem;
-  color: var(--text-subtle);
-}
-
-.bujo-entry-meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.bujo-tag {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 0.68rem;
-  background-color: var(--bg-input-focus);
-  color: var(--text-secondary);
-  padding: 2px 6px;
-  border-radius: 10px;
-}
-
-.bujo-delete-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-subtle);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  padding: 4px;
-  border-radius: 4px;
-  opacity: 0;
-  transition: all 0.15s ease;
-}
-
-.bujo-entry-row:hover .bujo-delete-btn {
-  opacity: 1;
-}
-
-.bujo-delete-btn:hover {
-  color: #EF4444;
-}
-
-.bujo-legend-row {
-  display: flex;
-  gap: 20px;
-  align-items: center;
-  padding: 12px 16px;
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.bujo-stat-card-label {
   font-size: 0.78rem;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
-/* BUJO WIDGET (Dashboard) */
-.bujo-widget-card {
+.bujo-stat-card-val-row {
   display: flex;
-  flex-direction: column;
-  height: 100%;
+  align-items: baseline;
+  gap: 4px;
 }
 
-.bujo-widget-row {
+.bujo-stat-card-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.bujo-stat-card-sub {
+  font-size: 0.72rem;
+  color: var(--text-subtle);
+}
+
+.bujo-stat-card-right {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 6px 8px;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.03);
 }
 
-.bujo-widget-row:hover {
-  background-color: var(--bg-input-focus);
-}
-
-.bujo-widget-symbol {
-  flex-shrink: 0;
-}
-
-.bujo-widget-text {
-  font-size: 0.85rem;
-  color: var(--text-primary);
-  flex: 1;
-}
-
-.bujo-widget-text.done {
-  text-decoration: line-through;
+/* Star / Favorite */
+.bujo-star-btn {
   color: var(--text-subtle);
+}
+
+.bujo-star-btn.active {
+  color: var(--accent-warning);
+}
+
+/* Context Menu */
+.bujo-context-menu {
+  position: absolute;
+  right: 0;
+  top: 30px;
+  background: #121214;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 6px;
+  z-index: 50;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 140px;
+}
+
+.bujo-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  width: 100%;
+}
+
+.bujo-menu-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+/* Sparklines */
+.bujo-sparkline {
+  stroke: var(--accent-green);
+  fill: none;
+  stroke-width: 1.5;
 }
 
 
@@ -3260,6 +3607,47 @@
 
 .tasks-empty-state svg {
   opacity: 0.3;
+}
+
+/* Unified Glassmorphism Card Style */
+.dashboard-card {
+  background: rgba(18, 24, 38, 0.6) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 16px !important;
+  padding: 24px !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  position: relative !important;
+  overflow: hidden !important;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-2px) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45) !important;
+}
+
+/* Excel Spreadsheet cell inputs */
+.bujo-module-container table input {
+  width: 100%;
+  background: transparent;
+  border: 1px solid transparent !important;
+  outline: none;
+  color: #fff;
+  font-size: 0.85rem;
+  padding: 6px 8px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.bujo-module-container table input:focus {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.15) !important;
 }
 
 

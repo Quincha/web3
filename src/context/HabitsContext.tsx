@@ -6,11 +6,13 @@ import { SyncQueueService } from '../services/SyncQueueService';
 // ─────────────────────────────────────────────
 
 export type HabitFrequency = 'daily' | 'weekdays' | 'weekends' | 'custom';
+export type HabitType = 'positive' | 'negative';
 
 export interface HabitCompletion {
   date: string;       // "YYYY-MM-DD"
   timestamp: string;  // ISO full
   note?: string;
+  isViolation?: boolean; // For negative habits: true if consumed/failed
 }
 
 export interface Habit {
@@ -19,6 +21,7 @@ export interface Habit {
   description: string;
   icon: string;              // emoji
   color: string;             // CSS color
+  type?: HabitType;          // 'positive' (default) or 'negative' (avoidance/sobriety)
   frequency: HabitFrequency;
   targetDays: number[];      // 0=Sunday...6=Saturday
   completions: HabitCompletion[];
@@ -47,6 +50,8 @@ interface HabitsContextType {
 
   // Completion
   toggleHabitToday: (habitId: string, note?: string) => void;
+  toggleHabitForDate: (habitId: string, dateISO: string, isViolation?: boolean, note?: string) => void;
+  setHabitStateForDate: (habitId: string, dateISO: string, completed: boolean, isViolation?: boolean, note?: string) => void;
 
   // Queries
   getTodayHabits: () => HabitWithStats[];
@@ -290,22 +295,44 @@ export const HabitsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // ── COMPLETION ─────────────────────────────────────
 
-  const toggleHabitToday = useCallback((habitId: string, note?: string) => {
-    const t = todayISO();
+  const toggleHabitForDate = useCallback((habitId: string, dateISO: string, isViolation: boolean = false, note?: string) => {
     setHabits(prev => {
       const updated = prev.map(h => {
         if (h.id !== habitId) return h;
-        const alreadyDone = h.completions.some(c => c.date === t);
-        const newCompletions = alreadyDone
-          ? h.completions.filter(c => c.date !== t)   // un-toggle
-          : [...h.completions, { date: t, timestamp: new Date().toISOString(), note }];
+        const existing = h.completions.find(c => c.date === dateISO);
+        let newCompletions;
+        if (existing) {
+          newCompletions = h.completions.filter(c => c.date !== dateISO);
+        } else {
+          newCompletions = [...h.completions, { date: dateISO, timestamp: new Date().toISOString(), isViolation, note }];
+        }
         return { ...h, completions: newCompletions };
       });
       saveHabits(updated);
       return updated;
     });
-    SyncQueueService.enqueue('TOGGLE_HABIT', { habitId, date: t });
+    SyncQueueService.enqueue('TOGGLE_HABIT', { habitId, date: dateISO });
   }, []);
+
+  const setHabitStateForDate = useCallback((habitId: string, dateISO: string, completed: boolean, isViolation: boolean = false, note?: string) => {
+    setHabits(prev => {
+      const updated = prev.map(h => {
+        if (h.id !== habitId) return h;
+        const filtered = h.completions.filter(c => c.date !== dateISO);
+        const newCompletions = completed 
+          ? [...filtered, { date: dateISO, timestamp: new Date().toISOString(), isViolation, note }]
+          : filtered;
+        return { ...h, completions: newCompletions };
+      });
+      saveHabits(updated);
+      return updated;
+    });
+    SyncQueueService.enqueue('SET_HABIT_STATE', { habitId, date: dateISO, completed, isViolation });
+  }, []);
+
+  const toggleHabitToday = useCallback((habitId: string, note?: string) => {
+    toggleHabitForDate(habitId, todayISO(), false, note);
+  }, [toggleHabitForDate]);
 
   // ── QUERIES ────────────────────────────────────────
 
@@ -324,7 +351,7 @@ export const HabitsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     <HabitsContext.Provider value={{
       habits, habitsWithStats,
       addHabit, updateHabit, deleteHabit, archiveHabit,
-      toggleHabitToday,
+      toggleHabitToday, toggleHabitForDate, setHabitStateForDate,
       getTodayHabits, getActiveHabits
     }}>
       {children}

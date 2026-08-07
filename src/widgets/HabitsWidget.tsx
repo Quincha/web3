@@ -13,19 +13,7 @@ export const HabitsWidget: React.FC = () => {
   ];
 
   return (
-    <div className="premium-card-hover" style={{
-      background: 'rgba(15, 23, 42, 0.3)',
-      backdropFilter: 'blur(16px)',
-      WebkitBackdropFilter: 'blur(16px)',
-      borderRadius: '24px',
-      padding: '24px',
-      border: `1px solid rgba(179, 136, 255, 0.15)`,
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100%',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
+    <div className="dashboard-card">
       {/* Background orb */}
       <div style={{
         position: 'absolute', bottom: '-50px', left: '-50px',

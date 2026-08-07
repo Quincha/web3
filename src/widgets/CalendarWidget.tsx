@@ -12,19 +12,7 @@ export const CalendarWidget: React.FC = () => {
   ];
 
   return (
-    <div className="premium-card-hover" style={{
-      background: 'rgba(15, 23, 42, 0.3)',
-      backdropFilter: 'blur(16px)',
-      WebkitBackdropFilter: 'blur(16px)',
-      borderRadius: '24px',
-      padding: '24px',
-      border: `1px solid rgba(56, 189, 248, 0.15)`,
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100%',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
+    <div className="dashboard-card">
       {/* Soft gradient orb in background */}
       <div style={{
         position: 'absolute', top: '-50px', right: '-50px',

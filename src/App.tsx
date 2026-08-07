@@ -17,6 +17,7 @@ import { ClientPortal } from './components/portal/ClientPortal';
 import { InsightsProvider } from './context/InsightsContext';
 import { FinanceProvider } from './context/FinanceContext';
 import { ClientsProvider } from './context/ClientsContext';
+import { ShoppingProvider } from './context/ShoppingContext';
 import { GlobalTaskCompletionModal } from './components/dashboard/GlobalTaskCompletionModal';
 
 function MainAppContent() {
@@ -78,7 +79,9 @@ function App() {
                     <FinanceProvider>
                       <InsightsProvider>
                         <ClientsProvider>
-                          <MainAppContent />
+                          <ShoppingProvider>
+                            <MainAppContent />
+                          </ShoppingProvider>
                         </ClientsProvider>
                       </InsightsProvider>
                     </FinanceProvider>

@@ -16,10 +16,18 @@ export type Module =
   | 'bujo'
   | 'health'
   | 'habitos'
-  | 'finanzas';
+  | 'finanzas'
+  | 'shopping';
 
 // Permissions matrix: module -> role -> set of allowed actions
 const PERMISSIONS: Record<Module, Record<Role, Action[]>> = {
+  shopping: {
+    'super-admin': ['view', 'create', 'edit', 'delete', 'share', 'export', 'admin'],
+    'admin': ['view', 'create', 'edit', 'delete', 'share', 'export'],
+    'supervisor': ['view', 'create', 'edit'],
+    'user': ['view', 'create', 'edit'],
+    'guest': ['view'],
+  },
   dashboard: {
     'super-admin': ['view', 'create', 'edit', 'delete', 'share', 'export', 'admin'],
     'admin': ['view', 'create', 'edit', 'delete', 'share', 'export', 'admin'],
