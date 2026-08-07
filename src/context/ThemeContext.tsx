@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { ConfigService } from '../services/ConfigService';
-import type { UserConfig } from '../services/ConfigService';
 
 export type Theme = 'dark' | 'light' | 'mixed';
 

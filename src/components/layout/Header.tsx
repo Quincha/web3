@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Bell, Mail, Sun, Moon, Sparkles, CloudCheck, RefreshCw } from 'lucide-react';
+import { Search, Bell, Mail, Sun, Moon, Sparkles} from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import type { Theme } from '../../context/ThemeContext';
 import { SyncStatusBar } from './SyncStatusBar';

@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { usePomodoro, SESSION_TYPES } from '../../context/PomodoroContext';
+import { usePomodoro} from '../../context/PomodoroContext';
 import type { SessionType } from '../../context/PomodoroContext';
 import { useTasks } from '../../context/TasksContext';
-import { Play, Pause, Square, Flame, Laptop, Calendar, CheckSquare, Plus, Check } from 'lucide-react';
+import { Play, Pause, Square, Flame, Laptop, Calendar,  Plus, Check } from 'lucide-react';
 
 export const PomodoroModule: React.FC = () => {
   const {
     timeRemaining,
+  // @ts-expect-error unused
     totalDuration,
     isActive,
     isPaused,

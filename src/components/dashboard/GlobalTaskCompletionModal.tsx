@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle2, DollarSign, PenTool, X } from 'lucide-react';
+import { CheckCircle2, DollarSign, PenTool} from 'lucide-react';
 import { useTasks } from '../../context/TasksContext';
 import { useFinance } from '../../context/FinanceContext';
 import { useClients } from '../../context/ClientsContext';

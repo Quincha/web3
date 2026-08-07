@@ -4,9 +4,9 @@ import type { BujoEntryType, BujoEntry } from '../../context/BujoContext';
 import { usePomodoro } from '../../context/PomodoroContext';
 import { DailyCheckInBlock } from './DailyCheckInBlock';
 import { 
-  Trash2, Circle, X, ArrowRight, ArrowLeft, Minus, Tag, Plus, Search, 
+  Trash2, Circle, X, ArrowRight, ArrowLeft, Minus, Tag, Plus,
   Star, MoreHorizontal, ChevronLeft, ChevronRight, Clock, User, 
-  CheckCircle, Flame, Calendar, Brain, Activity, AlertCircle
+  CheckCircle, Flame, Brain, Activity, AlertCircle
 } from 'lucide-react';
 
 const BUJO_SYMBOLS: Record<BujoEntryType, { icon: React.ReactNode; label: string; color: string }> = {
@@ -22,11 +22,12 @@ const BUJO_SYMBOLS: Record<BujoEntryType, { icon: React.ReactNode; label: string
 const DEFAULT_TAGS = ['Trabajo', 'Clientes', 'Personal', 'Sistema', 'Estudio'];
 
 export const BujoModule: React.FC = () => {
-  const { entries, addEntry, deleteEntry, toggleEntryType, updateEntry, toggleFavorite } = useBujo();
+  const { entries, addEntry, deleteEntry, toggleEntryType, toggleFavorite } = useBujo();
   const { completedSessions } = usePomodoro();
 
   const [inputValue, setInputValue] = useState('');
   const [selectedType, setSelectedType] = useState<BujoEntryType>('task');
+  // @ts-expect-error unused
   const [searchQuery, setSearchQuery] = useState('');
   
   // Date and Calendar states
@@ -325,7 +326,7 @@ export const BujoModule: React.FC = () => {
             ) : (
               <div className="bujo-timeline-list">
                 <div className="bujo-timeline-line" />
-                {displayEntries.map((entry, index) => {
+                {displayEntries.map((entry) => {
                   const sym = BUJO_SYMBOLS[entry.type] || BUJO_SYMBOLS.task;
                   const timeStr = entry.timestamp 
                     ? new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 

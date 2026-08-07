@@ -9,14 +9,14 @@ import { useFinance } from '../../context/FinanceContext';
 import { useHabits } from '../../context/HabitsContext';
 import { SyncStatusBar } from '../layout/SyncStatusBar';
 import { WeatherWidget } from './WeatherWidget';
-import { CheckCircle2, Search, Bell, Mail, Sparkles, Moon, Sun, Calendar, DollarSign, Phone, CloudRain, Plus, AlertCircle, BookOpen, Check, ArrowRight } from 'lucide-react';
+import { CheckCircle2, Search, Bell, Mail, Sparkles, Moon, Sun, Calendar, DollarSign, Plus, BookOpen } from 'lucide-react';
 import { tokens } from '../../theme/tokens';
 
 export const DashboardHero: React.FC = () => {
   const { userConfig } = useUser();
   const { getTodayEntries } = useBujo();
   const { tasks, updateTask } = useTasks();
-  const { insights } = useInsights();
+  const { insights: _insights } = useInsights();
   const { stats: financeStats } = useFinance();
   const { habitsWithStats } = useHabits();
   const firstName = userConfig.userName.split(' ')[0];
@@ -112,12 +112,6 @@ export const DashboardHero: React.FC = () => {
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center'
-  };
-
-  const dividerStyle: React.CSSProperties = {
-    width: '1px',
-    background: 'linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 100%)',
-    margin: '0 8px'
   };
 
   return (

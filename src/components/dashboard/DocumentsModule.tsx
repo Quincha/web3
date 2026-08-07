@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, Folder, Plus, Link2, Paperclip, Upload, HardDrive, Trash2 } from 'lucide-react';
+import { FileText,  Plus, Link2,  Upload,  Trash2 } from 'lucide-react';
 import { useHealth } from '../../context/HealthContext';
 import { useTasks } from '../../context/TasksContext';
 

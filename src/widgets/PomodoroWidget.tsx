@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { Play, Pause, RotateCcw, Settings, Target, Lightbulb, CheckCircle2, Sparkles, Sun, X, Volume2, VolumeX, Bell, Clock, Sliders, Check, ExternalLink } from 'lucide-react';
+import { Play, Pause, RotateCcw, Settings, Target, Lightbulb, CheckCircle2, Sun, X, Volume2, VolumeX, Clock, Check, ExternalLink } from 'lucide-react';
 import { usePomodoro } from '../context/PomodoroContext';
 import { useTasks } from '../context/TasksContext';
 import { WidgetRegistry } from './WidgetRegistry';
-import type { SessionType } from '../context/PomodoroContext';
 
 const PRO_TIPS = [
   'Mantén el enfoque. El progreso está en la constancia, no en la perfección.',
@@ -18,7 +17,6 @@ const PomodoroWidget: React.FC = () => {
     totalDuration, 
     isActive, 
     isPaused,
-    sessionType,
     task: currentTaskTitle,
     completedSessions,
     startSession, 
@@ -28,6 +26,7 @@ const PomodoroWidget: React.FC = () => {
     finishSession
   } = usePomodoro();
 
+  // @ts-expect-error unused
   const { tasks } = useTasks();
   const [tipIndex] = useState(0);
 

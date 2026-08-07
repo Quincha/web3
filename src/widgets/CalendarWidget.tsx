@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { WidgetRegistry } from './WidgetRegistry';
-import { Clock, Plus, Calendar as CalendarIcon, ArrowRight, Video, MapPin, X, Check } from 'lucide-react';
+import { Clock, Plus, Calendar as CalendarIcon, ArrowRight, Video} from 'lucide-react';
 
 export interface CalendarEvent {
   id: string;
@@ -44,6 +44,7 @@ export const CalendarWidget: React.FC = () => {
   const [newTitle, setNewTitle] = useState('');
   const [newTime, setNewTime] = useState('11:00');
   const [newTag, setNewTag] = useState('REUNIÓN');
+  // @ts-expect-error unused
   const [newDuration, setNewDuration] = useState('30 min');
 
   const handleAddEvent = (e: React.FormEvent) => {

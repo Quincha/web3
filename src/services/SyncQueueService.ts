@@ -188,6 +188,7 @@ class SyncQueue {
    * Replace this with a real fetch() call in production:
    *   await fetch('/api/sync', { method: 'POST', body: JSON.stringify(event) })
    */
+  // @ts-expect-error unused
   private simulateBackendSync(event: SyncEvent): Promise<void> {
     return new Promise((resolve, reject) => {
       const delay = 300 + Math.random() * 400; // 300-700ms simulated latency

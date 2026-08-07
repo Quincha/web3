@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Calendar as CalIcon, ChevronLeft, ChevronRight, Stethoscope, CheckSquare, Clock, BookOpen, Plus, X } from 'lucide-react';
+import { Calendar as  ChevronLeft, ChevronRight, Stethoscope, CheckSquare, Clock, BookOpen, Plus, X } from 'lucide-react';
 import { useHealth } from '../../context/HealthContext';
 import { useTasks } from '../../context/TasksContext';
 import { usePomodoro } from '../../context/PomodoroContext';

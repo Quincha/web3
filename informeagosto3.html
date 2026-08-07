@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Informe de Auditoría — Quincha Systems · Revisión 4</title>
+<style>
+  :root {
+    --bg:#06080B; --card:#0C1117; --border:rgba(255,255,255,.08);
+    --text:#F8FAFC; --text2:#94A3B8; --muted:#64748B;
+    --green:#16F0B5; --cyan:#3ACDFF; --warning:#FFB84D; --danger:#FF5F73; --accent:#3EFCDB;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; line-height:1.6; padding-bottom:80px; }
+  .wrap { max-width:980px; margin:0 auto; padding:0 24px; }
+  header.hero { padding:64px 0 40px; background:radial-gradient(ellipse at top, rgba(22,240,181,.07), transparent 55%); border-bottom:1px solid var(--border); }
+  .badge { display:inline-block; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--green); border:1px solid rgba(22,240,181,.35); border-radius:999px; padding:4px 12px; margin-bottom:16px; background:rgba(22,240,181,.06); }
+  h1 { font-size:clamp(28px,5vw,42px); line-height:1.15; letter-spacing:-.02em; }
+  h1 em { font-style:normal; color:var(--accent); }
+  .sub { color:var(--text2); margin-top:12px; max-width:680px; }
+  .meta { margin-top:20px; display:flex; gap:24px; flex-wrap:wrap; font-size:13px; color:var(--muted); }
+  .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin:32px 0; }
+  .kpi { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:18px; }
+  .kpi .num { font-size:30px; font-weight:700; letter-spacing:-.02em; }
+  .kpi .lbl { font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-top:4px; }
+  .kpi.danger .num { color:var(--danger); } .kpi.warn .num { color:var(--warning); } .kpi.ok .num { color:var(--green); } .kpi.cy .num { color:var(--cyan); }
+  h2 { font-size:22px; margin:48px 0 6px; letter-spacing:-.01em; display:flex; align-items:center; gap:10px; }
+  h2 .tag { font-size:11px; font-weight:600; border-radius:6px; padding:2px 8px; }
+  h2 .t-critical { background:rgba(255,95,115,.12); color:var(--danger); }
+  h2 .t-high { background:rgba(255,184,77,.12); color:var(--warning); }
+  h2 .t-med { background:rgba(58,205,255,.12); color:var(--cyan); }
+  h2 .t-low { background:rgba(22,240,181,.12); color:var(--green); }
+  .lead { color:var(--text2); margin-bottom:18px; font-size:14px; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px 22px; margin-bottom:14px; }
+  .card h3 { font-size:15px; margin-bottom:8px; }
+  .sev { display:inline-block; font-size:11px; font-weight:700; border-radius:6px; padding:2px 8px; margin-right:8px; }
+  .sev.critical { background:rgba(255,95,115,.15); color:var(--danger); }
+  .sev.high { background:rgba(255,184,77,.15); color:var(--warning); }
+  .sev.medium { background:rgba(58,205,255,.15); color:var(--cyan); }
+  .sev.ok { background:rgba(22,240,181,.15); color:var(--green); }
+  .card p, .card li { color:var(--text2); font-size:14px; }
+  .card ul { margin:8px 0 0 18px; }
+  .card li { margin-bottom:6px; }
+  code { background:rgba(255,255,255,.06); border:1px solid var(--border); border-radius:5px; padding:1px 6px; font-size:12.5px; color:var(--accent); font-family:ui-monospace,"Cascadia Code",Consolas,monospace; }
+  .file { font-family:ui-monospace,"Cascadia Code",Consolas,monospace; font-size:12px; color:var(--cyan); }
+  .footer { text-align:center; color:var(--muted); font-size:12px; margin-top:60px; border-top:1px solid var(--border); padding-top:24px; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th,td { text-align:left; padding:9px 10px; border-bottom:1px solid var(--border); color:var(--text2); }
+  th { color:var(--text); font-size:12px; text-transform:uppercase; letter-spacing:.06em; }
+  td.num,th.num { text-align:right; font-variant-numeric:tabular-nums; }
+  .note { font-size:12px; color:var(--muted); margin-top:10px; }
+  a { color:var(--cyan); }
+  .up { color:var(--green); } .down { color:var(--danger); } .flat { color:var(--warning); }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="badge">Auditoría técnica · sin modificaciones · Revisión 4</span>
+    <h1>Informe de auditoría de sistema<br /><em>Quincha Systems</em></h1>
+    <p class="sub">Cuarta revisión (07/08/2026). El progreso anterior quedó commiteado (<code>83c40c4</code> "Resolución auditoría 1"). Esta revisión detecta el uso de un script automático (<code>fix_ts.js</code>) y code-splitting. Auditoría de solo lectura: no se modificó ningún archivo.</p>
+    <div class="meta">
+      <span>Revisión 4 · 07 · agosto · 2026</span>
+      <span>Último commit: <code>83c40c4</code> "Resolucion auditoria 1"</span>
+      <span>29 archivos modificados + 1 nuevo sin commitear</span>
+      <span>Stack: React 19 · TS 6 · Vite 8 · oxlint</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="sub" style="margin-bottom:8px;color:var(--muted);font-size:13px;">ⓘ Cambios actuales <b>sin commitear</b>: 30 archivos, más el untracked <span class="file">fix_ts.js</span>. Se comparó contra el commit <code>83c40c4</code>.</div>
+
+  <div class="kpis">
+    <div class="kpi ok"><div class="num">0</div><div class="lbl">Errores TS · build ✓</div></div>
+    <div class="kpi cy"><div class="num">41</div><div class="lbl">Warnings lint</div></div>
+    <div class="kpi ok"><div class="num">429</div><div class="lbl">KB bundle principal</div></div>
+    <div class="kpi ok"><div class="num">&gt;30</div><div class="lbl">Chunks (code-split)</div></div>
+    <div class="kpi"><div class="num">0</div><div class="lbl">Tests</div></div>
+  </div>
+
+  <h2>1. Resumen ejecutivo <span class="tag t-low">Progreso</span></h2>
+  <p class="lead">Excelente avance en calidad técnica: build OK, tsconfig vuelve a exigir código limpio, y se aplicó code-splitting que bajó el bundle principal de 632 KB a 429 KB (sin warning). El lint cayó a 41. Sin embargo, la forma de resolver (un script de reemplazo automático) deja parches frágiles (<code>@ts-expect-error</code>, imports comentados) que conviene revisar.</p>
+
+  <div class="card">
+    <h3>Evolución de las 4 revisiones</h3>
+    <table>
+      <thead><tr><th>Métrica</th><th class="num">Rev1</th><th class="num">Rev2</th><th class="num">Rev3</th><th class="num">Rev4</th><th>Tendencia</th></tr></thead>
+      <tbody>
+        <tr><td>Errores TS (build)</td><td class="num">126</td><td class="num">126</td><td class="num">0</td><td class="num">0</td><td><span class="up">✅</span></td></tr>
+        <tr><td>Warnings oxlint</td><td class="num">111</td><td class="num">111</td><td class="num">94</td><td class="num"><b>41</b></td><td><span class="up">-53</span></td></tr>
+        <tr><td>noUnusedLocals/Params</td><td class="num">on</td><td class="num">on</td><td class="num"><span class="down">off</span></td><td class="num"><b>on</b></td><td><span class="up">Reactivado ✅</span></td></tr>
+        <tr><td>Bundle principal (KB)</td><td class="num">—</td><td class="num">—</td><td class="num">632</td><td class="num"><b>429</b></td><td><span class="up">-32% ✅</span></td></tr>
+        <tr><td>Basura en raíz</td><td class="num">7</td><td class="num">7</td><td class="num">0</td><td class="num">0</td><td><span class="up">Ojo: nuevo fix_ts.js</span></td></tr>
+        <tr><td>Tests</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td><span class="flat">Sin cambio</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>2. Build y compilación <span class="tag t-low">Estable</span></h2>
+
+  <div class="card">
+    <h3><span class="sev ok">✅</span> Build compila: 0 errores TS</h3>
+    <p><code>tsc -b</code> pasa y Vite genera el bundle en ~400 ms. Se <b>reactivaron</b> <code>noUnusedLocals</code> y <code>noUnusedParameters</code> en <span class="file">tsconfig.app.json</span> (recomendación de la rev. 3), y el código se limpió para satisfacerlos. Excelente.</p>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev warning">Alto</span> Code-splitting aplicado como un parche de código</h3>
+    <p>Se importaron todos los módulos con <code>lazy()</code> + <code>Suspense</code> en <span class="file">DashboardLayout.tsx</span>, reduciendo el chunk principal a 429 KB y generando ~30 chunks. Logra el objetivo, pero:</p>
+    <ul>
+      <li>Queda un <code>fallback</code> de <code>DashboardSkeleton</code> esperado (positivo), pero también se eliminó de golpe el configurador de widgets (la lógica <code>handleShowWidget</code>/<code>hiddenWidgets</code> desapareció).</li>
+      <li>Se insertaron silenciadores: <code>// @ts-expect-error unused</code> en <span class="file">Card.tsx</span> y en <code>const { userConfig } = useUser()</code> dentro de <span class="file">DashboardLayout.tsx</span>. Si esos "errores esperados" dejan de existir, <code>@ts-expect-error</code> fallará en futuros builds.</li>
+      <li>Quedó un import comentado: <span class="file">App.tsx:1</span> <code>// import from react removed</code> (dejado por el script).</li>
+    </ul>
+  </div>
+
+  <h2>3. SCRIPT AUTOMÁTICO fix_ts.js <span class="tag t-high">Alto</span></h2>
+
+  <div class="card">
+    <h3><span class="sev high">Alto</span> Script de reemplazo automático no trackeado, sin auditar</h3>
+    <p>Aparece <span class="file">fix_ts.js</span> (sin commitear, junto a la raíz). Es un script que ejecuta <code>npx tsc -b</code>, parsea errores de tipo "unused" (TS6133/6192/6196) y reescribe los archivos <b>borrando identificadores o cometando líneas</b>.</p>
+    <ul>
+      <li><b>Riesgo</b>: es una herramienta de edición de código con regex simples, sin par-sgistros ni dry-run. Ya dejó huellas: <span class="file">App.tsx:1</span> <code>// import from react removed</code> y comentarios en <span class="file">Card.tsx</span>/<span class="file">DashboardLayout.tsx</span>.</li>
+      <li><b>Riesgo futuro</b>: al correr de nuevo, puede comentar líneas de imports completas o romper formato. No debe quedar en el repo, ni menos ejecutarse sobre código sin revisión.</li>
+      <li>Recomendación: eliminar <span class="file">fix_ts.js</span> del proyecto (o moverlo a scripts/documentación) y en su lugar un <code>eslint --fix</code> / limpieza guiada.</li>
+    </ul>
+  </div>
+
+  <h2>4. Lint y calidad de código <span class="tag t-low">Mejor</span></h2>
+
+  <div class="card">
+    <h3><span class="sev ok">Mejorado</span> 41 warnings (era 94 en rev 3)</h3>
+    <p>Se redujeron a menos de la mitad. Composición actual:</p>
+    <ul>
+      <li><b>~17 × <code>no-unused-vars</code></b>: concentrados en <span class="file">WidgetContainer.tsx</span> (4), <span class="file">UserContext.tsx</span> (2) y repartidos en Health/Documents/Pomodoro/etc.</li>
+      <li><b>~12 × <code>react/only-export-components</code></b> (Fast Refresh en contexts) y <b>~8 × <code>react-hooks/exhaustive-deps</code></b> en <span class="file">PomodoroContext.tsx</span>/<span class="file">UserContext.tsx</span>.</li>
+      <li>Exiguos: <code>no-useless-escape</code>, etc.</li>
+    </ul>
+    <p class="note">Los avisos <code>exhaustive-deps</code> siguen siendo prioridad funcional (efectos con dependencias incompletas pueden usar cierres viejos).</p>
+  </div>
+
+  <h2>5. Arquitectura y rendimiento <span class="tag t-low">Mejor</span></h2>
+
+  <div class="card">
+    <h3><span class="sev ok">✅</span> Code-splitting: bundle principal 429 KB (de 632 KB) — recomendación de rev. 3 cumplida</h3>
+    <p>El code-split resolvió el warning de "chunk >500 kB". Módulos grandes (Bujo ~30 KB, Finance ~27 KB, Tasks ~16 KB, Statistics ~12 KB) quedaron en chunks lazy. Correcto.</p>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev medium">Media</span> Navegación: strings mágicos siguen</h3>
+    <p>Aún se navega con <code>change-view</code>/<code>navigate-to-module</code> con <code>detail</code> en strings no tipados (<code>'pomodoro'</code>, <code>'finanzas'</code>…), aunque ahora centralizado en <span class="file">TransitionContext.tsx</span>. Recomendación recurrente: un enum de vistas para evitar typos silenciosos.</p>
+  </div>
+
+  <h2>6. Persistencia y seguridad <span class="tag t-high">Sin cambios</span></h2>
+
+  <div class="card">
+    <ul>
+      <li><b>Sin backend real</b>: ~20 claves de localStorage (<code>quincha_*</code>); el "sync" sigue siendo simulado.</li>
+      <li><b>Login decorativo</b>: <span class="file">LoginForm.tsx</span> acepta cualquier credencial; rol <code>admin</code> y usuario por defecto hardcodeados.</li>
+      <li><b>Datos sensibles en claro</b>: salud, finanzas, mensajes sin cifrar.</li>
+      <li>URLs falsas de S3 en <span class="file">DocumentsModule.tsx</span> siguen presentes.</li>
+    </ul>
+  </div>
+
+  <h2>7. Repositorio e higiene <span class="tag t-med">Atención</span></h2>
+
+  <div class="card">
+    <h3><span class="sev high">Alto</span> Trabajo sin commitear otra vez + tools</h3>
+    <ul>
+      <li><b>29 archivos modificados + 1 nuevo (<code>fix_ts.js</code>) sin commitear</b>. Igual que en la revisión anterior, recomiendo guardarlo ya.</li>
+      <li>El commit <code>83c40c4</code> ya atrapó el progreso anterior (basura removida, build, nuevo módulos). Bien.</li>
+      <li>El nuevo <span class="file">fix_ts.js</span> es un artefacto de tooling que no debería vivir en la raíz del repo (recomendación de alojarlo en <code>scripts/</code> con validación, o descartarlo).</li>
+      <li>Quedan específicos de la plantilla: <span class="file">README.md</span> por defecto, <span class="file">react.svg</span>, <span class="file">vite.svg</span>.</li>
+    </ul>
+  </div>
+
+  <h2>8. Dependencias <span class="tag t-low">Baja</span></h2>
+  <div class="card">
+    <ul>
+      <li><code>lucide-react@1.26.0</code> (versión atípica), React 19.2, Vite 8.1, TS 6, gsap 3.15. No ejecuté <code>npm audit</code> (solo-lectura).</li>
+      <li>Sin nuevos problemas de dependencias detectados.</li>
+    </ul>
+  </div>
+
+  <h2>9. Plan de acción priorizado</h2>
+
+  <div class="card">
+    <table>
+      <thead><tr><th>#</th><th>Prioridad</th><th>Acción</th></tr></thead>
+      <tbody>
+        <tr><td><b>1</b></td><td class="num">Crítica</td><td><b>Commitear</b> los 30 archivos actuales para no perder avance; y decidir el destino de <code>fix_ts.js</code>.</td></tr>
+        <tr><td><b>2</b></td><td class="num">Alta</td><td>Revisar manualmente los parches del script: <code>// @ts-expect-error</code> en Card y DashboardLayout, y el import comentado en App.tsx; limpiarlos de forma correcta.</td></tr>
+        <tr><td><b>3</b></td><td class="num">Alta</td><td>Eliminar o mover <code>fix_ts.js</code> del repo; usar <code>eslint --fix</code>/limpieza guiada.</td></tr>
+        <tr><td><b>4</b></td><td class="num">Media</td><td>Tipar la navegación global con enum (eliminar strings mágicos).</td></tr>
+        <tr><td><b>5</b></td><td class="num">Media</td><td>Añadir backend real o marcar demo; versionar esquemas de localStorage; cifrar datos sensibles.</td></tr>
+        <tr><td><b>6</b></td><td class="num">Media</td><td>Limpieza de C<code>react-hooks/exhaustive-deps</code> pendientes.</td></tr>
+        <tr><td><b>7</b></td><td class="num">Media</td><td>Agregar Vitest + tests de contexts/utils y CI (lint+build).</td></tr>
+        <tr><td><b>8</b></td><td class="num">Baja</td><td>Higiene de repo: README real, remover assets de plantilla, mover scripts a <code>scripts/</code>.</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Estimaciones relativas y subjetivas. La prioridad 1 y 2 (commit + revisar parches del script) son las que desbloquean un repositorio sano y a prueba de regresiones.</p>
+  </div>
+
+  <div class="footer">
+    Informe generado por auditoría de solo lectura — revisión 4 · 07/08/2026 · Quincha Systems (React 19 + TS + Vite).<br />
+    No se modificó ningún archivo del sistema durante la auditoría.
+  </div>
+
+</div>
+</body>
+</html>

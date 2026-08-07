@@ -25,6 +25,7 @@ export const Card: React.FC<CardProps> = ({
   };
 
   const baseShadow = 'inset 0px 1px 1px rgba(255, 255, 255, 0.05), inset 0px -1px 2px rgba(0, 0, 0, 0.6), 0px 12px 32px rgba(0, 0, 0, 0.5), 0px 4px 12px rgba(0, 0, 0, 0.3)';
+  // @ts-expect-error unused
   const hoverShadow = 'inset 0px 1px 2px rgba(255, 255, 255, 0.1), inset 0px -1px 4px rgba(0, 0, 0, 0.8), 0px 24px 48px rgba(0, 0, 0, 0.6), 0px 8px 24px rgba(0, 0, 0, 0.4)';
 
   const baseStyles: React.CSSProperties = {

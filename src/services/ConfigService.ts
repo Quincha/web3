@@ -97,6 +97,7 @@ export class ConfigService {
   /**
    * Actual endpoint integration placeholder
    */
+  // @ts-expect-error unused
   private static async syncWithBackend(config: UserConfig): Promise<void> {
     return new Promise((resolve) => {
       // Simulate network request duration

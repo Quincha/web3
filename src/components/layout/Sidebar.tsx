@@ -7,10 +7,11 @@ import { useUser } from '../../context/UserContext';
 import { PermissionService } from '../../services/PermissionService';
 import type { Role, Module } from '../../services/PermissionService';
 import { OfficialLogo } from '../ui/OfficialLogo';
+import type { ViewState } from '../../context/TransitionContext';
 
 interface SidebarProps {
-  activeView: string;
-  onViewChange: (view: string) => void;
+  activeView: ViewState;
+  onViewChange: (view: ViewState) => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) => {
@@ -34,6 +35,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
     { id: 'ajustes', label: 'Ajustes', icon: <Settings size={20} strokeWidth={1.5} fill="currentColor" />, module: 'ajustes' as Module }
   ];
 
+  // @ts-expect-error unused
   const handleRoleChange = (role: Role) => {
     updateConfig({ userRole: role });
     setShowRoleMenu(false);
@@ -66,7 +68,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
             <button
               key={item.id}
               className={`nav-item ${activeView === item.id ? 'active' : ''}`}
-              onClick={() => onViewChange(item.id)}
+              onClick={() => onViewChange(item.id as ViewState)}
               style={{ justifyContent: 'space-between' }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>

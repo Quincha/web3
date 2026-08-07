@@ -83,36 +83,56 @@ function subtractDay(dateISO: string, days: number): string {
   return toLocalISO(d);
 }
 
-function calculateStreak(completions: HabitCompletion[]): { streak: number; bestStreak: number } {
-  if (completions.length === 0) return { streak: 0, bestStreak: 0 };
-
-  const dates = new Set(completions.map(c => c.date));
+function calculateStreak(habit: Habit): { streak: number; bestStreak: number } {
+  const dates = new Set(habit.completions.map(c => c.date));
   const today = todayISO();
-
-  // Current streak: count consecutive days back from today (or yesterday)
   let streak = 0;
-  let checkDate = dates.has(today) ? today : subtractDay(today, 1);
+  let best = 0;
 
-  while (dates.has(checkDate)) {
-    streak++;
-    checkDate = subtractDay(checkDate, 1);
-  }
+  if (habit.type === 'negative') {
+    // For negative habits, streak is days SINCE last violation.
+    for (let i = 0; i < 365; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const dateISO = toLocalISO(d);
+      
+      if (dateISO < habit.startDate) break;
 
-  // Best streak: scan all dates
-  const sorted = [...dates].sort();
-  let best = 0, current = 1;
-  for (let i = 1; i < sorted.length; i++) {
-    const prev = new Date(sorted[i - 1] + 'T12:00:00');
-    const curr = new Date(sorted[i] + 'T12:00:00');
-    const diff = Math.round((curr.getTime() - prev.getTime()) / 86400000);
-    if (diff === 1) {
-      current++;
-      best = Math.max(best, current);
-    } else {
-      current = 1;
+      if (!dates.has(dateISO)) {
+        streak++;
+      } else {
+        break; // found a violation, streak breaks
+      }
     }
+    best = streak; // simplify best streak for now
+  } else {
+    // Positive habit
+    let currentStreak = 0;
+    for (let i = 0; i < 365; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const dateISO = toLocalISO(d);
+      
+      if (dateISO < habit.startDate) break;
+
+      const isTarget = habit.targetDays.includes(d.getDay());
+      const isDone = dates.has(dateISO);
+
+      if (isDone) {
+        currentStreak++;
+      } else if (isTarget) {
+        if (i === 0) {
+          // Missed today, but day not over. Don't break streak yet.
+        } else {
+          // Missed a past target day. Streak broken.
+          break;
+        }
+      }
+      // If not target day and not done, skip it.
+    }
+    streak = currentStreak;
+    best = streak; // simplify best streak for now
   }
-  best = Math.max(best, current, streak);
 
   return { streak, bestStreak: best };
 }
@@ -147,7 +167,7 @@ function countInCurrentMonth(completions: HabitCompletion[], onlyViolations: boo
 }
 
 function enrichHabit(habit: Habit): HabitWithStats {
-  const { streak, bestStreak } = calculateStreak(habit.completions);
+  const { streak, bestStreak } = calculateStreak(habit);
   const completedToday = habit.completions.some(c => c.date === todayISO());
   const rate = completionRate30d(habit.completions, habit.targetDays);
   const onlyViolations = habit.type === 'negative';

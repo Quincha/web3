@@ -135,7 +135,7 @@ export const BujoProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const tagsSet = new Set<string>(tags);
 
     // Parse duration: e.g. "(60 min)" or "[60 min]" or "60 min" (if at the end)
-    const durationMatch = parsedContent.match(/[\(\[](?:(\d+\s*(?:min|h|m|horas|minutos))|(\d+m))[\)\]]/i);
+    const durationMatch = parsedContent.match(/[(\[](?:(\d+\s*(?:min|h|m|horas|minutos))|(\d+m))[)\]]/i);
     if (durationMatch) {
       duration = durationMatch[1] || durationMatch[2];
       parsedContent = parsedContent.replace(durationMatch[0], '').trim();

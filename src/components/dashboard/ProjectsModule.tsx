@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Briefcase, Plus, FolderGit2, Calendar, Target, ChevronRight } from 'lucide-react';
+import { Briefcase, Plus, FolderGit2, Calendar, Target} from 'lucide-react';
 import { useTasks } from '../../context/TasksContext';
 import { ProjectSidebar } from './ProjectSidebar';
 import { tokens } from '../../theme/tokens';

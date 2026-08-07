@@ -1,11 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Sidebar } from './Sidebar';
 import { DashboardSkeleton } from '../ui/SkeletonLoader';
 import { DashboardHero } from '../dashboard/DashboardHero';
-import { WidgetRegistry } from '../../widgets/WidgetRegistry';
 import { FinanceSummaryBanner } from '../finance/dashboard/FinanceSummaryBanner';
 import { useUser } from '../../context/UserContext';
-import { Plus } from 'lucide-react';
 import '../../Dashboard.css';
 
 // Make sure all widgets are registered by importing them
@@ -15,28 +13,29 @@ import PomodoroWidget from '../../widgets/PomodoroWidget';
 import { BujoWidget } from '../../widgets/BujoWidget';
 import { HabitsWidget } from '../../widgets/HabitsWidget';
 import { CalendarWidget } from '../../widgets/CalendarWidget';
-import { PomodoroModule } from '../dashboard/PomodoroModule';
-import { BujoModule } from '../dashboard/BujoModule';
-import { HealthModule } from '../dashboard/HealthModule';
-import { TasksModule } from '../dashboard/TasksModule';
-import { HabitsModule } from '../dashboard/HabitsModule';
-import { CalendarModule } from '../dashboard/CalendarModule';
-import { DocumentsModule } from '../dashboard/DocumentsModule';
-import { FinanceModule } from '../finance/FinanceModule';
-import { ProjectsModule } from '../dashboard/ProjectsModule';
-import { ActivityModule } from '../dashboard/ActivityModule';
-import { ClientsModule } from '../dashboard/ClientsModule';
-import { ShoppingModule } from '../dashboard/ShoppingModule';
-import { StatisticsModule } from '../dashboard/StatisticsModule';
-import { MessagesModule } from '../dashboard/MessagesModule';
-import { AjustesModule } from '../dashboard/AjustesModule';
+const PomodoroModule = lazy(() => import('../dashboard/PomodoroModule').then(m => ({ default: m.PomodoroModule })));
+const BujoModule = lazy(() => import('../dashboard/BujoModule').then(m => ({ default: m.BujoModule })));
+const HealthModule = lazy(() => import('../dashboard/HealthModule').then(m => ({ default: m.HealthModule })));
+const TasksModule = lazy(() => import('../dashboard/TasksModule').then(m => ({ default: m.TasksModule })));
+const HabitsModule = lazy(() => import('../dashboard/HabitsModule').then(m => ({ default: m.HabitsModule })));
+const CalendarModule = lazy(() => import('../dashboard/CalendarModule').then(m => ({ default: m.CalendarModule })));
+const DocumentsModule = lazy(() => import('../dashboard/DocumentsModule').then(m => ({ default: m.DocumentsModule })));
+const FinanceModule = lazy(() => import('../finance/FinanceModule').then(m => ({ default: m.FinanceModule })));
+const ProjectsModule = lazy(() => import('../dashboard/ProjectsModule').then(m => ({ default: m.ProjectsModule })));
+const ActivityModule = lazy(() => import('../dashboard/ActivityModule').then(m => ({ default: m.ActivityModule })));
+const ClientsModule = lazy(() => import('../dashboard/ClientsModule').then(m => ({ default: m.ClientsModule })));
+const ShoppingModule = lazy(() => import('../dashboard/ShoppingModule').then(m => ({ default: m.ShoppingModule })));
+const StatisticsModule = lazy(() => import('../dashboard/StatisticsModule').then(m => ({ default: m.StatisticsModule })));
+const MessagesModule = lazy(() => import('../dashboard/MessagesModule').then(m => ({ default: m.MessagesModule })));
+const AjustesModule = lazy(() => import('../dashboard/AjustesModule').then(m => ({ default: m.AjustesModule })));
 import { CommandPalette } from './CommandPalette';
 import gsap from 'gsap';
 
 import { useTransition } from '../../context/TransitionContext';
 
 export const DashboardLayout: React.FC = () => {
-  const { userConfig, updateConfig } = useUser();
+  // @ts-expect-error unused
+  const { userConfig } = useUser();
   const { currentView: activeView, navigateTo } = useTransition();
   const [isLoading, setIsLoading] = useState(true);
 
@@ -59,14 +58,6 @@ export const DashboardLayout: React.FC = () => {
     return () => clearTimeout(timer);
   }, [activeView]);
 
-  const handleShowWidget = (id: string) => {
-    const updated = userConfig.widgets.map(w => 
-      w.id === id ? { ...w, visible: true } : w
-    );
-    updateConfig({ widgets: updated });
-  };
-
-  const hiddenWidgets = userConfig.widgets.filter(w => !w.visible);
 
   const renderDashboardHome = () => {
     if (isLoading) {
@@ -145,23 +136,25 @@ export const DashboardLayout: React.FC = () => {
       {/* Main Container Frame */}
       <div className="dashboard-main-frame" style={{ position: 'relative' }}>
         <main className="dashboard-body-scroller">
-          {activeView === 'dashboard' ? renderDashboardHome() : 
-           activeView === 'pomodoro' ? <PomodoroModule /> :
-           activeView === 'bujo' ? <BujoModule /> :
-           activeView === 'health' ? <HealthModule /> :
-           activeView === 'tareas' ? <TasksModule /> :
-           activeView === 'habitos' ? <HabitsModule /> :
-           activeView === 'calendario' ? <CalendarModule /> :
-           activeView === 'documentos' ? <DocumentsModule /> :
-           activeView === 'finanzas' ? <FinanceModule /> :
-           activeView === 'shopping' ? <ShoppingModule /> :
-           activeView === 'proyectos' ? <ProjectsModule /> :
-           activeView === 'actividad' ? <ActivityModule /> :
-           activeView === 'clientes' ? <ClientsModule /> :
-           activeView === 'estadisticas' ? <StatisticsModule /> :
-           activeView === 'mensajes' ? <MessagesModule /> :
-           activeView === 'ajustes' ? <AjustesModule /> :
-           renderModulePlaceholder(activeView)}
+          <Suspense fallback={<DashboardSkeleton />}>
+            {activeView === 'dashboard' ? renderDashboardHome() : 
+             activeView === 'pomodoro' ? <PomodoroModule /> :
+             activeView === 'bujo' ? <BujoModule /> :
+             activeView === 'health' ? <HealthModule /> :
+             activeView === 'tareas' ? <TasksModule /> :
+             activeView === 'habitos' ? <HabitsModule /> :
+             activeView === 'calendario' ? <CalendarModule /> :
+             activeView === 'documentos' ? <DocumentsModule /> :
+             activeView === 'finanzas' ? <FinanceModule /> :
+             activeView === 'shopping' ? <ShoppingModule /> :
+             activeView === 'proyectos' ? <ProjectsModule /> :
+             activeView === 'actividad' ? <ActivityModule /> :
+             activeView === 'clientes' ? <ClientsModule /> :
+             activeView === 'estadisticas' ? <StatisticsModule /> :
+             activeView === 'mensajes' ? <MessagesModule /> :
+             activeView === 'ajustes' ? <AjustesModule /> :
+             renderModulePlaceholder(activeView)}
+          </Suspense>
         </main>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Circle, CheckCircle2, Plus, Clock, ArrowRight, Tag, Folder } from 'lucide-react';
+import { Circle,  Plus, Clock, ArrowRight,  Folder } from 'lucide-react';
 import { WidgetRegistry } from './WidgetRegistry';
 import { useTasks } from '../context/TasksContext';
 import type { Priority } from '../context/TasksContext';

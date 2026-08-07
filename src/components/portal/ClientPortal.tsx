@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Heart, Briefcase, Plus, Send, CheckCircle2, ChevronRight, Laptop, Star } from 'lucide-react';
+import {    Send, CheckCircle2,  Laptop, Star } from 'lucide-react';
 import './ClientPortal.css';
 import { OfficialLogo } from '../ui/OfficialLogo';
 
@@ -17,6 +17,7 @@ interface ClientRequest {
 
 export const ClientPortal: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'request' | 'tracking' | 'portfolio'>('request');
+  // @ts-expect-error unused
   const [availability, setAvailability] = useState<'available' | 'limited' | 'busy'>('available');
   
   // Request Form States
@@ -265,7 +266,7 @@ export const ClientPortal: React.FC = () => {
                 <div className="tracking-timeline-flow" style={{ display: 'flex', justifyContent: 'space-between', position: 'relative', marginTop: '32px', marginBottom: '24px', padding: '0 20px' }}>
                   <div style={{ position: 'absolute', top: '10px', left: '40px', right: '40px', height: '2px', background: 'var(--border-color)', zIndex: 1 }} />
                   
-                  {['received', 'reviewing', 'progress', 'completed'].map((st, idx, arr) => {
+                  {['received', 'reviewing', 'progress', 'completed'].map((st, idx) => {
                     const statuses = ['received', 'reviewing', 'progress', 'completed'];
                     const currentIdx = statuses.indexOf(trackedOrder.status);
                     const isDone = idx <= currentIdx;

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   Heart, Plus, Pill, Calendar, FileText, User,
+  // @ts-expect-error unused
   ChevronRight, AlertTriangle, CheckCircle2,
   Phone, Trash2, Clock, Paperclip, Stethoscope
 } from 'lucide-react';

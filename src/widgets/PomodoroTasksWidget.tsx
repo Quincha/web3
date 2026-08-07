@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Settings, Play, CheckCircle2, Circle, Pause, Square } from 'lucide-react';
+import { Settings, Play,  Circle, Pause, Square } from 'lucide-react';
 import { usePomodoro } from '../context/PomodoroContext';
 import { useTasks } from '../context/TasksContext';
 import { tokens } from '../theme/tokens';

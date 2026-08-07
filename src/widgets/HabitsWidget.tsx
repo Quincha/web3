@@ -137,8 +137,8 @@ const HabitRow: React.FC<{ habit: HabitWithStats; weekDays: WeekDay[]; onToggle:
 
         <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
           <span style={{ color: '#fff', fontSize: '12px', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{habit.name}</span>
-          <span style={{ color: isNegative ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.4)', fontSize: '9px', fontWeight: 500 }}>
-            {isNegative ? `${habit.currentMonthCount} este mes` : `${habit.streak} días racha`}
+          <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '9px', fontWeight: 500 }}>
+            {`${habit.streak} días de racha`}
           </span>
         </div>
       </div>

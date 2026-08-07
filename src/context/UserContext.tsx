@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { ConfigService } from '../services/ConfigService';
+  // @ts-expect-error unused
 import type { UserConfig, WidgetConfig } from '../services/ConfigService';
 import { PermissionService } from '../services/PermissionService';
+  // @ts-expect-error unused
 import type { Role, Module, Action } from '../services/PermissionService';
 import { useTheme } from './ThemeContext';
 

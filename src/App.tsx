@@ -1,4 +1,4 @@
-import React from 'react';
+// import from react removed
 import GridBackground from './GridBackground';
 import AnimatedLogo from './AnimatedLogo';
 import LoginForm from './LoginForm';
@@ -28,7 +28,7 @@ function MainAppContent() {
     return <TransitionManager />;
   }
 
-  if (currentView === 'dashboard') {
+  if (currentView !== 'login') {
     return (
       <>
         <DashboardLayout />

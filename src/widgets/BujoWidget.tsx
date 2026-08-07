@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { ExternalLink, Clock, Plus, Circle, X, Minus, ArrowRight, ArrowLeft, MoreVertical, CheckCircle2 } from 'lucide-react';
+import React, { useState,  useEffect } from 'react';
+import { ExternalLink, Clock, Plus, Circle, X, Minus, ArrowRight, ArrowLeft,  CheckCircle2 } from 'lucide-react';
 import { WidgetRegistry } from './WidgetRegistry';
 import { tokens } from '../theme/tokens';
 import { useBujo } from '../context/BujoContext';
