@@ -117,7 +117,7 @@ export const ClientsModule: React.FC = () => {
       {/* Columna Derecha: Historial (Solo visible si hay un cliente seleccionado) */}
       {selectedClientId && selectedClient && clientHistory && (
         <div style={{ flex: '2', display: 'flex', flexDirection: 'column', animation: 'fadeInRight 0.3s ease' }}>
-          <Card padding="xl" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+          <Card padding="lg" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
             <div style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '24px', marginBottom: '24px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
                 <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: `${selectedClient.color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: selectedClient.color, fontWeight: 700, fontSize: '20px' }}>

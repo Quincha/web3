@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Informe de Auditoría — Quincha Systems · Agosto 2026</title>
+<style>
+  :root {
+    --bg: #06080B;
+    --card: #0C1117;
+    --card2: #111821;
+    --border: rgba(255,255,255,.08);
+    --text: #F8FAFC;
+    --text2: #94A3B8;
+    --muted: #64748B;
+    --green: #16F0B5;
+    --cyan: #3ACDFF;
+    --warning: #FFB84D;
+    --danger: #FF5F73;
+    --accent: #3EFCDB;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.6;
+    padding-bottom: 80px;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 24px; }
+  header.hero {
+    padding: 64px 0 40px;
+    background: radial-gradient(ellipse at top, rgba(22,240,181,.07), transparent 55%);
+    border-bottom: 1px solid var(--border);
+  }
+  .badge {
+    display:inline-block; font-size:12px; letter-spacing:.12em; text-transform:uppercase;
+    color: var(--green); border:1px solid rgba(22,240,181,.35); border-radius:999px;
+    padding:4px 12px; margin-bottom:16px; background: rgba(22,240,181,.06);
+  }
+  h1 { font-size: clamp(28px, 5vw, 42px); line-height:1.15; letter-spacing:-.02em; }
+  h1 em { font-style:normal; color: var(--accent); }
+  .sub { color: var(--text2); margin-top:12px; max-width:640px; }
+  .meta { margin-top:20px; display:flex; gap:24px; flex-wrap:wrap; font-size:13px; color: var(--muted); }
+  .kpis { display:grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap:14px; margin:32px 0; }
+  .kpi { background: var(--card); border:1px solid var(--border); border-radius:14px; padding:18px; }
+  .kpi .num { font-size:30px; font-weight:700; letter-spacing:-.02em; }
+  .kpi .lbl { font-size:12px; text-transform:uppercase; letter-spacing:.08em; color: var(--muted); margin-top:4px; }
+  .kpi.danger .num { color: var(--danger); }
+  .kpi.warn .num { color: var(--warning); }
+  .kpi.ok .num { color: var(--green); }
+  h2 {
+    font-size:22px; margin:48px 0 6px; letter-spacing:-.01em;
+    display:flex; align-items:center; gap:10px;
+  }
+  h2 .tag { font-size:11px; font-weight:600; border-radius:6px; padding:2px 8px; }
+  h2 .t-critical { background:rgba(255,95,115,.12); color:var(--danger); }
+  h2 .t-high { background:rgba(255,184,77,.12); color:var(--warning); }
+  h2 .t-med { background:rgba(58,205,255,.12); color:var(--cyan); }
+  h2 .t-low { background:rgba(22,240,181,.12); color:var(--green); }
+  .lead { color: var(--text2); margin-bottom:18px; font-size:14px; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px 22px; margin-bottom:14px; }
+  .card h3 { font-size:15px; margin-bottom:8px; }
+  .sev { display:inline-block; font-size:11px; font-weight:700; border-radius:6px; padding:2px 8px; margin-right:8px; vertical-align:1px; }
+  .sev.critical { background:rgba(255,95,115,.15); color:var(--danger); }
+  .sev.high { background:rgba(255,184,77,.15); color:var(--warning); }
+  .sev.medium { background:rgba(58,205,255,.15); color:var(--cyan); }
+  .sev.low { background:rgba(22,240,181,.15); color:var(--green); }
+  .card p, .card li { color:var(--text2); font-size:14px; }
+  .card ul { margin:8px 0 0 18px; }
+  .card li { margin-bottom:6px; }
+  code {
+    background:rgba(255,255,255,.06); border:1px solid var(--border); border-radius:5px;
+    padding:1px 6px; font-size:12.5px; color:var(--accent); font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  }
+  .file { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size:12px; color:var(--cyan); }
+  .footer { text-align:center; color:var(--muted); font-size:12px; margin-top:60px; border-top:1px solid var(--border); padding-top:24px; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { text-align:left; padding:9px 10px; border-bottom:1px solid var(--border); color:var(--text2); }
+  th { color:var(--text); font-size:12px; text-transform:uppercase; letter-spacing:.06em; }
+  td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; }
+  .pct { display:inline-block; height:6px; border-radius:99px; background:rgba(255,255,255,.08); width:120px; vertical-align:middle; margin-left:8px; }
+  .pct span { display:block; height:6px; border-radius:99px; background:var(--danger); }
+  .note { font-size:12px; color:var(--muted); margin-top:10px; }
+  a { color: var(--cyan); }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="badge">Auditoría técnica · sin modificaciones · 2ª revisión</span>
+    <h1>Informe de auditoría de sistema<br /><em>Quincha Systems</em></h1>
+    <p class="sub">Revisión integral de código, compilación, dependencias, persistencia, seguridad y arquitectura. Segunda auditoría (07/08/2026) con comparativa contra la primera. No se modificó ni movió ningún archivo del sistema. Documento entregable y de solo lectura.</p>
+    <div class="meta">
+      <span>Revisión 2 · fecha: 07 · agosto · 2026</span>
+      <span>Rama: master (git)</span>
+      <span>Último commit: <code>d0a1ef8</code> — "agosto 2"</span>
+      <span>5 archivos modificados sin commitear + 6 sin trackear</span>
+      <span>Stack: React 19 · TypeScript 6 · Vite 8 · oxlint</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="kpis">
+    <div class="kpi danger"><div class="num">126</div><div class="lbl">Errores TS (build roto)</div></div>
+    <div class="kpi warn"><div class="num">111</div><div class="lbl">Warnings de lint</div></div>
+    <div class="kpi ok"><div class="num">1</div><div class="lbl">API real (open-meteo)</div></div>
+    <div class="kpi"><div class="num">0</div><div class="lbl">Tests / framework test</div></div>
+    <div class="kpi"><div class="num">~18</div><div class="lbl">Claves en localStorage</div></div>
+  </div>
+
+  <div class="lead">El build de producción <b>falla</b> (<code>npm run build</code> termina con 126 errores TS en ~35 archivos). La app solo corre en modo desarrollo. Se listan a continuación los hallazgos ordenados por severidad.</div>
+
+  <h2>1. Build y compilación <span class="tag t-critical">Crítico</span></h2>
+  <p class="lead">El proyecto no compila a producción. Cualquier deploy actual es imposible sin reparar el compilador.</p>
+
+  <div class="card">
+    <h3><span class="sev critical">Crítico</span> `npm run build` falla — 126 errores de TypeScript</h3>
+    <p>La secuencia <code>tsc -b &amp;&amp; vite build</code> aborta en el paso <code>tsc</code>. Errores agrupados por causa raíz:</p>
+    <ul>
+      <li><b>Imports/variables sin uso (~70% de los errores):</b> <code>noUnusedLocals</code>/<code>noUnusedParameters</code> están activos en <span class="file">tsconfig.app.json</span> y decenas de archivos declaran imports muertos (restos de refactors). Ejemplos: <span class="file">DashboardLayout.tsx</span> (10), <span class="file">TasksModule.tsx</span> (10), <span class="file">DashboardHero.tsx</span> (8), <span class="file">WidgetContainer.tsx</span>.</li>
+      <li><b>Paleta de colores incompleta:</b> <code>colors.accent</code> en <span class="file">src/theme/colors.ts</span> solo define <code>green/bright/cyan/danger/warning</code>, pero los componentes usan <code>colors.accent.primary</code>, <code>.red</code> y <code>.orange</code>. Afecta a <span class="file">ClientsModule.tsx</span>, <span class="file">ProjectsModule.tsx</span>, <span class="file">TaskDetailSidebar.tsx</span>, <span class="file">ProjectsWidget.tsx</span>. Además de romper TS, el estilo renderiza colores indefinidos en runtime.</li>
+      <li><b>Tipos desalineados:</b> <span class="file">DailyCheckInBlock.tsx</span> accede a props sobre un objeto vacío <code>{}</code> (15 errores); <span class="file">Card.tsx</span> no acepta <code>size="xl"</code>; <code>Subtask</code> requiere <code>createdAt</code> que no se provee en <span class="file">TaskDetailSidebar.tsx</span>; <code>SyncEventType</code> no contempla <code>CREATE_CLIENT</code>/<code>UPDATE_CLIENT</code>/<code>SET_HABIT_STATE</code> (Contexts los envían); <code>toggleHabitCompletion</code> no existe en <code>HabitsContextType</code>.</li>
+      <li><b>Faltan tokens de tema:</b> <code>ConfigService.ts</code> usa <code>NodeJS.Timeout</code> sin el tipo global correspondiente; <code>UserContext.tsx</code> importa tipos sin uso.</li>
+    </ul>
+    <p class="note">Recomendación: no mitigar uno a uno; correr <code>npx tsc --noEmit</code> iterativamente, activar <code>strict: true</code> en tsconfig y limpiar imports muertos (oxlint los marca todos).</p>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev high">Alto</span> tsconfig sin modo estricto</h3>
+    <p><span class="file">tsconfig.app.json</span> no tiene <code>"strict": true</code>. Con 126 errores ya detectados, habilitar strict de golpe escalará la deuda, pero sin él el tipado no protege de errores de runtime. Se recomienda activarlo junto con la limpieza de la fase 1.</p>
+  </div>
+
+  <h2>2. Lint y calidad de código <span class="tag t-high">Alto</span></h2>
+
+  <div class="card">
+    <h3><span class="sev high">Alto</span> 111 warnings de oxlint</h3>
+    <p>El 100% son <code>no-unused-vars</code> y algunos <code>react/only-export-components</code> (afecta Fast Refresh). Señalan imports de iconos, variables y handlers declarados pero jamás usados, evidencia de funciones a medio implementar.</p>
+    <ul>
+      <li><b>Lógica muerta en <span class="file">WidgetContainer.tsx</span>:</b> <code>handleHide</code>, <code>handleMove</code>, <code>handleToggleSize</code> existen pero no se invocan; el parámetro <code>name</code> no se usa. La rejilla de widgets parece estar a medias (ver sección 6).</li>
+      <li><b><span class="file">DashboardLayout.tsx</span>:</b> importa 7 widgets sin usar, <code>setShowConfigurator</code> y <code>sortedWidgets</code> muertos — el configurador de widgets está inconcluso.</li>
+      <li><b><span class="file">Sidebar.tsx</span>:</b> <code>handleRoleChange</code> no se usa (cambio de rol a medio implementar).</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev medium">Media</span> 0 tests automatizados</h3>
+    <p>No existe script <code>test</code>, ni archivos <code>*.test.*</code>, ni framework (Jest/Vitest). Con 13 contextos y ~60 componentes de UI, cualquier refactor (incluido arreglar el build) es de alto riesgo sin red de pruebas.</p>
+  </div>
+
+  <h2>3. Persistencia y sincronización <span class="tag t-high">Alto</span></h2>
+
+  <div class="card">
+    <h3><span class="sev high">Alto</span> Toda la "base de datos" es localStorage — sin backend real</h3>
+    <p>Se identificaron <b>~18 claves</b> de localStorage (<code>quincha_tasks</code>, <code>quincha_habits</code>, <code>quincha_bujo_*</code>, <code>quincha_health_data</code>, <code>quincha_finance_*</code>, <code>quincha_clients</code>, <code>quincha_messages</code>, etc.) y ninguna llamada <code>fetch</code> real de negocio. Implicaciones:</p>
+    <ul>
+      <li>Los datos viven solo en el navegador de cada usuario: se pierden con limpiar caché/cambiar dispositivo, y no hay respaldo.</li>
+      <li><span class="file">SyncQueueService.ts</span> y <span class="file">ConfigService.ts</span> tienen arquitectura offline-first pero con backend <b>simulado</b> (setTimeout + 2% de fallos aleatorios). Prometen "sync" que no ocurre.</li>
+      <li><b>Fuga de eventos no sincronizables:</b> <code>SyncEventType</code> no incluye <code>CREATE_CLIENT</code>, <code>UPDATE_CLIENT</code>, <code>SET_HABIT_STATE</code> que <span class="file">ClientsContext</span> y <span class="file">HabitsContext</span> sí envían — error de compilación y, de compilar, esos eventos se perderían.</li>
+      <li>La cola retiene eventos pendientes indefinidamente y los reintenta máximo 3 veces, pero el "envío" nunca es persistente en servidor.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev medium">Media</span> Sin validación de esquema al leer caché</h3>
+    <p>Contextos como <span class="file">HealthContext</span>, <span class="file">BujoContext</span>, <span class="file">FinanceContext</span> hacen <code>JSON.parse</code> de localStorage y asumen la forma esperada sin validación ni migraciones. Un esquema desactualizado (producto de un deploy intermedio) produce crashes silenciosos o datos corruptos. Tampoco hay versión/namespacing de esquemas.</p>
+  </div>
+
+  <h2>4. Seguridad y datos <span class="tag t-high">Alto</span></h2>
+
+  <div class="card">
+    <h3><span class="sev high">Alto</span> "Login" decorativo — sin autenticación</h3>
+    <p><span class="file">LoginForm.tsx</span> acepta cualquier usuario/contraseña (no valida, no consulta backend): el botón simplemente dispara una animación y pasa al dashboard. Rol <code>admin</code> por defecto en <span class="file">ConfigService.ts</span> (<code>userName: 'Daniel Quinchahual'</code> hardcodeado). El control de permisos (<span class="file">PermissionService.ts</span>) aplica sobre roles que nadie autentica realmente.</p>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev high">Alto</span> Datos sensibles en claro y URLs falsas</h3>
+    <ul>
+      <li>LocalStorage sin cifrar almacena salud (medicación), finanzas (movimientos, deudas), hábitos y mensajes.</li>
+      <li><span class="file">DocumentsModule.tsx</span> referencia "documentos" con URLs de S3 inexistentes (<code>s3.amazonaws.com/quincha-systems/...receta_losartan.pdf</code>) — el sitio sugiere funcionalidad que no existe.</li>
+      <li>Datos de demostración hardcodeados en <span class="file">ShoppingContext</span>, <span class="file">ReceiptsGallery</span>, <span class="file">MessagesContext</span>, etc. — no hay ingestión real.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev medium">Media</span> Única integración externa real: clima</h3>
+    <p><span class="file">WeatherWidget.tsx</span> llama a <code>api.open-meteo.com</code>. Es un fetch sin manejo de error visible al usuario ni API key, pero al menos es real. Todo lo demás (S3, Unsplash, Amazon, MercadoLibre) son URLs de ejemplo.</p>
+  </div>
+
+  <h2>5. Arquitectura y organización <span class="tag t-med">Media</span></h2>
+
+  <div class="card">
+    <h3><span class="sev medium">Media</span> Árbol de providers muy profundo</h3>
+    <p><span class="file">App.tsx</span> anida 12 Providers (<code>Theme→User→Transition→Tasks→Habits→Pomodoro→Bujo→Health→Finance→Insights→Clients→Shopping→Messages</code>). Cada cambio de estado en un contexto re-renderiza toda la subárbol. Se recomienda: colapsar en <code>AppProviders</code>, memoizar valores de contexto, o dividir módulos en lazy-loaded.</p>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev medium">Media</span> Estilos monolíticos y en archivos sueltos</h3>
+    <ul>
+      <li><span class="file">Dashboard.css</span> pesa <b>~75 KB</b> en un solo archivo (probablemente el CSS más grande del proyecto), junto a CSS por componente sin sistema de temas coherente (solo <code>dark/light/mixed</code> en <code>ThemeContext</code>).</li>
+      <li>Hay archivos decorativos sueltos: <span class="file">AnimatedLogo.css</span>, <span class="file">GridBackground.css</span>, <span class="file">Footer.css</span>, <span class="file">LoginForm.css</span> al nivel de <code>src/</code>, en lugar de estar junto a sus componentes.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev medium">Media</span> Gestión de estado duplicada y módulos fantasma</h3>
+    <p>Hay doble sistema de widgets: <code>src/widgets/*</code> (rejilla del dashboard) y módulos completos en <code>src/components/dashboard/*Module.tsx</code> que duplican funcionalidad (Bujo, Pomodoro, Calendar). El <span class="file">WidgetRegistry.ts</span> existe pero el configurador que debería usarlo está muerto (ver sección 2). Se recomienda consolidar: o módulos o widgets, no ambos.</p>
+  </div>
+
+  <h2>6. Funcionalidad inconclusa <span class="tag t-warning" style="background:rgba(255,184,77,.12);color:var(--warning)">Medio</span></h2>
+
+  <div class="card">
+    <h3><span class="sev medium">Media</span> Features a medio implementar (detectadas por código muerto)</h3>
+    <ul>
+      <li><b>Configurador de widgets</b> (<span class="file">DashboardLayout.tsx</span>): estado <code>showConfigurator</code> y handlers sin uso.</li>
+      <li><b>Reordenamiento de widgets</b> (<span class="file">WidgetContainer.tsx</span>): <code>handleMove</code>, <code>handleHide</code>, <code>handleToggleSize</code> no conectados; hay un error de tamaño <code>"xl"</code> no soportado por <code>Card</code>.</li>
+      <li><b>Cambio de rol en el Sidebar</b>: <code>handleRoleChange</code> sin usar.</li>
+      <li><b>Diario/check-in</b> (<span class="file">DailyCheckInBlock.tsx</span>): lee un <code>{}</code> en vez de la fuente de datos correcta.</li>
+      <li><b>Asistente IA proactivo</b> (<span class="file">ProactiveAIAssistant.tsx</span>): importado pero no montado.</li>
+      <li><b>Búsqueda de entradas Bujo</b> (<span class="file">BujoModule.tsx</span>): <code>setSearchQuery</code> y <code>updateEntry</code> sin uso pese a ser features visibles.</li>
+    </ul>
+  </div>
+
+  <h2>7. Repositorio e higiene <span class="tag t-low">Baja</span></h2>
+
+  <div class="card">
+    <h3><span class="sev low">Baja</span> Archivos basura y comprometidos</h3>
+    <ul>
+      <li>En la raíz hay archivos que no forman parte de la app: <span class="file">indexfalso.html</span>, <span class="file">pruebaclaude.html</span>, <span class="file">plandetrabajo.html</span>, <span class="file">f231.png</span>, <span class="file">f232.png</span>, <span class="file">video.mp4</span> (~762 KB), y <span class="file">hero_aurora*.png</span>.</li>
+      <li><b><span class="file">video.mp4</span> está commiteado a git</b> (binarios en el repo: peso innecesario y sin trazabilidad de origen).</li>
+      <li>El <span class="file">package.json</span> se llama <span class="file">"tmp-app"</span> (nombre genérico de plantilla, no "Quincha Systems").</li>
+      <li><span class="file">README.md</span> es el README por defecto de Vite, no documenta el proyecto.</li>
+      <li>Assets por defecto de la plantilla en <span class="file">src/assets</span> (<code>react.svg</code>, <code>vite.svg</code>) siguen presentes.</li>
+      <li>Archivos sin trackear en git con trabajo nuevo (<span class="file">AjustesModule.tsx</span>, <span class="file">MessagesModule.tsx</span>, <span class="file">StatisticsModule.tsx</span>, <span class="file">MessagesContext.tsx</span>) — riesgo de pérdida si no se commitcan.</li>
+    </ul>
+  </div>
+
+  <h2>8. Novedades detectadas en la 2ª auditoría <span class="tag t-high">Alto</span></h2>
+  <p class="lead">Desde la primera revisión hay trabajo <b>sin commitear</b> (5 modificados + 6 nuevos). No empeoró el build (sigue en 126 errores), pero incorpora características y plantea riesgos nuevos.</p>
+
+  <div class="card">
+    <h3><span class="sev medium">Media</span> Nuevos módulos: Estadísticas, Mensajes y Ajustes (sin commitear)</h3>
+    <ul>
+      <li><span class="file">StatisticsModule.tsx</span> agrega un dashboard de métricas (tareas, pomodoros, hábitos, salud, finanzas e insights) leyendo de los contextos. Codifica un gran bloque de estilo inline y formatea montos con <code>toLocaleString('es-CL')</code>.</li>
+      <li><span class="file">MessagesModule.tsx</span> + <span class="file">MessagesContext.tsx</span>: bandeja de mensajes y notificaciones <b>derivadas de datos reales</b> (finanzas, citas de salud, stock de medicamentos, rachas de hábitos, tareas urgentes). Buena idea de diseño; ver riesgos abajo.</li>
+      <li><span class="file">AjustesModule.tsx</span>: cambio de nombre/tema/rol y toggles de visibilidad de widgets usando <code>WidgetRegistry</code> y <code>PermissionService</code>.</li>
+      <li>Se conectaron en <span class="file">DashboardLayout.tsx</span> con vistas <code>estadisticas</code>, <code>mensajes</code>, <code>ajustes</code>, y se corrigió el id del menú <code>estadicas</code>→<code>estadisticas</code> en <span class="file">Sidebar.tsx</span>. Se retiró del menú el acceso directo a <span class="file">Pomodoro</span> (pero se añadió en <span class="file">PomodoroWidget.tsx</span> un botón "Módulo completo" que navega a <code>pomodoro</code>).</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev high">Alto</span> Nuevo anti-patrón de navegación: eventos globales de ventana</h3>
+    <p>Los módulos nuevos navegan despachando eventos de ventana: <code>window.dispatchEvent(new CustomEvent('change-view', { detail }))</code> y <code>navigate-to-module</code>, escuchados en <span class="file">DashboardLayout.tsx</span>. Es un enfoque global no tipado:</p>
+    <ul>
+      <li>Duplica el estado de vista que ya existe en <code>TransitionContext</code>, creando dos fuentes de verdad para la navegación.</li>
+      <li>Los nombres de vistas son <b>strings mágicos</b> (<code>'pomodoro'</code>, <code>'finanzas'</code>…) sin tipado ni verificación de existencia → errores de navegación silenciosos.</li>
+      <li>Ya se usa en ~10 archivos (widgets, módulos, command palette). Debería centralizarse en el contexto de transición o un router, no en <code>window</code>.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev high">Alto</span> <span class="file">MessagesContext.tsx</span>: semilla con datos ficticios y riesgo</h3>
+    <ul>
+      <li>Siembra mensajes de prueba hardcodeados con nombres y empresas inventadas (<code>Roberto Gómez</code>, <code>GALTEC</code>…). Si esto es demo está bien; si se llevara a producción, se filtrarían conversaciones ficticias como si fueran reales.</li>
+      <li>El <code>useMemo</code> de notificaciones depende de <code>getUpcomingAppointments</code> y otros que deben ser referencias estables (viables), pero el resto del patrón de persistencia (<code>JSON.parse</code> sin validación) sigue igual que el resto de contextos: sin migraciones ni versión de esquema.</li>
+      <li>Añade 2 claves más de localStorage sin cifrar: <code>quincha_messages</code>, <code>quincha_read_notifications</code>.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev medium">Media</span> Inconsistencia de estilos: inline vs. tokens</h3>
+    <p>Los nuevos módulos usan colores hex hardcodeados (<code>#F43F5E</code>, <code>#F59E0B</code>, <code>#38BDF8</code>, <code>#10B981</code>) y <code>var(--bg-card)</code>, en vez de la paleta <code>colors.accent</code> de <span class="file">theme/colors.ts</span>. Se agrava el problema de tema ya reportado.</p>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev low">Baja</span> Métricas de la 2ª auditoría (sin cambios vs. la 1ª)</h3>
+    <table>
+      <thead><tr><th>Métrica</th><th class="num">1ª rev</th><th class="num">2ª rev</th><th>Progreso</th></tr></thead>
+      <tbody>
+        <tr><td>Errores TS (build)</td><td class="num">126</td><td class="num">126</td><td><span style="color:var(--warning)">Sin cambio</span></td></tr>
+        <tr><td>Warnings oxlint</td><td class="num">111</td><td class="num">111</td><td><span style="color:var(--warning)">Sin cambio</span></td></tr>
+        <tr><td>Tests</td><td class="num">0</td><td class="num">0</td><td><span style="color:var(--warning)">Sin cambio</span></td></tr>
+        <tr><td>Backend real</td><td class="num">No</td><td class="num">No</td><td><span style="color:var(--warning)">Sin cambio</span></td></tr>
+        <tr><td>Módulos nuevos compilados limpio</td><td class="num">—</td><td class="num">Sí</td><td><span style="color:var(--green)">Bien (no añaden errores)</span></td></tr>
+      </tbody>
+    </table>
+    <p class="note">El trabajo nuevo está sin commitear; los 3 módulos compilan sin errores propios. Recomendación fuerte: <b>commitear cuanto antes</b> y seguir el plan de acción.</p>
+  </div>
+
+  <h2>9. Dependencias <span class="tag t-low">Baja</span></h2>
+
+  <div class="card">
+    <h3><span class="sev low">Baja</span> Estado general</h3>
+    <ul>
+      <li><code>lucide-react@1.26.0</code> — versión atípica (no es la publicada comúnmente; posible alias de registro). Verificar procedencia.</li>
+      <li>React 19.2, Vite 8, TS 6, oxlint 1.71: ecosistema moderno. No se ejecutó <code>npm audit</code> ni <code>npm outdated</code> por ser auditoría de solo lectura.</li>
+      <li>gsap + @gsap/react: usados correctamente en animaciones de logo/transiciones.</li>
+    </ul>
+  </div>
+
+  <h2>10. Plan de acción sugerido</h2>
+
+  <div class="card">
+    <table>
+      <thead><tr><th>Fase</th><th>Acción</th><th class="num">Impacto</th><th class="num">Esfuerzo</th></tr></thead>
+      <tbody>
+        <tr><td><b>1</b></td><td>Reparar build: limpiar imports muertos (guiarse por oxlint) y corregir los tipos (colors.accent, Subtask, SyncEventType, DailyCheckInBlock).</td><td class="num">Crítico</td><td class="num">Medio</td></tr>
+        <tr><td><b>2</b></td><td>Activar <code>strict: true</code> y resolver lo que aflore.</td><td class="num">Alto</td><td class="num">Medio</td></tr>
+        <tr><td><b>3</b></td><td>Definir backend real o aclarar explícitamente que es demo; versionar esquemas de localStorage con migraciones.</td><td class="num">Alto</td><td class="num">Alto</td></tr>
+        <tr><td><b>4</b></td><td>Autenticación mínima y cifrado/depuración de datos sensibles; quitar URLs falsas (S3) o conectarlas de verdad.</td><td class="num">Alto</td><td class="num">Alto</td></tr>
+        <tr><td><b>5</b></td><td>Decidir widget-grid vs módulos; terminar o eliminar el configurador, reordenamiento y check-in roto.</td><td class="num">Medio</td><td class="num">Medio</td></tr>
+        <tr><td><b>6</b></td><td>Agregar Vitest + al menos pruebas de los contextos y utilidades; CI con lint+build.</td><td class="num">Medio</td><td class="num">Medio</td></tr>
+        <tr><td><b>7</b></td><td>Higiene de repo: mover binarios fuera de git, limpiar html/pngs de prueba, renombrar <code>tmp-app</code>, escribir README real, commitear el trabajo sin trackear.</td><td class="num">Bajo</td><td class="num">Bajo</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Estimaciones relativas y subjetivas. Fase 1 desbloquea el resto: sin build no hay deploy ni CI. En la 2ª revisión se suman: <b>(a)</b> commitear ya los módulos nuevos, <b>(b)</b> centralizar la navegación por eventos de ventana en un contexto/router tipado, <b>(c)</b> quitar o marcar explícitamente como demo los datos semilla de mensajería.</p>
+  </div>
+
+  <div class="footer">
+    Informe generado por auditoría de solo lectura — revisión 2 · 07/08/2026 · Quincha Systems (React 19 + TS + Vite).<br />
+    No se modificó ningún archivo del sistema durante la auditoría.
+  </div>
+
+</div>
+</body>
+</html>

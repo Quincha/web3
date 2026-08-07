@@ -42,7 +42,7 @@ const CACHE_KEY = 'quincha_user_config';
 export class ConfigService {
   // Simulated backend sync state
   private static isSyncing = false;
-  private static syncTimeout: NodeJS.Timeout | null = null;
+  private static syncTimeout: ReturnType<typeof setTimeout> | null = null;
 
   /**
    * Load configurations: Check cache, fallback to defaults, and asynchronously trigger backend fetch

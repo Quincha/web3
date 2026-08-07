@@ -2,24 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { Sidebar } from './Sidebar';
 import { DashboardSkeleton } from '../ui/SkeletonLoader';
 import { DashboardHero } from '../dashboard/DashboardHero';
-import { ProactiveAIAssistant } from '../dashboard/ProactiveAIAssistant';
 import { WidgetRegistry } from '../../widgets/WidgetRegistry';
 import { FinanceSummaryBanner } from '../finance/dashboard/FinanceSummaryBanner';
 import { useUser } from '../../context/UserContext';
-import { Eye, Plus, Settings } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import '../../Dashboard.css';
 
 // Make sure all widgets are registered by importing them
-import StatsWidget from '../../widgets/StatsWidget';
 import ActivityWidget from '../../widgets/ActivityWidget';
-import ProductivityWidget from '../../widgets/ProductivityWidget';
 import TasksWidget from '../../widgets/TasksWidget';
-import ProjectsWidget from '../../widgets/ProjectsWidget';
 import PomodoroWidget from '../../widgets/PomodoroWidget';
 import { BujoWidget } from '../../widgets/BujoWidget';
-import HealthWidget from '../../widgets/HealthWidget';
 import { HabitsWidget } from '../../widgets/HabitsWidget';
-import ProactiveInsightsWidget from '../../widgets/ProactiveInsightsWidget';
 import { CalendarWidget } from '../../widgets/CalendarWidget';
 import { PomodoroModule } from '../dashboard/PomodoroModule';
 import { BujoModule } from '../dashboard/BujoModule';
@@ -33,14 +27,18 @@ import { ProjectsModule } from '../dashboard/ProjectsModule';
 import { ActivityModule } from '../dashboard/ActivityModule';
 import { ClientsModule } from '../dashboard/ClientsModule';
 import { ShoppingModule } from '../dashboard/ShoppingModule';
+import { StatisticsModule } from '../dashboard/StatisticsModule';
+import { MessagesModule } from '../dashboard/MessagesModule';
+import { AjustesModule } from '../dashboard/AjustesModule';
 import { CommandPalette } from './CommandPalette';
 import gsap from 'gsap';
 
+import { useTransition } from '../../context/TransitionContext';
+
 export const DashboardLayout: React.FC = () => {
   const { userConfig, updateConfig } = useUser();
-  const [activeView, setActiveView] = useState('dashboard');
+  const { currentView: activeView, navigateTo } = useTransition();
   const [isLoading, setIsLoading] = useState(true);
-  const [showConfigurator, setShowConfigurator] = useState(false);
 
   useEffect(() => {
     if (!isLoading && activeView === 'dashboard') {
@@ -52,22 +50,6 @@ export const DashboardLayout: React.FC = () => {
     }
   }, [isLoading, activeView]);
 
-  useEffect(() => {
-    const handleViewChange = (e: Event) => {
-      const customEvent = e as CustomEvent;
-      if (customEvent.detail) {
-        setActiveView(customEvent.detail);
-        // Scroll to top of main body
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    };
-    window.addEventListener('change-view', handleViewChange);
-    window.addEventListener('navigate-to-module', handleViewChange);
-    return () => {
-      window.removeEventListener('change-view', handleViewChange);
-      window.removeEventListener('navigate-to-module', handleViewChange);
-    };
-  }, []);
 
   useEffect(() => {
     // Simulate initial dashboard data loader skeleton
@@ -91,11 +73,6 @@ export const DashboardLayout: React.FC = () => {
       return <DashboardSkeleton />;
     }
 
-    // Sort widgets based on order
-    const sortedWidgets = [...userConfig.widgets]
-      .filter(w => w.visible)
-      .sort((a, b) => a.order - b.order);
-
     return (
       <div className="dashboard-content-area" style={{ display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
         
@@ -104,34 +81,6 @@ export const DashboardLayout: React.FC = () => {
           <div className="gsap-stagger-item">
             <DashboardHero />
           </div>
-
-          {/* Floating Customization Panel */}
-          {showConfigurator && (
-            <div className="widget-configurator-panel">
-              <span className="panel-title">Ajustes de Widgets</span>
-              {hiddenWidgets.length === 0 ? (
-                <span className="panel-empty-text">Todos los widgets están visibles.</span>
-              ) : (
-                <div className="hidden-widgets-list">
-                  {hiddenWidgets.map(w => {
-                    const meta = WidgetRegistry.get(w.id);
-                    return (
-                      <div key={w.id} className="hidden-widget-row">
-                        <span>{meta?.name || w.id}</span>
-                        <button 
-                          className="show-widget-btn"
-                          onClick={() => handleShowWidget(w.id)}
-                        >
-                          <Plus size={14} />
-                          <span>Mostrar</span>
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
 
           {/* Classic 3x2 Grid */}
           <div style={{
@@ -191,7 +140,7 @@ export const DashboardLayout: React.FC = () => {
       <CommandPalette />
 
       {/* Sidebar Frame */}
-      <Sidebar activeView={activeView} onViewChange={setActiveView} />
+      <Sidebar activeView={activeView} onViewChange={navigateTo} />
 
       {/* Main Container Frame */}
       <div className="dashboard-main-frame" style={{ position: 'relative' }}>
@@ -209,6 +158,9 @@ export const DashboardLayout: React.FC = () => {
            activeView === 'proyectos' ? <ProjectsModule /> :
            activeView === 'actividad' ? <ActivityModule /> :
            activeView === 'clientes' ? <ClientsModule /> :
+           activeView === 'estadisticas' ? <StatisticsModule /> :
+           activeView === 'mensajes' ? <MessagesModule /> :
+           activeView === 'ajustes' ? <AjustesModule /> :
            renderModulePlaceholder(activeView)}
         </main>
       </div>

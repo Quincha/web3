@@ -14,7 +14,7 @@ export const ActivityModule: React.FC = () => {
   const activities = buildActivity(tasks, projects);
 
   return (
-    <div className="module-container fade-in" style={{ padding: '32px', height: '100%', display: 'flex', flexDirection: 'column', maxWidth: '900px' }}>
+    <div className="module-container fade-in" style={{ padding: '32px', height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
         <div>

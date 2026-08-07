@@ -12,7 +12,7 @@ export const DailyCheckInBlock: React.FC<DailyCheckInBlockProps> = ({ selectedDa
   const { getCheckIn, saveCheckIn, addOrUpdateReflectionEntry } = useBujo();
   const { habits, setHabitStateForDate } = useHabits();
 
-  const currentCheckIn = getCheckIn(selectedDateStr) || {};
+  const currentCheckIn = (getCheckIn(selectedDateStr) || {}) as Partial<BujoCheckIn>;
 
   const [dayRating, setDayRating] = useState<number>(currentCheckIn.dayRating || 0);
   const [energyLevel, setEnergyLevel] = useState<number>(currentCheckIn.energyLevel || 7);
@@ -24,7 +24,7 @@ export const DailyCheckInBlock: React.FC<DailyCheckInBlockProps> = ({ selectedDa
 
   // Synchronize internal component state whenever selectedDateStr changes
   useEffect(() => {
-    const c = getCheckIn(selectedDateStr) || {};
+    const c = (getCheckIn(selectedDateStr) || {}) as Partial<BujoCheckIn>;
     setDayRating(c.dayRating || 0);
     setEnergyLevel(c.energyLevel || 7);
     setMedsTaken(c.medsTaken ?? null);

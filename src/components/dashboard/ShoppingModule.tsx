@@ -107,7 +107,7 @@ export const ShoppingModule: React.FC = () => {
               gap: '6px',
               fontSize: '0.85rem'
             }}
-            onClick={addProductRow}
+            onClick={() => addProductRow()}
           >
             <Plus size={16} />
             <span>Agregar Fila</span>

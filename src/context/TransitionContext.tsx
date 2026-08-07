@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import gsap from 'gsap';
 
-export type ViewState = 'login' | 'transition' | 'dashboard';
+export type ViewState = string;
 
 interface TransitionContextType {
   currentView: ViewState;
@@ -20,7 +20,23 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const navigateTo = useCallback((view: ViewState) => {
     setCurrentView(view);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
+
+  useEffect(() => {
+    const handleGlobalNav = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        navigateTo(customEvent.detail);
+      }
+    };
+    window.addEventListener('change-view', handleGlobalNav);
+    window.addEventListener('navigate-to-module', handleGlobalNav);
+    return () => {
+      window.removeEventListener('change-view', handleGlobalNav);
+      window.removeEventListener('navigate-to-module', handleGlobalNav);
+    };
+  }, [navigateTo]);
 
   const startLoginTransition = useCallback((onComplete: () => void) => {
     setCurrentView('transition');

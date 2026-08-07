@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { 
-  CheckCircle2, Plus, Clock, Circle, XCircle, MoreVertical, 
-  Briefcase, Tag, Calendar, Filter, User, DollarSign, Building2,
-  ChevronDown, ChevronRight, Trash2, Flame
+  CheckCircle2, Plus, Circle, 
+  Briefcase, Tag, Calendar, User, DollarSign,
+  ChevronDown
 } from 'lucide-react';
 import { useTasks } from '../../context/TasksContext';
 import { useClients } from '../../context/ClientsContext';
 import { useFinance } from '../../context/FinanceContext';
-import type { Task, Priority, TaskStatus, Project } from '../../context/TasksContext';
+import type { Task, Priority, Project } from '../../context/TasksContext';
 import { TaskDetailSidebar } from './TaskDetailSidebar';
 
 // ─────────────────────────────────────────────
@@ -59,10 +59,7 @@ const QuickEntryBar: React.FC = () => {
         tags: [],
         estimatedPomodoros: 1,
         isBillable: false,
-        price: 0,
-        subtasks: [],
-        completedPomodoros: 0,
-        createdAt: new Date().toISOString()
+        price: 0
       });
       setTitle('');
     }

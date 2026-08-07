@@ -74,7 +74,7 @@ const ProjectsWidget: React.FC = () => {
         {/* New Project creation card - conditional check demo */}
         <div 
           className={`project-card new-project-card ${!canCreate ? 'disabled-card' : ''}`}
-          onClick={handleCreateProject}
+          onClick={() => {}}
         >
           <div className="new-project-content">
             <div className="plus-icon-circle">

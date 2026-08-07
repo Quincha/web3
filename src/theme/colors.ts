@@ -16,11 +16,14 @@ export const colors = {
     hover: 'rgba(255, 255, 255, 0.09)',
   },
   accent: {
+    primary: '#16F0B5',
     green: '#16F0B5',
     bright: '#3EFCDB',
     cyan: '#3ACDFF',
     danger: '#FF5F73',
+    red: '#F43F5E',
     warning: '#FFB84D',
+    orange: '#F59E0B',
   },
   glow: {
     green: 'rgba(22, 240, 181, 0.15)',

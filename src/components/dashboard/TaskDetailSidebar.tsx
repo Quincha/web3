@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Save, Clock, Briefcase, User, Calendar, DollarSign, Tag, Play, CheckCircle2, Circle, Plus, ListTodo } from 'lucide-react';
 import { useTasks } from '../../context/TasksContext';
 import { useClients } from '../../context/ClientsContext';
-import type { Task, Priority } from '../../context/TasksContext';
+import type { Priority } from '../../context/TasksContext';
 import { tokens } from '../../theme/tokens';
 
 interface TaskDetailSidebarProps {
@@ -34,7 +34,7 @@ export const TaskDetailSidebar: React.FC<TaskDetailSidebarProps> = ({ taskId, on
   const [pomodoros, setPomodoros] = useState(0);
   const [isBillable, setIsBillable] = useState(false);
   const [price, setPrice] = useState(0);
-  const [subtasks, setSubtasks] = useState<{ id: string, content: string, completed: boolean }[]>([]);
+  const [subtasks, setSubtasks] = useState<{ id: string, content: string, completed: boolean, createdAt: string }[]>([]);
   const [newSubtask, setNewSubtask] = useState('');
   const [createdAt, setCreatedAt] = useState('');
 
@@ -77,7 +77,7 @@ export const TaskDetailSidebar: React.FC<TaskDetailSidebarProps> = ({ taskId, on
     if (e.key === 'Enter') {
       e.preventDefault();
       if (!newSubtask.trim()) return;
-      setSubtasks([...subtasks, { id: 'st_' + Date.now(), content: newSubtask.trim(), completed: false }]);
+      setSubtasks([...subtasks, { id: 'st_' + Date.now(), content: newSubtask.trim(), completed: false, createdAt: new Date().toISOString() }]);
       setNewSubtask('');
     }
   };

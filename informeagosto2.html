@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Informe de Auditoría — Quincha Systems · Revisión 3</title>
+<style>
+  :root {
+    --bg: #06080B; --card: #0C1117; --card2: #111821;
+    --border: rgba(255,255,255,.08);
+    --text: #F8FAFC; --text2: #94A3B8; --muted: #64748B;
+    --green: #16F0B5; --cyan: #3ACDFF; --warning: #FFB84D;
+    --danger: #FF5F73; --accent: #3EFCDB;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; line-height:1.6; padding-bottom:80px; }
+  .wrap { max-width:980px; margin:0 auto; padding:0 24px; }
+  header.hero { padding:64px 0 40px; background:radial-gradient(ellipse at top, rgba(22,240,181,.07), transparent 55%); border-bottom:1px solid var(--border); }
+  .badge { display:inline-block; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--green); border:1px solid rgba(22,240,181,.35); border-radius:999px; padding:4px 12px; margin-bottom:16px; background:rgba(22,240,181,.06); }
+  h1 { font-size:clamp(28px,5vw,42px); line-height:1.15; letter-spacing:-.02em; }
+  h1 em { font-style:normal; color:var(--accent); }
+  .sub { color:var(--text2); margin-top:12px; max-width:680px; }
+  .meta { margin-top:20px; display:flex; gap:24px; flex-wrap:wrap; font-size:13px; color:var(--muted); }
+  .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin:32px 0; }
+  .kpi { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:18px; }
+  .kpi .num { font-size:30px; font-weight:700; letter-spacing:-.02em; }
+  .kpi .lbl { font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-top:4px; }
+  .kpi.danger .num { color:var(--danger); } .kpi.warn .num { color:var(--warning); } .kpi.ok .num { color:var(--green); }
+  .kpi.cy .num { color:var(--cyan); }
+  h2 { font-size:22px; margin:48px 0 6px; letter-spacing:-.01em; display:flex; align-items:center; gap:10px; }
+  h2 .tag { font-size:11px; font-weight:600; border-radius:6px; padding:2px 8px; }
+  h2 .t-critical { background:rgba(255,95,115,.12); color:var(--danger); }
+  h2 .t-high { background:rgba(255,184,77,.12); color:var(--warning); }
+  h2 .t-med { background:rgba(58,205,255,.12); color:var(--cyan); }
+  h2 .t-low { background:rgba(22,240,181,.12); color:var(--green); }
+  .lead { color:var(--text2); margin-bottom:18px; font-size:14px; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px 22px; margin-bottom:14px; }
+  .card h3 { font-size:15px; margin-bottom:8px; }
+  .sev { display:inline-block; font-size:11px; font-weight:700; border-radius:6px; padding:2px 8px; margin-right:8px; }
+  .sev.critical { background:rgba(255,95,115,.15); color:var(--danger); }
+  .sev.high { background:rgba(255,184,77,.15); color:var(--warning); }
+  .sev.medium { background:rgba(58,205,255,.15); color:var(--cyan); }
+  .sev.ok { background:rgba(22,240,181,.15); color:var(--green); }
+  .card p, .card li { color:var(--text2); font-size:14px; }
+  .card ul { margin:8px 0 0 18px; }
+  .card li { margin-bottom:6px; }
+  code { background:rgba(255,255,255,.06); border:1px solid var(--border); border-radius:5px; padding:1px 6px; font-size:12.5px; color:var(--accent); font-family:ui-monospace,"Cascadia Code",Consolas,monospace; }
+  .file { font-family:ui-monospace,"Cascadia Code",Consolas,monospace; font-size:12px; color:var(--cyan); }
+  .footer { text-align:center; color:var(--muted); font-size:12px; margin-top:60px; border-top:1px solid var(--border); padding-top:24px; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th,td { text-align:left; padding:9px 10px; border-bottom:1px solid var(--border); color:var(--text2); }
+  th { color:var(--text); font-size:12px; text-transform:uppercase; letter-spacing:.06em; }
+  td.num,th.num { text-align:right; font-variant-numeric:tabular-nums; }
+  .note { font-size:12px; color:var(--muted); margin-top:10px; }
+  a { color:var(--cyan); }
+  .delta-up { color:var(--green); } .delta-down { color:var(--danger); } .delta-flat { color:var(--warning); }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="badge">Auditoría técnica · sin modificaciones · Revisión 3</span>
+    <h1>Informe de auditoría de sistema<br /><em>Quincha Systems</em></h1>
+    <p class="sub">Tercera revisión (07/08/2026) con comparativa frente a las dos anteriores. Cubre compilación, lint, persistencia, seguridad, arquitectura e higiene de repositorio. Auditoría de solo lectura: no se modificó ni movió ningún archivo.</p>
+    <div class="meta">
+      <span>Revisión 3 · 07 · agosto · 2026</span>
+      <span>Último commit: <code>d0a1ef8</code> "agosto 2"</span>
+      <span>15 archivos modificados + 5 nuevos sin commitear</span>
+      <span>5 binarios/htmls eliminados (sin commitear)</span>
+      <span>Stack: React 19 · TypeScript 6 · Vite 8 · oxlint</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="sub" style="margin-bottom:8px;color:var(--muted);font-size:13px;">ⓘ Los cambios de esta revisión están <b>sin commitear</b>. Se comparó contra el último commit (<code>d0a1ef8</code>).</div>
+
+  <div class="kpis">
+    <div class="kpi ok"><div class="num">0</div><div class="lbl">Errores TS · build ✓</div></div>
+    <div class="kpi cy"><div class="num">94</div><div class="lbl">Warnings lint</div></div>
+    <div class="kpi warn"><div class="num">632</div><div class="lbl">KB bundle JS</div></div>
+    <div class="kpi"><div class="num">0</div><div class="lbl">Tests</div></div>
+    <div class="kpi"><div class="num">~20</div><div class="lbl">Claves localStorage</div></div>
+  </div>
+
+  <h2>1. Resumen ejecutivo <span class="tag t-low">Progreso</span></h2>
+  <p class="lead">Avance significativo: <b>el build ya compila</b> (pasó de 126 errores TS a 0). La limpieza de archivos de prueba y varios fixes de tipos se aplicaron. Sin embargo, parte de esa mejora se logró <i>desactivando reglas del compilador</i> en lugar de corregir el código, y quedan deudas de lint, de rendimiento y de seguridad.</p>
+
+  <div class="card">
+    <h3>Comparativa de las 3 revisiones</h3>
+    <table>
+      <thead><tr><th>Métrica</th><th class="num">Rev 1</th><th class="num">Rev 2</th><th class="num">Rev 3</th><th>Tendencia</th></tr></thead>
+      <tbody>
+        <tr><td>Errores TS (npm run build)</td><td class="num">126</td><td class="num">126</td><td class="num">0</td><td><span class="delta-up">✅ Build reparado</span></td></tr>
+        <tr><td>Warnings oxlint</td><td class="num">111</td><td class="num">111</td><td class="num">94</td><td><span class="delta-up">-17</span></td></tr>
+        <tr><td>Bundle JS (min, sin gzip)</td><td class="num">—</td><td class="num">—</td><td class="num">632 KB</td><td><span class="delta-down">>500 KB (warning)</span></td></tr>
+        <tr><td>Archivos basura en raíz</td><td class="num">~7</td><td class="num">~7</td><td class="num">0</td><td><span class="delta-up">✅ Eliminados</span></td></tr>
+        <tr><td>Tests</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td><span class="delta-flat">Sin cambio</span></td></tr>
+        <tr><td>Backend real</td><td class="num">No</td><td class="num">No</td><td class="num">No</td><td><span class="delta-flat">Sin cambio</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>2. Build y compilación <span class="tag t-low">Resuelto</span></h2>
+
+  <div class="card">
+    <h3><span class="sev ok">Resuelto</span> `npm run build` compila — 0 errores TS</h3>
+    <p>El bundle se genera correctamente: <code>dist/index.html (0.46 KB)</code>, <code>index-*.css (68.8 KB)</code>, <code>index-*.js (632 KB)</code>, gzip ~168 KB.</p>
+    <p class="note">Ojo: el build exitoso para nada significa que el código esté limpio: los errores de tipos fueron "escondidos" (ver punto 3).</p>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev high">Alto</span> Mejora conseguida desactivando reglas, no corrigiendo código</h3>
+    <p>Se eliminaron <code>noUnusedLocals</code> y <code>noUnusedParameters</code> de <span class="file">tsconfig.app.json</span>. Casi todos los 126 errores eran de este tipo (imports/variables sin usar). Al apagar la regla, el build pasa, pero:</p>
+    <ul>
+      <li>Los <b>imports y código muerto siguen presentes</b>: oxlint aún reporta <b>68 avisos <code>no-unused-vars</code></b>, ahora invisibles para TS.</li>
+      <li>Se perdió una red de seguridad del compilador. Recomendación: en lugar de desactivar, <b>limpiar los imports</b> y reactivar la regla (o pasar las vars no usadas a <code>_prefijo</code>).</li>
+    </ul>
+  </div>
+
+  <h2>3. Lint y calidad de código <span class="tag t-med">Media</span></h2>
+
+  <div class="card">
+    <h3><span class="sev medium">Media</span> 94 warnings de oxlint (era 111)</h3>
+    <p>Se redujeron 17, pero la mayoría del total sigue siendo código no usado:</p>
+    <ul>
+      <li><b>68 × <code>no-unused-vars</code></b> — concentrados en <span class="file">WidgetContainer.tsx</span> (9, handlers de reordenar/ocultar/redimensionar muertos), <span class="file">DashboardHero.tsx</span> (7), <span class="file">ClientPortal.tsx</span> (6), <span class="file">PomodoroWidget.tsx</span> (6), <span class="file">BujoModule.tsx</span> (5), <span class="file">CalendarWidget.tsx</span> (4), <span class="file">DashboardLayout.tsx</span> (4).</li>
+      <li><b><code>react-hooks/exhaustive-deps</code></b>: 5 avisos en <span class="file">PomodoroContext.tsx</span> y <span class="file">UserContext.tsx</span> (efectos con dependencias incompletas) — riesgo de bugs por cierres obsoletos.</li>
+      <li><b><code>react/only-export-components</code></b>: se multiplicó a ~14 archivos (cada context exporta un hook <code>useX</code> junto a su componente). Impacta solo Fast Refresh en dev, pero es ruido constante.</li>
+      <li><b>3 × <code>no-useless-escape</code></b>: escapes innecesarios en regex/strings.</li>
+    </ul>
+  </div>
+
+  <h2>4. Arquitectura y navegación <span class="tag t-med">Media</span></h2>
+
+  <div class="card">
+    <h3><span class="sev ok">Mejorado</span> Navegación centralizada (recomendación de la rev. 2 atendida)</h3>
+    <p>Se movió el escuchador de <code>change-view</code>/<code>navigate-to-module</code> desde <span class="file">DashboardLayout.tsx</span> al <span class="file">TransitionContext.tsx</span>, eliminando la duplicación. <code>ViewState</code> pasó de unión cerrada a <code>string</code>, y <code>navigateTo</code> ahora hace scroll al tope. Mejora clara con respecto a la revisión anterior.</p>
+    <p class="note">Pendiente: los eventos globales de <code>window</code> siguen siendo strings mágicos no tipados. Al ser la única fuente de verdad ahora, un typo en un <code>detail</code> navega a una vista inexistente sin error.</p>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev medium">Media</span> Tamaño de bundle: 632 KB JS (warning de Vite)</h3>
+    <p>El build advierte <i>"chunks larger than 500 kB after minification"</i>. El panel (SPA completa de 75 componentes) se comprueba en un solo chunk. Se recomienda code-splitting con <code>import()</code> dinámico de los módulos pesados (estadísticas, finanzas, portal de clientes) o <code>manualChunks</code>.</p>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev low">Baja</span> 13 Providers anidados en AppProviders</h3>
+    <p>Se incorporó <code>MessagesProvider</code> (14 con el patrón). Sin cambio en la recomendación: colapsar los providers, memoizar valores y/o lazy-load.</p>
+  </div>
+
+  <h2>5. Persistencia y sincronización <span class="tag t-high">Alto</span></h2>
+
+  <div class="card">
+    <h3><span class="sev high">Alto</span> Sin backend real — todo en localStorage</h3>
+    <p>No se detectó ninguna llamada <code>fetch</code> de negocio. ~20 claves de localStorage (<code>quincha_*</code>) persisten datos de tareas, hábitos, bujo, salud, finanzas, clientes y, ahora, mensajes. Persistencia siempre local: datos volátiles al cambiar de navegador.</p>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev medium">Media</span> Avance parcial: SyncEventType ampliado</h3>
+    <p>Se añadieron los eventos que faltaban (<code>CREATE_CLIENT</code>, <code>UPDATE_CLIENT</code>, <code>SET_HABIT_STATE</code>) que causaban error de tipos. Sin embargo el "sync" sigue siendo simulado (<code>setTimeout</code> con 2% de fallos random en <span class="file">SyncQueueService.ts</span>) — sin endpoint real.</p>
+  </div>
+
+  <h2>6. Seguridad y datos <span class="tag t-high">Alto</span></h2>
+
+  <div class="card">
+    <h3><span class="sev high">Alto</span> Sin cambios: login decorativo, datos sensibles en claro</h3>
+    <ul>
+      <li><span class="file">LoginForm.tsx</span> acepta cualquier credencial; rol <code>admin</code> y nombre de usuario por defecto hardcodeados en <span class="file">ConfigService.ts</span>.</li>
+      <li>LocalStorage sin cifrar con salud (medicación), finanzas, hábitos y conversaciones de mensajería (<code>quincha_messages</code>).</li>
+      <li>URLs de negocio falsas (S3 <code>quincha-systems/...receta_losartan.pdf</code>) siguen presentes en <span class="file">DocumentsModule.tsx</span>.</li>
+      <li>Única integración externa real: clima vía <code>api.open-meteo.com</code> en <span class="file">WeatherWidget.tsx</span>.</li>
+    </ul>
+  </div>
+
+  <h2>7. Repositorio e higiene <span class="tag t-low">Mejorado</span></h2>
+
+  <div class="card">
+    <h3><span class="sev ok">Mejorado</span> Limpieza de basura aplicada (pero sin commitear)</h3>
+    <ul>
+      <li><b>Eliminados:</b> <span class="file">f231.png</span>, <span class="file">f232.png</span>, <span class="file">indexfalso.html</span>, <span class="file">pruebaclaude.html</span>, <span class="file">video.mp4</span> (y <span class="file">plandetrabajo.html</span> ya no existe en raíz). Quedó vacío y ordenado el raíz.</li>
+      <li><b>Renombrado:</b> <code>package.json</code> pasa de <code>"tmp-app"</code> a <code>"quincha-systems"</code>. ✅</li>
+      <li><b>Pendiente crítico:</b> tanto los borrados como los cambios <b>NO están commiteado</b>. Si se pierde el working dir, se pierde todo el trabajo (15 archivos modificados + 4 nuevos módulos).</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev low">Baja</span> Quedan detalles</h3>
+    <ul>
+      <li>Nuevos módulos (<span class="file">StatisticsModule</span>, <span class="file">MessagesModule</span>, <span class="file">AjustesModule</span>, <span class="file">MessagesContext</span>) siguen sin trackear.</li>
+      <li><span class="file">README.md</span> sigue siendo el de plantilla de Vite.</li>
+      <li>Assets de plantilla (<span class="file">react.svg</span>, <span class="file">vite.svg</span>) siguen en <span class="file">src/assets</span>.</li>
+    </ul>
+  </div>
+
+  <h2>8. Dependencias <span class="tag t-low">Baja</span></h2>
+  <div class="card">
+    <ul>
+      <li><code>lucide-react@1.26.0</code>: versión atípica/no estándar (posible alias). Verificar procedencia.</li>
+      <li>React 19.2, Vite 8.1.5, oxlint 1.71, gsap 3.15. No se ejecutó <code>npm audit</code>/<code>npm outdated</code> (solo-lectura).</li>
+      <li>Nuevo warning de build: chunk JS &gt;500 KB (requiere code-splitting).</li>
+    </ul>
+  </div>
+
+  <h2>9. Plan de acción priorizado</h2>
+
+  <div class="card">
+    <table>
+      <thead><tr><th>Prioridad</th><th>Acción</th><th>Impacto</th></tr></thead>
+      <tbody>
+        <tr><td><b>1</b></td><td><b>Commitear YA</b> todo el trabajo: 15 modificados, 4 nuevos módulos y las 5 eliminaciones de basura. Es imperativo no perder el avance.</td><td class="num">Critico</td></tr>
+        <tr><td><b>2</b></td><td>Parchar la deuda de <code>no-unused-vars</code>: usar oxlint para limpiar los 68 imports muertos en vez de depender del tsconfig desactivado.</td><td class="num">Alto</td></tr>
+        <tr><td><b>3</b></td><td>Introducir code-splitting (<code>import()</code> dinámico / <code>manualChunks</code>) para bajar el bundle de 632 KB y acabar el warning de chunk.</td><td class="num">Medio</td></tr>
+        <tr><td><b>4</b></td><td>Tipar la navegación global (enum de vistas) para eliminar strings mágicos.</td><td class="num">Medio</td></tr>
+        <tr><td><b>5</b></td><td>Añadir backend real o marcar explícitamente demo; versionar esquemas de localStorage; cifrar datos sensibles.</td><td class="num">Alto</td></tr>
+        <tr><td><b>6</b></td><td>Autenticación mínima y quitar URLs falsas (S3) o conectarlas.</td><td class="num">Alto</td></tr>
+        <tr><td><b>7</b></td><td>Agregar Vitest + tests de contexts/utilidades y CI (lint + build).</td><td class="num">Medio</td></tr>
+        <tr><td><b>8</b></td><td>Tratar los avisos <code>exhaustive-deps</code> (PomodoroContext/UserContext).</td><td class="num">Bajo</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Estimaciones relativas y subjetivas. La prioridad 1 (commit) es bloqueante: el código reprobará laxes de guardar los avances y borrarlos del disco es irreversible.</p>
+  </div>
+
+  <div class="footer">
+    Informe generado por auditoría de solo lectura — revisión 3 · 07/08/2026 · Quincha Systems (React 19 + TS + Vite).<br />
+    No se modificó ningún archivo del sistema durante la auditoría. El informe es entregable.
+  </div>
+
+</div>
+</body>
+</html>

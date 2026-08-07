@@ -309,7 +309,7 @@ export const DashboardHero: React.FC = () => {
             </div>
           ) : (
             dynamicRecommendations.map((t) => (
-              <div key={t.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', group: 'true' }}>
+              <div key={t.id} className="group" style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
                 <button 
                   onClick={() => updateTask(t.id, { status: 'completed' })}
                   style={{ 

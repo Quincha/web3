@@ -34,7 +34,7 @@ const getBujoColor = (type: BujoEntryType) => {
 
 export const BujoWidget: React.FC = () => {
   const { getTodayEntries, addEntry, toggleEntryType, getDailyMood, setDailyMood } = useBujo();
-  const { habitsWithStats, toggleHabitCompletion } = useHabits();
+  const { habitsWithStats, toggleHabitToday } = useHabits();
   
   const entries = getTodayEntries().slice(0, 5);
   const [inputValue, setInputValue] = useState('');
@@ -115,7 +115,7 @@ export const BujoWidget: React.FC = () => {
           {quickHabits.map(habit => (
             <button
               key={habit.id}
-              onClick={() => toggleHabitCompletion(habit.id, todayISO)}
+              onClick={() => toggleHabitToday(habit.id)}
               style={{
                 display: 'flex', alignItems: 'center', gap: '6px',
                 padding: '6px 12px', borderRadius: '12px',
@@ -272,9 +272,10 @@ const dropdownBtnStyle: React.CSSProperties = {
   whiteSpace: 'nowrap'
 };
 
-WidgetRegistry.register('BujoWidget', {
+WidgetRegistry.register({
   id: 'BujoWidget',
   name: 'Bullet Journal',
+  description: 'Módulo Bullet Journal',
+  defaultSize: 'large',
   component: BujoWidget,
-  defaultLayout: { w: 3, h: 4 }
 });

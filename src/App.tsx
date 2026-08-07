@@ -18,6 +18,7 @@ import { InsightsProvider } from './context/InsightsContext';
 import { FinanceProvider } from './context/FinanceContext';
 import { ClientsProvider } from './context/ClientsContext';
 import { ShoppingProvider } from './context/ShoppingContext';
+import { MessagesProvider } from './context/MessagesContext';
 import { GlobalTaskCompletionModal } from './components/dashboard/GlobalTaskCompletionModal';
 
 function MainAppContent() {
@@ -80,7 +81,9 @@ function App() {
                       <InsightsProvider>
                         <ClientsProvider>
                           <ShoppingProvider>
-                            <MainAppContent />
+                            <MessagesProvider>
+                              <MainAppContent />
+                            </MessagesProvider>
                           </ShoppingProvider>
                         </ClientsProvider>
                       </InsightsProvider>

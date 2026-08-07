@@ -19,7 +19,8 @@ export type SyncEventType =
   | 'COMPLETE_POMODORO'
   | 'ADD_BUJO_ENTRY'     | 'UPDATE_BUJO_ENTRY'| 'DELETE_BUJO_ENTRY'
   | 'MARK_DOSE'          | 'ADD_APPOINTMENT'  | 'UPDATE_APPOINTMENT'
-  | 'CREATE_PROJECT'     | 'UPDATE_PROJECT';
+  | 'CREATE_PROJECT'     | 'UPDATE_PROJECT'   | 'CREATE_CLIENT'
+  | 'UPDATE_CLIENT'      | 'SET_HABIT_STATE';
 
 export interface SyncEvent {
   id: string;

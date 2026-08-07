@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Play, Pause, RotateCcw, Settings, Target, Lightbulb, CheckCircle2, Sparkles, Sun, X, Volume2, VolumeX, Bell, Clock, Sliders, Check } from 'lucide-react';
+import { Play, Pause, RotateCcw, Settings, Target, Lightbulb, CheckCircle2, Sparkles, Sun, X, Volume2, VolumeX, Bell, Clock, Sliders, Check, ExternalLink } from 'lucide-react';
 import { usePomodoro } from '../context/PomodoroContext';
 import { useTasks } from '../context/TasksContext';
 import { WidgetRegistry } from './WidgetRegistry';
@@ -335,6 +335,13 @@ const PomodoroWidget: React.FC = () => {
         <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#FFFFFF', margin: 0, letterSpacing: '-0.01em' }}>
           Pomodoro
         </h3>
+        <button 
+          onClick={() => { window.dispatchEvent(new CustomEvent('change-view', { detail: 'pomodoro' })); window.dispatchEvent(new CustomEvent('navigate-to-module', { detail: 'pomodoro' })); }}
+          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.8)', cursor: 'pointer', padding: '6px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s' }}
+          title="Abrir el módulo completo de Pomodoro"
+        >
+          <ExternalLink size={13} /> Módulo completo
+        </button>
         <button 
           onClick={() => setShowSettingsModal(true)}
           style={{ background: 'transparent', border: 'none', color: 'rgba(255, 255, 255, 0.6)', cursor: 'pointer', padding: 0, transition: 'color 0.2s' }}

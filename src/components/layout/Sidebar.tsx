@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
    LayoutDashboard, Briefcase, CheckSquare, Calendar, 
-   BarChart3, Mail, FileText, Users, Settings, Activity, Flame, BookOpen, Heart, Wallet, ShoppingBag
+   BarChart3, Mail, FileText, Users, Settings, ClipboardCheck, BookOpen, Heart, Wallet, ShoppingBag
 } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
 import { PermissionService } from '../../services/PermissionService';
@@ -19,15 +19,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} strokeWidth={1.5} fill="currentColor" />, module: 'dashboard' as Module },
-    { id: 'pomodoro', label: 'Pomodoro', icon: <Flame size={20} strokeWidth={1.5} fill="currentColor" />, module: 'pomodoro' as Module },
     { id: 'tareas', label: 'Tareas', icon: <CheckSquare size={20} strokeWidth={1.5} fill="currentColor" />, module: 'tareas' as Module },
     { id: 'bujo', label: 'Bullet Journal', icon: <BookOpen size={20} strokeWidth={1.5} fill="currentColor" />, module: 'bujo' as Module },
-    { id: 'habitos', label: 'Hábitos', icon: <Activity size={20} strokeWidth={1.5} fill="currentColor" />, module: 'habitos' as Module },
+    { id: 'habitos', label: 'Hábitos', icon: <ClipboardCheck size={20} strokeWidth={1.5} fill="currentColor" />, module: 'habitos' as Module },
     { id: 'health', label: 'Salud', icon: <Heart size={20} strokeWidth={1.5} fill="currentColor" />, module: 'health' as Module },
     { id: 'proyectos', label: 'Proyectos', icon: <Briefcase size={20} strokeWidth={1.5} fill="currentColor" />, module: 'proyectos' as Module },
     { id: 'calendario', label: 'Calendario', icon: <Calendar size={20} strokeWidth={1.5} fill="currentColor" />, module: 'calendario' as Module },
-    { id: 'estadicas', label: 'Estadísticas', icon: <BarChart3 size={20} strokeWidth={1.5} fill="currentColor" />, module: 'estadisticas' as Module },
-    { id: 'mensajes', label: 'Mensajes', icon: <Mail size={20} strokeWidth={1.5} fill="currentColor" />, badge: 3, module: 'mensajes' as Module },
+    { id: 'estadisticas', label: 'Estadísticas', icon: <BarChart3 size={20} strokeWidth={1.5} fill="currentColor" />, module: 'estadisticas' as Module },
+    { id: 'mensajes', label: 'Mensajes', icon: <Mail size={20} strokeWidth={1.5} fill="currentColor" />, module: 'mensajes' as Module },
     { id: 'documentos', label: 'Documentos', icon: <FileText size={20} strokeWidth={1.5} fill="currentColor" />, module: 'documentos' as Module },
     { id: 'finanzas', label: 'Finanzas', icon: <Wallet size={20} strokeWidth={1.5} fill="currentColor" />, module: 'finanzas' as Module },
     { id: 'shopping', label: 'Compras', icon: <ShoppingBag size={20} strokeWidth={1.5} fill="currentColor" />, module: 'shopping' as Module },
@@ -62,9 +61,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
       {/* Navigation Menu */}
       <nav className="sidebar-nav">
         {menuItems.map(item => {
-          // If user role does not have permission to view the module, hide it
           if (!hasPermission(item.module, 'view')) return null;
-
           return (
             <button
               key={item.id}
@@ -77,16 +74,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
                 <span className="nav-label">{item.label}</span>
               </div>
               {(item as any).badge && (
-                <div className="nav-label" style={{ 
-                  background: 'var(--accent-green)', 
-                  color: 'var(--bg-primary)', 
-                  fontSize: '10px', 
-                  fontWeight: 700, 
-                  width: '18px', 
-                  height: '18px', 
-                  borderRadius: '50%', 
-                  display: 'flex', 
-                  alignItems: 'center', 
+                <div className="nav-label" style={{
+                  background: 'var(--accent-green)',
+                  color: 'var(--bg-primary)',
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  width: '18px',
+                  height: '18px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
                   justifyContent: 'center'
                 }}>
                   {(item as any).badge}
