@@ -1,19 +1,46 @@
 import React, { useState } from 'react';
-import { Plus, Check, Trophy, Star, Calendar, Trash2, Archive, Flame } from 'lucide-react';
+import { Plus, Check, Trophy, Star, Calendar, Trash2, Pencil, Flame, Ban } from 'lucide-react';
 import { useHabits } from '../../context/HabitsContext';
-import type { HabitWithStats, HabitFrequency } from '../../context/HabitsContext';
+import type { HabitWithStats, HabitFrequency, HabitType } from '../../context/HabitsContext';
 
 export const HabitsModule: React.FC = () => {
-  const { habitsWithStats, addHabit, toggleHabitToday, archiveHabit } = useHabits();
+  const { habitsWithStats, addHabit, updateHabit, deleteHabit, toggleHabitToday } = useHabits();
+
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [desc, setDesc] = useState('');
   const [icon, setIcon] = useState('🔥');
   const [frequency, setFrequency] = useState<HabitFrequency>('daily');
   const [color, setColor] = useState('#10B981');
+  const [type, setType] = useState<HabitType>('positive');
 
-  const EMOJIS = ['🔥', '💧', '🏃', '📚', '🧘', '🚭', '🍎', '💻', '⏰', '✍️'];
+  const EMOJIS = ['🔥', '💧', '🏃', '📚', '🧘', '🚭', '🍎', '💻', '⏰', '✍️', '🍷', '🥗', '😴', '💊'];
   const COLORS = ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444', '#EC4899'];
+
+  const openNew = () => {
+    setEditingId(null);
+    setName(''); setDesc(''); setIcon('🔥'); setColor('#10B981'); setType('positive'); setFrequency('daily');
+    setShowAddForm(true);
+  };
+
+  const startEdit = (habit: HabitWithStats) => {
+    setEditingId(habit.id);
+    setName(habit.name); setDesc(habit.description); setIcon(habit.icon);
+    setColor(habit.color); setType(habit.type || 'positive'); setFrequency(habit.frequency);
+    setShowAddForm(true);
+  };
+
+  const closeForm = () => {
+    setShowAddForm(false);
+    setEditingId(null);
+  };
+
+  const handleDelete = (h: HabitWithStats) => {
+    if (window.confirm(`¿Eliminar el hábito "${h.name}"? Se borrará su historial completo y no se puede deshacer.`)) {
+      deleteHabit(h.id);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,20 +50,31 @@ export const HabitsModule: React.FC = () => {
     if (frequency === 'weekdays') targetDays = [1, 2, 3, 4, 5];
     if (frequency === 'weekends') targetDays = [0, 6];
 
-    addHabit({
-      name: name.trim(),
-      description: desc.trim(),
-      icon,
-      color,
-      frequency,
-      targetDays,
-      startDate: new Date().toISOString().split('T')[0],
-      archived: false,
-    });
+    if (editingId) {
+      updateHabit(editingId, {
+        name: name.trim(),
+        description: desc.trim(),
+        icon,
+        color,
+        frequency,
+        targetDays,
+        type,
+      });
+    } else {
+      addHabit({
+        name: name.trim(),
+        description: desc.trim(),
+        icon,
+        color,
+        type,
+        frequency,
+        targetDays,
+        startDate: new Date().toISOString().split('T')[0],
+        archived: false,
+      });
+    }
 
-    setName('');
-    setDesc('');
-    setShowAddForm(false);
+    closeForm();
   };
 
   return (
@@ -46,13 +84,16 @@ export const HabitsModule: React.FC = () => {
           <h2>Hábitos & Rutinas</h2>
           <p className="module-subtitle">Construye consistencia día a día</p>
         </div>
-        <button className="action-green-btn" onClick={() => setShowAddForm(!showAddForm)}>
+        <button className="action-green-btn" onClick={openNew}>
           <Plus size={14} /> Nuevo Hábito
         </button>
       </div>
 
       {showAddForm && (
         <div className="add-task-form-card" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '20px' }}>
+          <h3 style={{ marginTop: 0, fontSize: '0.95rem', marginBottom: '12px' }}>
+            {editingId ? 'Modificar hábito' : 'Crear hábito'}
+          </h3>
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <input
               type="text"
@@ -69,11 +110,60 @@ export const HabitsModule: React.FC = () => {
               value={desc}
               onChange={e => setDesc(e.target.value)}
             />
-            
+
             <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+
+              {/* Tipo de hábito */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-subtle)', marginBottom: '6px' }}>Tipo</label>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setType('positive')}
+                    style={{
+                      padding: '6px 12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      background: type === 'positive' ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+                      border: `1px solid ${type === 'positive' ? '#10B981' : 'var(--border-color)'}`,
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      color: type === 'positive' ? '#34D399' : 'var(--text-subtle)',
+                      fontSize: '0.75rem'
+                    }}
+                  >
+                    <Check size={13} /> Positivo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setType('negative')}
+                    style={{
+                      padding: '6px 12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      background: type === 'negative' ? 'rgba(244, 63, 94, 0.15)' : 'transparent',
+                      border: `1px solid ${type === 'negative' ? '#F43F5E' : 'var(--border-color)'}`,
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      color: type === 'negative' ? '#FB7185' : 'var(--text-subtle)',
+                      fontSize: '0.75rem'
+                    }}
+                  >
+                    <Ban size={13} /> Negativo
+                  </button>
+                </div>
+                <p style={{ margin: '6px 0 0', fontSize: '0.7rem', color: 'var(--text-subtle)' }}>
+                  {type === 'negative'
+                    ? 'Hábito de evitación: marcas los días en que ocurrió (ej. días que bebiste alcohol).'
+                    : 'Hábito a construir: marcas los días que lo cumples.'}
+                </p>
+              </div>
+
               <div>
                 <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-subtle)', marginBottom: '6px' }}>Icono</label>
-                <div style={{ display: 'flex', gap: '6px' }}>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', maxWidth: '220px' }}>
                   {EMOJIS.map(em => (
                     <button
                       key={em}
@@ -122,89 +212,134 @@ export const HabitsModule: React.FC = () => {
                   onChange={e => setFrequency(e.target.value as HabitFrequency)}
                 >
                   <option value="daily">Diario</option>
-                  <option value="weekdays">Días de semana</option>
+                  <option value="weekday">Días de semana</option>
                   <option value="weekends">Fines de semana</option>
                 </select>
               </div>
             </div>
 
             <div className="task-form-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-              <button type="button" className="outline-action-btn" onClick={() => setShowAddForm(false)}>Cancelar</button>
-              <button type="submit" className="action-green-btn">Crear Hábito</button>
+              <button type="button" className="outline-action-btn" onClick={closeForm}>Cancelar</button>
+              <button type="submit" className="action-green-btn">{editingId ? 'Guardar cambios' : 'Crear Hábito'}</button>
             </div>
           </form>
         </div>
       )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
-        {habitsWithStats.map(habit => (
-          <div
-            key={habit.id}
-            style={{
-              background: 'var(--bg-card)',
-              border: `1px solid ${habit.completedToday ? habit.color + '40' : 'var(--border-color)'}`,
-              borderRadius: '10px',
-              padding: '18px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px',
-              transition: 'all 0.15s ease'
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                <span style={{ fontSize: '1.5rem' }}>{habit.icon}</span>
-                <div>
-                  <h4 style={{ margin: 0, fontSize: '0.95rem' }}>{habit.name}</h4>
-                  <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-subtle)' }}>{habit.description}</p>
+        {habitsWithStats.map(habit => {
+          const isNegative = habit.type === 'negative';
+          return (
+            <div
+              key={habit.id}
+              style={{
+                background: 'var(--bg-card)',
+                border: `1px solid ${habit.completedToday ? habit.color + '40' : 'var(--border-color)'}`,
+                borderRadius: '10px',
+                padding: '18px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <span style={{ fontSize: '1.5rem' }}>{habit.icon}</span>
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: '0.95rem' }}>
+                      {habit.name}
+                      <span
+                        style={{
+                          marginLeft: '8px',
+                          fontSize: '0.62rem',
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.04em',
+                          padding: '2px 6px',
+                          borderRadius: '6px',
+                          verticalAlign: 'middle',
+                          color: isNegative ? '#FB7185' : '#34D399',
+                          background: isNegative ? 'rgba(244,63,94,0.12)' : 'rgba(16,185,129,0.12)',
+                          border: `1px solid ${isNegative ? 'rgba(244,63,94,0.3)' : 'rgba(16,185,129,0.3)'}`
+                        }}
+                      >
+                        {isNegative ? 'Negativo' : 'Positivo'}
+                      </span>
+                    </h4>
+                    <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: 'var(--text-subtle)' }}>{habit.description}</p>
+                  </div>
                 </div>
+                <button
+                  onClick={() => toggleHabitToday(habit.id)}
+                  title={isNegative ? (habit.completedToday ? 'Hoy lo consumiste (día registrado)' : 'Marca el día de hoy como consumo') : (habit.completedToday ? 'Completado hoy' : 'Completar hoy')}
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    border: 'none',
+                    background: habit.completedToday ? habit.color : 'var(--bg-secondary)',
+                    color: habit.completedToday ? '#FFF' : 'var(--text-subtle)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <Check size={16} />
+                </button>
               </div>
-              <button
-                onClick={() => toggleHabitToday(habit.id)}
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  border: 'none',
-                  background: habit.completedToday ? habit.color : 'var(--bg-secondary)',
-                  color: habit.completedToday ? '#FFF' : 'var(--text-subtle)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                <Check size={16} />
-              </button>
-            </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', borderTop: '1px solid var(--border-color)', paddingTop: '10px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Flame size={14} style={{ color: habit.streak > 0 ? '#F97316' : 'var(--text-subtle)' }} />
-                <span>Racha: <strong>{habit.streak}d</strong></span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', borderTop: '1px solid var(--border-color)', paddingTop: '10px' }}>
+                {isNegative ? (
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <Calendar size={14} style={{ color: '#F43F5E' }} />
+                      <span>Este mes: <strong>{habit.currentMonthCount} veces</strong></span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <Flame size={14} style={{ color: '#F97316' }} />
+                      <span>Hoy: <strong>{habit.completedToday ? 'Sí' : 'No'}</strong></span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <Flame size={14} style={{ color: habit.streak > 0 ? '#F97316' : 'var(--text-subtle)' }} />
+                      <span>Racha: <strong>{habit.streak}d</strong></span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <Trophy size={14} style={{ color: '#F59E0B' }} />
+                      <span>Máx: <strong>{habit.bestStreak}d</strong></span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <Star size={14} style={{ color: habit.color }} />
+                      <span>Tasa 30d: <strong>{habit.completionRate30d}%</strong></span>
+                    </div>
+                  </>
+                )}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Trophy size={14} style={{ color: '#F59E0B' }} />
-                <span>Máx: <strong>{habit.bestStreak}d</strong></span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Star size={14} style={{ color: habit.color }} />
-                <span>Tasa 30d: <strong>{habit.completionRate30d}%</strong></span>
-              </div>
-            </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
-              <button
-                onClick={() => archiveHabit(habit.id)}
-                title="Archivar"
-                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-subtle)', padding: '4px' }}
-              >
-                <Archive size={14} />
-              </button>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
+                <button
+                  onClick={() => startEdit(habit)}
+                  title="Modificar"
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-subtle)', padding: '4px' }}
+                >
+                  <Pencil size={14} />
+                </button>
+                <button
+                  onClick={() => handleDelete(habit)}
+                  title="Eliminar"
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'rgba(244,63,94,0.8)', padding: '4px' }}
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

@@ -30,6 +30,7 @@ import { CalendarModule } from '../dashboard/CalendarModule';
 import { DocumentsModule } from '../dashboard/DocumentsModule';
 import { FinanceModule } from '../finance/FinanceModule';
 import { ProjectsModule } from '../dashboard/ProjectsModule';
+import { ActivityModule } from '../dashboard/ActivityModule';
 import { ClientsModule } from '../dashboard/ClientsModule';
 import { ShoppingModule } from '../dashboard/ShoppingModule';
 import { CommandPalette } from './CommandPalette';
@@ -54,10 +55,18 @@ export const DashboardLayout: React.FC = () => {
   useEffect(() => {
     const handleViewChange = (e: Event) => {
       const customEvent = e as CustomEvent;
-      setActiveView(customEvent.detail);
+      if (customEvent.detail) {
+        setActiveView(customEvent.detail);
+        // Scroll to top of main body
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     };
     window.addEventListener('change-view', handleViewChange);
-    return () => window.removeEventListener('change-view', handleViewChange);
+    window.addEventListener('navigate-to-module', handleViewChange);
+    return () => {
+      window.removeEventListener('change-view', handleViewChange);
+      window.removeEventListener('navigate-to-module', handleViewChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -198,6 +207,7 @@ export const DashboardLayout: React.FC = () => {
            activeView === 'finanzas' ? <FinanceModule /> :
            activeView === 'shopping' ? <ShoppingModule /> :
            activeView === 'proyectos' ? <ProjectsModule /> :
+           activeView === 'actividad' ? <ActivityModule /> :
            activeView === 'clientes' ? <ClientsModule /> :
            renderModulePlaceholder(activeView)}
         </main>

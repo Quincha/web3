@@ -1,15 +1,15 @@
 import React from 'react';
-import { Activity as ActivityIcon, CheckCircle, FileText, Users } from 'lucide-react';
+import { Activity as ActivityIcon, ArrowRight } from 'lucide-react';
 import { WidgetRegistry } from './WidgetRegistry';
 import { tokens } from '../theme/tokens';
+import { useTasks } from '../context/TasksContext';
+import { buildActivity, formatRelativeTime } from '../utils/activity';
+
+const MAX_ITEMS = 4;
 
 const ActivityWidget: React.FC = () => {
-  const activities = [
-    { id: 1, text: 'Completaste la tarea "Diseño del Hero"', time: 'hace 2 horas', icon: <CheckCircle size={16} />, color: tokens.colors.accent.green },
-    { id: 2, text: 'Actualizaste el documento "Design System"', time: 'hace 4 horas', icon: <FileText size={16} />, color: tokens.colors.accent.cyan },
-    { id: 3, text: 'Nuevo miembro añadido al equipo', time: 'ayer', icon: <Users size={16} />, color: '#B388FF' },
-    { id: 4, text: 'Reunión de sincronización finalizada', time: 'ayer', icon: <CheckCircle size={16} />, color: tokens.colors.accent.green },
-  ];
+  const { tasks, projects } = useTasks();
+  const activities = buildActivity(tasks, projects);
 
   return (
     <div className="dashboard-card">
@@ -22,35 +22,47 @@ const ActivityWidget: React.FC = () => {
         </button>
       </div>
 
-
-
       <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacing.space4, flex: 1, overflowY: 'auto', zIndex: 1 }}>
-        {activities.map(activity => (
-          <div key={activity.id} style={{ display: 'flex', gap: tokens.spacing.space4, alignItems: 'flex-start' }}>
-            <div style={{ 
-              width: '8px', 
-              height: '8px', 
-              borderRadius: '2px', 
-              background: tokens.colors.accent.cyan,
-              marginTop: '6px',
-              boxShadow: `0 0 8px ${tokens.colors.accent.cyan}60`,
-              flexShrink: 0
-            }} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-              <span style={{ color: tokens.colors.text.primary, fontSize: tokens.typography.sizes.body }}>
-                {activity.text}
-              </span>
-              <span style={{ color: tokens.colors.text.secondary, fontSize: tokens.typography.sizes.small }}>
-                {activity.time}
-              </span>
-            </div>
+        {activities.length === 0 ? (
+          <div style={{ color: tokens.colors.text.muted, fontSize: tokens.typography.sizes.body, textAlign: 'center', padding: '24px 0' }}>
+            Aún no hay actividad registrada.
           </div>
-        ))}
+        ) : (
+          activities.slice(0, MAX_ITEMS).map(activity => (
+            <div key={activity.id} style={{ display: 'flex', gap: tokens.spacing.space4, alignItems: 'flex-start' }}>
+              <div style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '2px',
+                background: activity.color,
+                marginTop: '6px',
+                boxShadow: `0 0 8px ${activity.color}60`,
+                flexShrink: 0
+              }} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={{ color: tokens.colors.text.primary, fontSize: tokens.typography.sizes.body }}>
+                  {activity.text}
+                </span>
+                <span style={{ color: tokens.colors.text.secondary, fontSize: tokens.typography.sizes.small }}>
+                  {formatRelativeTime(activity.timestamp)}
+                </span>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       <div style={{ marginTop: 'auto', borderTop: `1px solid ${tokens.colors.border.primary}`, paddingTop: tokens.spacing.space4, zIndex: 1 }}>
-        <a href="#" style={{ color: tokens.colors.accent.green, fontSize: tokens.typography.sizes.small, textDecoration: 'none', fontWeight: tokens.typography.weights.medium }}>
-          Ver toda la actividad →
+        <a
+          href="#"
+          onClick={e => {
+            e.preventDefault();
+            window.dispatchEvent(new CustomEvent('change-view', { detail: 'actividad' }));
+            window.dispatchEvent(new CustomEvent('navigate-to-module', { detail: 'actividad' }));
+          }}
+          style={{ color: tokens.colors.accent.green, fontSize: tokens.typography.sizes.small, textDecoration: 'none', fontWeight: tokens.typography.weights.medium, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+        >
+          Ver toda la actividad <ArrowRight size={14} />
         </a>
       </div>
     </div>

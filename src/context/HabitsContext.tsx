@@ -36,6 +36,7 @@ export interface HabitWithStats extends Habit {
   streak: number;
   bestStreak: number;
   completionRate30d: number; // 0-100
+  currentMonthCount: number; // veces registradas en el mes actual (hábitos positivos y negativos)
 }
 
 interface HabitsContextType {
@@ -62,14 +63,24 @@ interface HabitsContextType {
 // STREAK CALCULATION (pure, runtime only)
 // ─────────────────────────────────────────────
 
+function pad(n: number): string { return String(n).padStart(2, '0'); }
+
+function toLocalISO(d: Date): string {
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+function parseISO(dateISO: string): Date {
+  return new Date(dateISO + 'T12:00:00');
+}
+
 function todayISO(): string {
-  return new Date().toISOString().split('T')[0];
+  return toLocalISO(new Date());
 }
 
 function subtractDay(dateISO: string, days: number): string {
-  const d = new Date(dateISO + 'T12:00:00');
+  const d = parseISO(dateISO);
   d.setDate(d.getDate() - days);
-  return d.toISOString().split('T')[0];
+  return toLocalISO(d);
 }
 
 function calculateStreak(completions: HabitCompletion[]): { streak: number; bestStreak: number } {
@@ -115,7 +126,7 @@ function completionRate30d(completions: HabitCompletion[], targetDays: number[])
     const d = new Date(today);
     d.setDate(today.getDate() - i);
     const dayOfWeek = d.getDay();
-    const isoDate = d.toISOString().split('T')[0];
+    const isoDate = toLocalISO(d);
 
     if (targetDays.includes(dayOfWeek)) {
       eligible++;
@@ -126,11 +137,22 @@ function completionRate30d(completions: HabitCompletion[], targetDays: number[])
   return eligible === 0 ? 0 : Math.round((completed / eligible) * 100);
 }
 
+function countInCurrentMonth(completions: HabitCompletion[], onlyViolations: boolean = false): number {
+  const now = new Date();
+  return completions.filter(c => {
+    if (onlyViolations && c.isViolation !== true) return false;
+    const d = parseISO(c.date);
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  }).length;
+}
+
 function enrichHabit(habit: Habit): HabitWithStats {
   const { streak, bestStreak } = calculateStreak(habit.completions);
   const completedToday = habit.completions.some(c => c.date === todayISO());
   const rate = completionRate30d(habit.completions, habit.targetDays);
-  return { ...habit, streak, bestStreak, completedToday, completionRate30d: rate };
+  const onlyViolations = habit.type === 'negative';
+  const currentMonthCount = countInCurrentMonth(habit.completions, onlyViolations);
+  return { ...habit, streak, bestStreak, completedToday, completionRate30d: rate, currentMonthCount };
 }
 
 // ─────────────────────────────────────────────
@@ -150,7 +172,7 @@ function mockCompletions(daysBack: number, skipDays: number[] = []): HabitComple
     if (skipDays.includes(i)) continue;
     const d = new Date(today);
     d.setDate(today.getDate() - i);
-    const dateISO = d.toISOString().split('T')[0];
+    const dateISO = toLocalISO(d);
     completions.push({
       date: dateISO,
       timestamp: d.toISOString()
@@ -159,7 +181,23 @@ function mockCompletions(daysBack: number, skipDays: number[] = []): HabitComple
   return completions;
 }
 
+const SEED_ALCOHOL_HABIT: Habit = {
+  id: 'habit_alcohol',
+  name: 'Beber alcohol',
+  description: 'Hábito negativo: seguimiento de los días con consumo (racha = días sin beber).',
+  icon: '🍷',
+  color: '#F43F5E',
+  type: 'negative',
+  frequency: 'daily',
+  targetDays: [0, 1, 2, 3, 4, 5, 6],
+  completions: [],
+  startDate: subtractDay(todayISO(), 14),
+  archived: false,
+  syncId: null
+};
+
 const INITIAL_HABITS: Habit[] = [
+  SEED_ALCOHOL_HABIT,
   {
     id: 'habit_water',
     name: 'Hidratación 2L',
@@ -236,7 +274,13 @@ const CACHE_KEY = 'quincha_habits';
 function loadHabits(): Habit[] {
   try {
     const raw = localStorage.getItem(CACHE_KEY);
-    return raw ? JSON.parse(raw) : INITIAL_HABITS;
+    if (!raw) return INITIAL_HABITS;
+    const parsed = JSON.parse(raw) as Habit[];
+    // One-time seed: ensure the "Beber alcohol" negative habit exists even for existing saved data
+    if (!parsed.some(h => h.id === SEED_ALCOHOL_HABIT.id)) {
+      parsed.unshift({ ...SEED_ALCOHOL_HABIT, completions: [] });
+    }
+    return parsed;
   } catch { return INITIAL_HABITS; }
 }
 

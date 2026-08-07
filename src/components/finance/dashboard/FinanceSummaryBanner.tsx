@@ -1,11 +1,19 @@
 import React from 'react';
-import { Wallet, TrendingUp, CreditCard } from 'lucide-react';
+import { Wallet, TrendingUp, CreditCard, CalendarClock } from 'lucide-react';
 import { useFinance } from '../../../context/FinanceContext';
 import { tokens } from '../../../theme/tokens';
 import { Button } from '../../ui/Button';
 
+const fmtCLP = (n: number): string =>
+  `$${Math.round(n).toLocaleString('es-CL')}`;
+
 export const FinanceSummaryBanner: React.FC = () => {
   const { stats } = useFinance();
+
+  const goToFinance = () => {
+    window.dispatchEvent(new CustomEvent('change-view', { detail: 'finanzas' }));
+    window.dispatchEvent(new CustomEvent('navigate-to-module', { detail: 'finanzas' }));
+  };
 
   return (
     <div className="premium-card-hover" style={{
@@ -49,16 +57,16 @@ export const FinanceSummaryBanner: React.FC = () => {
             <Wallet size={14} /> Saldo disponible
           </div>
           <span style={{ fontSize: '20px', fontWeight: 700, color: tokens.colors.accent.green }}>
-            $4.820.000
+            {fmtCLP(stats.availableBalance)}
           </span>
         </div>
-        
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.6)', fontSize: '12px' }}>
             <TrendingUp size={14} /> Por cobrar
           </div>
           <span style={{ fontSize: '20px', fontWeight: 700, color: '#38BDF8' }}>
-            $980.000
+            {fmtCLP(stats.totalReceivables)}
           </span>
         </div>
 
@@ -67,25 +75,33 @@ export const FinanceSummaryBanner: React.FC = () => {
             <CreditCard size={14} /> Por pagar
           </div>
           <span style={{ fontSize: '20px', fontWeight: 700, color: tokens.colors.accent.danger }}>
-            $620.000
+            {fmtCLP(stats.totalPayables)}
           </span>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.6)', fontSize: '12px' }}>
-            Próximo vencimiento
+            <CalendarClock size={14} /> Próximo vencimiento
           </div>
-          <span style={{ fontSize: '16px', fontWeight: 600, color: '#fff' }}>
-            Mañana
-          </span>
+          {stats.nextDueCard ? (
+            <>
+              <span style={{ fontSize: '16px', fontWeight: 600, color: '#fff' }}>
+                {fmtCLP(stats.nextDueCard.amount)} · {stats.nextDueCard.dueDate}
+              </span>
+              <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>{stats.nextDueCard.name}</span>
+            </>
+          ) : (
+            <span style={{ fontSize: '16px', fontWeight: 600, color: '#fff' }}>—</span>
+          )}
         </div>
       </div>
 
       {/* Right side: Action */}
       <div style={{ flexShrink: 0 }}>
-        <Button 
-          variant="primary" 
-          style={{ 
+        <Button
+          variant="primary"
+          onClick={goToFinance}
+          style={{
             background: 'rgba(255, 255, 255, 0.08)',
             color: '#fff',
             fontWeight: 500,
@@ -93,7 +109,8 @@ export const FinanceSummaryBanner: React.FC = () => {
             borderRadius: '12px',
             padding: '12px 24px',
             boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)',
-            transition: 'all 0.3s ease'
+            transition: 'all 0.3s ease',
+            cursor: 'pointer'
           }}
         >
           Ir a Finanzas →
