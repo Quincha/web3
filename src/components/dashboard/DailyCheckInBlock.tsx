@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useBujo } from '../../context/BujoContext';
 import type { BujoCheckIn } from '../../context/BujoContext';
 import { useHabits } from '../../context/HabitsContext';
-import { Star, Zap, Pill, BookOpen, Activity, Wine, Check, X, Sparkles, MessageSquare } from 'lucide-react';
+import { Star, Zap, Check, X, Sparkles, MessageSquare } from 'lucide-react';
 
 interface DailyCheckInBlockProps {
   selectedDateStr: string;
@@ -16,10 +16,6 @@ export const DailyCheckInBlock: React.FC<DailyCheckInBlockProps> = ({ selectedDa
 
   const [dayRating, setDayRating] = useState<number>(currentCheckIn.dayRating || 0);
   const [energyLevel, setEnergyLevel] = useState<number>(currentCheckIn.energyLevel || 7);
-  const [medsTaken, setMedsTaken] = useState<boolean | null>(currentCheckIn.medsTaken ?? null);
-  const [readBook, setReadBook] = useState<boolean | null>(currentCheckIn.readBook ?? null);
-  const [exercised, setExercised] = useState<boolean | null>(currentCheckIn.exercised ?? null);
-  const [drankAlcohol, setDrankAlcohol] = useState<boolean | null>(currentCheckIn.drankAlcohol ?? null);
   const [notes, setNotes] = useState<string>(currentCheckIn.notes || '');
 
   // Synchronize internal component state whenever selectedDateStr changes
@@ -27,10 +23,6 @@ export const DailyCheckInBlock: React.FC<DailyCheckInBlockProps> = ({ selectedDa
     const c = (getCheckIn(selectedDateStr) || {}) as Partial<BujoCheckIn>;
     setDayRating(c.dayRating || 0);
     setEnergyLevel(c.energyLevel || 7);
-    setMedsTaken(c.medsTaken ?? null);
-    setReadBook(c.readBook ?? null);
-    setExercised(c.exercised ?? null);
-    setDrankAlcohol(c.drankAlcohol ?? null);
     setNotes(c.notes || '');
   }, [selectedDateStr, getCheckIn]);
 
@@ -49,26 +41,7 @@ export const DailyCheckInBlock: React.FC<DailyCheckInBlockProps> = ({ selectedDa
     saveCheckIn({ date: selectedDateStr, energyLevel: val });
   };
 
-  const handleToggle = (key: 'medsTaken' | 'readBook' | 'exercised' | 'drankAlcohol', value: boolean) => {
-    // Keep this only for legacy daily checkin fallback logic if needed
-    let updatedMeds = medsTaken;
-    let updatedRead = readBook;
-    let updatedEx = exercised;
-    let updatedAlc = drankAlcohol;
 
-    if (key === 'medsTaken') { setMedsTaken(value); updatedMeds = value; }
-    if (key === 'readBook') { setReadBook(value); updatedRead = value; }
-    if (key === 'exercised') { setExercised(value); updatedEx = value; }
-    if (key === 'drankAlcohol') { setDrankAlcohol(value); updatedAlc = value; }
-
-    saveCheckIn({
-      date: selectedDateStr,
-      medsTaken: updatedMeds ?? undefined,
-      readBook: updatedRead ?? undefined,
-      exercised: updatedEx ?? undefined,
-      drankAlcohol: updatedAlc ?? undefined,
-    });
-  };
 
   const handleNotesChange = (txt: string) => {
     setNotes(txt);

@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Target, Plus, CheckCircle2, Circle, TrendingUp, X } from 'lucide-react';
 import { useGoals } from '../../context/GoalsContext';
-import type { GoalTimeframe, Goal } from '../../context/GoalsContext';
-
+import type { GoalTimeframe } from '../../context/GoalsContext';
 const TIMEFRAMES: { id: GoalTimeframe; label: string; color: string }[] = [
   { id: 'weekly', label: 'Semanales', color: '#3B82F6' },
   { id: 'monthly', label: 'Mensuales', color: '#10B981' },

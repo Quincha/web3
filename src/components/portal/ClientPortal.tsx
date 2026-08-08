@@ -17,8 +17,7 @@ interface ClientRequest {
 
 export const ClientPortal: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'request' | 'tracking' | 'portfolio'>('request');
-  // @ts-expect-error unused
-  const [availability, setAvailability] = useState<'available' | 'limited' | 'busy'>('available');
+  const [availability] = useState<'available' | 'limited' | 'busy'>('available');
   
   // Request Form States
   const [name, setName] = useState('');

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Play, Pause, RotateCcw, Settings, Target, Lightbulb, CheckCircle2, Sun, X, Volume2, VolumeX, Clock, Check, ExternalLink } from 'lucide-react';
 import { usePomodoro } from '../context/PomodoroContext';
-import { useTasks } from '../context/TasksContext';
 import { WidgetRegistry } from './WidgetRegistry';
 
 const PRO_TIPS = [
@@ -26,8 +25,6 @@ const PomodoroWidget: React.FC = () => {
     finishSession
   } = usePomodoro();
 
-  // @ts-expect-error unused
-  const { tasks } = useTasks();
   const [tipIndex] = useState(0);
 
   // Settings State

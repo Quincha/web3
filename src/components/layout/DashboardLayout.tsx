@@ -3,7 +3,6 @@ import { Sidebar } from './Sidebar';
 import { DashboardSkeleton } from '../ui/SkeletonLoader';
 import { DashboardHero } from '../dashboard/DashboardHero';
 import { FinanceSummaryBanner } from '../finance/dashboard/FinanceSummaryBanner';
-import { useUser } from '../../context/UserContext';
 import '../../Dashboard.css';
 
 // Make sure all widgets are registered by importing them
@@ -35,8 +34,6 @@ import gsap from 'gsap';
 import { useTransition } from '../../context/TransitionContext';
 
 export const DashboardLayout: React.FC = () => {
-  // @ts-expect-error unused
-  const { userConfig } = useUser();
   const { currentView: activeView, navigateTo } = useTransition();
   const [isLoading, setIsLoading] = useState(true);
 

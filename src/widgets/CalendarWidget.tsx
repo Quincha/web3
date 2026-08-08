@@ -44,8 +44,7 @@ export const CalendarWidget: React.FC = () => {
   const [newTitle, setNewTitle] = useState('');
   const [newTime, setNewTime] = useState('11:00');
   const [newTag, setNewTag] = useState('REUNIÓN');
-  // @ts-expect-error unused
-  const [newDuration, setNewDuration] = useState('30 min');
+  const [newDuration] = useState('30 min');
 
   const handleAddEvent = (e: React.FormEvent) => {
     e.preventDefault();

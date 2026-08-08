@@ -7,8 +7,6 @@ import { Play, Pause, Square, Flame, Laptop, Calendar,  Plus, Check } from 'luci
 export const PomodoroModule: React.FC = () => {
   const {
     timeRemaining,
-  // @ts-expect-error unused
-    totalDuration,
     isActive,
     isPaused,
     sessionType,

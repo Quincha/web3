@@ -37,8 +37,7 @@ export const BujoModule: React.FC = () => {
 
   const [inputValue, setInputValue] = useState('');
   const [selectedType, setSelectedType] = useState<BujoEntryType>('task');
-  // @ts-expect-error unused
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery] = useState('');
   
   const [activeTab, setActiveTab] = useState<'diario' | 'calendario' | 'tareas' | 'habitos' | 'bienestar' | 'proyectos' | 'compras' | 'metas'>('diario');
   
