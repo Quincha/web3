@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { 
-   LayoutDashboard, Briefcase, CheckSquare, Calendar, 
-   BarChart3, Mail, FileText, Users, Settings, ClipboardCheck, BookOpen, Heart, Wallet, ShoppingBag, Activity
+   LayoutDashboard, BarChart3, Mail, FileText, Users, Settings, BookOpen, Wallet
 } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
 import { PermissionService } from '../../services/PermissionService';
@@ -15,8 +14,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) => {
-  const { userConfig, updateConfig, hasPermission } = useUser();
-  const [showRoleMenu, setShowRoleMenu] = useState(false);
+  const { userConfig, hasPermission, username } = useUser();
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} strokeWidth={1.5} fill="currentColor" />, module: 'dashboard' as Module },
@@ -29,11 +27,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
     { id: 'ajustes', label: 'Ajustes', icon: <Settings size={20} strokeWidth={1.5} fill="currentColor" />, module: 'ajustes' as Module }
   ];
 
-  // @ts-expect-error unused
-  const handleRoleChange = (role: Role) => {
-    updateConfig({ userRole: role });
-    setShowRoleMenu(false);
-  };
 
   const getRoleLabel = (role: Role) => {
     return PermissionService.getRoles().find(r => r.id === role)?.label || role;
@@ -92,14 +85,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
 
       {/* User Info & Settings Footer */}
       <div className="sidebar-user-section">
-        <div className="user-profile-card" onClick={() => setShowRoleMenu(!showRoleMenu)}>
+        <div className="user-profile-card">
           <img 
             src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=32&h=32&q=80" 
-            alt="Daniel"
+            alt={username}
             className="user-avatar"
           />
           <div className="user-info-text">
-            <span className="user-name">Daniel</span>
+            <span className="user-name">{username || userConfig.userName || 'Usuario'}</span>
             <span className="user-role">{getRoleLabel(userConfig.userRole)}</span>
           </div>
         </div>

@@ -1,0 +1,17 @@
+{
+  "name": "quincha-server",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Backend Quincha Systems — Express + node:sqlite (sin dependencias nativas)",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

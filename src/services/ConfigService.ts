@@ -1,4 +1,5 @@
 import type { Role } from './PermissionService';
+import { Api, getProfile } from './ApiClient';
 
 export interface WidgetConfig {
   id: string;
@@ -33,8 +34,8 @@ const DEFAULT_CONFIG: UserConfig = {
   theme: 'dark',
   widgets: DEFAULT_WIDGETS,
   sidebarCollapsed: false,
-  userRole: 'admin',
-  userName: 'Daniel Quinchahual'
+  userRole: 'guest',
+  userName: 'Invitado'
 };
 
 const CACHE_KEY = 'quincha_user_config';
@@ -56,6 +57,10 @@ export class ConfigService {
         console.error('Failed to parse cached configuration', e);
       }
     }
+    const profile = getProfile();
+    if (profile) {
+      return { ...DEFAULT_CONFIG, userRole: profile.role as Role, userName: profile.name || profile.username };
+    }
     return DEFAULT_CONFIG;
   }
 
@@ -69,41 +74,28 @@ export class ConfigService {
   }
 
   /**
-   * Mock background api sync. Implements Debounce + Async simulation.
+   * Background API sync with debounce.
    */
   private static scheduleBackendSync(config: UserConfig): Promise<UserConfig> {
     if (this.syncTimeout) {
       clearTimeout(this.syncTimeout);
     }
-    
+
     this.isSyncing = true;
-    console.log('[ConfigService] Cache updated locally. Scheduling background sync...');
-    
+
     return new Promise((resolve) => {
       this.syncTimeout = setTimeout(async () => {
         try {
-          await this.syncWithBackend(config);
-          console.log('[ConfigService] Synced successfully with mock backend API.');
+          if (Api.isAuthenticated()) {
+            await Api.saveConfig(config);
+          }
         } catch (e) {
           console.error('[ConfigService] Sync failed, retrying in background later.', e);
         } finally {
           this.isSyncing = false;
           resolve(config);
         }
-      }, 1000); // 1-second debounce simulation
-    });
-  }
-
-  /**
-   * Actual endpoint integration placeholder
-   */
-  // @ts-expect-error unused
-  private static async syncWithBackend(config: UserConfig): Promise<void> {
-    return new Promise((resolve) => {
-      // Simulate network request duration
-      setTimeout(() => {
-        resolve();
-      }, 400);
+      }, 500); // debounce
     });
   }
 

@@ -9,12 +9,14 @@
  *                       ↓
  *               SyncQueueService.enqueue(event)
  *                       ↓
- *   [online?] YES → flush() → simulated POST → mark synced
+ *   [online?] YES → flush() → POST /api/sync → marked synced
  *             NO  → stays queued → 'online' listener → auto-retry
  */
 
-export type SyncEventType =
-  | 'CREATE_TASK'        | 'UPDATE_TASK'      | 'COMPLETE_TASK'    | 'DELETE_TASK'
+import { getToken } from './ApiClient';
+import { API_BASE } from './config';
+
+export type SyncEventType =  | 'CREATE_TASK'        | 'UPDATE_TASK'      | 'COMPLETE_TASK'    | 'DELETE_TASK'
   | 'CREATE_HABIT'       | 'TOGGLE_HABIT'     | 'ARCHIVE_HABIT'
   | 'COMPLETE_POMODORO'
   | 'ADD_BUJO_ENTRY'     | 'UPDATE_BUJO_ENTRY'| 'DELETE_BUJO_ENTRY'
@@ -184,25 +186,28 @@ class SyncQueue {
   }
 
   /**
-   * Simulated backend sync.
-   * Replace this with a real fetch() call in production:
-   *   await fetch('/api/sync', { method: 'POST', body: JSON.stringify(event) })
+   * Real backend sync via the Quincha API.
+   * Events are pushed as one payload per event type using the generic /api/sync store.
    */
-  // @ts-expect-error unused
-  private simulateBackendSync(event: SyncEvent): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const delay = 300 + Math.random() * 400; // 300-700ms simulated latency
-      const shouldFail = Math.random() < 0.02;  // 2% simulated failure rate
-
-      setTimeout(() => {
-        if (shouldFail) {
-          reject(new Error('Simulated network error'));
-        } else {
-          // In production: validate response status here
-          resolve();
-        }
-      }, delay);
+  private async simulateBackendSync(event: SyncEvent): Promise<void> {
+    if (!getToken()) {
+      // Not logged in: nothing to sync to the server; treat as best-effort success
+      // so the queue doesn't accumulate noise for anonymous local usage.
+      return;
+    }
+    const res = await fetch(`${API_BASE}/sync`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${getToken()}`,
+      },
+      body: JSON.stringify({
+        entries: [{ key: `sync_event:${event.id}`, data: event, updatedAt: Date.now() }],
+      }),
     });
+    if (!res.ok) {
+      throw new Error(`Sync falló con status ${res.status}`);
+    }
   }
 
   private loadQueue(): SyncEvent[] {

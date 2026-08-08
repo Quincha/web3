@@ -6,11 +6,13 @@ import type { Theme } from '../../context/ThemeContext';
 import { PermissionService } from '../../services/PermissionService';
 import type { Role } from '../../services/PermissionService';
 import { WidgetRegistry } from '../../widgets/WidgetRegistry';
+import { getProfile } from '../../services/ApiClient';
 
 export const AjustesModule: React.FC = () => {
   const { userConfig, updateConfig, isSyncing } = useUser();
   const { setTheme } = useTheme();
 
+  const isSuperAdmin = getProfile()?.role === 'super-admin';
   const [nameDraft, setNameDraft] = useState(userConfig.userName);
   const [saved, setSaved] = useState(false);
   const [pendingRole, setPendingRole] = useState<Role | null>(null);
@@ -126,12 +128,13 @@ export const AjustesModule: React.FC = () => {
         </div>
       </section>
 
-      {/* Rol */}
+      {/* Rol — solo visible para super-admins */}
+      {isSuperAdmin && (
       <section style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '14px', padding: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
           <Shield size={16} color="#8B5CF6" />
           <h3 style={{ margin: 0, fontSize: '0.95rem', color: 'white' }}>Rol de usuario</h3>
-          <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#F59E0B' }}>El cambio de rol requiere confirmación</span>
+          <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#F59E0B' }}>Solo el super-admin puede gestionar roles</span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '10px' }}>
           {roles.map(r => {
@@ -156,6 +159,7 @@ export const AjustesModule: React.FC = () => {
           })}
         </div>
       </section>
+      )}
 
       {/* Confirmation Modal */}
       {pendingRole && (() => {

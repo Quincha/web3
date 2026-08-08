@@ -1,4 +1,4 @@
-// import from react removed
+import { useRef, useEffect } from 'react';
 import GridBackground from './GridBackground';
 import AnimatedLogo from './AnimatedLogo';
 import LoginForm from './LoginForm';
@@ -22,6 +22,7 @@ import { ClientsProvider } from './context/ClientsContext';
 import { ShoppingProvider } from './context/ShoppingContext';
 import { MessagesProvider } from './context/MessagesContext';
 import { GlobalTaskCompletionModal } from './components/dashboard/GlobalTaskCompletionModal';
+import { Api } from './services/ApiClient';
 
 function MainAppContent() {
   const { currentView } = useTransition();
@@ -86,7 +87,7 @@ function App() {
                           <ClientsProvider>
                             <ShoppingProvider>
                               <MessagesProvider>
-                                <MainAppContent />
+                                <SessionRestore />
                               </MessagesProvider>
                             </ShoppingProvider>
                           </ClientsProvider>
@@ -103,6 +104,29 @@ function App() {
       </UserProvider>
     </ThemeProvider>
   );
+}
+
+// Restore a persisted session on first load (skip login if a valid token exists).
+function SessionRestore() {
+  const { navigateTo, currentView } = useTransition();
+  const restored = useRef(false);
+
+  useEffect(() => {
+    if (restored.current) return;
+    restored.current = true;
+    if (currentView !== 'login') return;
+
+    if (Api.isAuthenticated()) {
+      Api.me()
+        .then(() => {
+          window.dispatchEvent(new Event('quincha-auth'));
+          navigateTo('dashboard');
+        })
+        .catch(() => { /* invalid token: stay on login */ });
+    }
+  }, [currentView, navigateTo]);
+
+  return <MainAppContent />;
 }
 
 export default App;
