@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Integración Mi Band 5 · Guía desde cero</title>
+<style>
+  :root {
+    --bg: #0C1117;
+    --bg-card: #141A22;
+    --border-color: rgba(255,255,255,0.09);
+    --accent-green: #16F0A5;
+    --accent-green-dark: #0C1117;
+    --white: #FFFFFF;
+    --text-subtle: rgba(255,255,255,0.55);
+    --code-bg: #0A0E13;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--white);
+    line-height: 1.6;
+  }
+
+  .wrap {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 32px 20px 80px;
+  }
+
+  .hero {
+    text-align: center;
+    padding: 48px 16px 32px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 32px;
+  }
+
+  .hero h1 {
+    margin: 0 0 8px;
+    font-size: 30px;
+    letter-spacing: -0.02em;
+  }
+
+  .hero p { color: var(--text-subtle); margin: 0; }
+
+  .badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: rgba(34,240,165,0.12);
+    border: 1px solid rgba(34,240,165,0.4);
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .step {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 24px 24px 20px;
+    margin: 20px 0;
+    position: relative;
+  }
+
+  .step-num {
+    position: absolute;
+    top: -14px;
+    left: 20px;
+    background: var(--accent);
+    color: var(--accent-green-dark);
+    font-weight: 800;
+    font-size: 13px;
+    border-radius: 8px;
+    padding: 4px 12px;
+    letter-spacing: 0.03em;
+  }
+
+  .step h2 {
+    font-size: 18px;
+    margin: 4px 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .step ul { margin: 8px 0 0; padding-left: 20px; }
+
+  .step li { margin: 6px 0; }
+
+  .muted { color: var(--text-subtle); }
+
+  code {
+    font-family: 'SF Mono', ui-monospace, 'Cascadia Code', Consolas, Menlo, monospace;
+    background: var(--code-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 2px 6px;
+    font-size: 13px;
+    color: #7ee8a8;
+  }
+
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.5;
+    font-family: 'SF Mono', ui-monospace, 'Cascadia Code', Consolas, Menlo, monospace;
+    color: #d8e0e9;
+  }
+
+  pre .p { color: var(--accent); font-weight: 700; }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin: 16px 0;
+  }
+
+  .path {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 20px 0;
+  }
+
+  .path a {
+    flex: 1 1 240px;
+    text-decoration: none;
+    background: rgba(34,240,165,0.10);
+    border: 1px solid rgba(34,240,165,0.45);
+    color: var(--accent);
+    border-radius: 12px;
+    padding: 16px;
+    font-weight: 700;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+
+  .path a:hover { background: var(--accent); color: var(--accent-green-dark); }
+
+  .toggle-btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border-color);
+    color: var(--white);
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+
+  .toggle-btn:hover { background: rgba(255,255,255,0.1); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  th {
+    text-align: left;
+    color: var(--text-subtle);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  td {
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    vertical-align: top;
+  }
+
+  .warn {
+    border-left: 3px solid #F59E0B;
+    background: rgba(245,158,11,0.08);
+    border-radius: 0 10px 10px 0;
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+
+  .ok {
+    border-left: 3px solid var(--accent);
+    background: rgba(34,240,165,0.07);
+    border-radius: 0 10px 10px 0;
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+
+  .footer {
+    text-align: center;
+    color: var(--text-subtle);
+    font-size: 12px;
+    margin-top: 48px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <span class="badge">Mi Band 5 · Datos reales</span>
+    <h1>Sincronizar tu Mi Band 5 con el dashboard 🩺</h1>
+    <p>Cómo pasar de cero a tener tus pasos, frecuencia cardíaca y sueño reales en el módulo "Mi Band 5"</p>
+  </div>
+
+  <div class="path">
+    <a href="#completa">① Gadgetbridge (recomendada — 100% real)</a>
+    <a href="#mifitness">② Mi Fitness oficial (sin root)</a>
+    <a href="#csv">③ Plantilla CSV / Excel</a>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <!-- RUTA COMPLETA GADGETBRIDGE                                    -->
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div id="completa"></div>
+
+  <div class="step">
+    <span class="step-num">PASO 1</span>
+    <h2>1 · Entiende por qué no es "al click" 🔍</h2>
+    <p class="muted">
+      La Mi Band 5 usa un protocolo Bluetooth <b>propietario de Xiaomi</b>. Un navegador web no puede leerlo
+      directamente (ni Safari, ni Chrome, ni Firefox). Por eso el camino real es:
+    </p>
+    <div class="card">
+      <b>Teléfono</b> (app que sincroniza con la pulsera) → <b>exporta un archivo</b> → <b>tú lo subes al dashboard</b>.
+    </div>
+    <p class="muted" style="margin-bottom:0">
+      Tu <b>Mi Band 5</b> ya guarda los datos en su memoria y los pasa por Bluetooth a la app del teléfono.
+      Nosotros solo extraemos ese respaldo y lo cargamos en la web. Los datos son tuyos y reales.
+    </p>
+  </div>
+
+  <div class="step">
+    <span class="step-num">PASO 2</span>
+    <h2>2 · Instala la app libre Gadgetbridge (Android)</h2>
+    <ul>
+      <li>Necesitas un teléfono <b>Android</b> con Bluetooth.</li>
+      <li>Instala <b>Gadgetbridge</b> (libre y de código abierto). Fuentes seguras:
+        <ul>
+          <li>F-Droid (tienda recomendada): busca "Gadgetbridge".</li>
+          <li>O desde su web oficial (mira <a href="https://f-droid.org/en/packages/nodomain.freeyourgadget.gadgetbridge/" target="_blank" rel="noopener">F-Droid → Gadgetbridge</a>).</li>
+        </ul>
+      </li>
+      <li>Concede permisos de Bluetooth/ubicación cuando lo pida.</li>
+    </ul>
+    <div class="ok"><b>¿Sabías?</b> Gadgetbridge fue creado como alternativa libre a la app "Mi Fit", y es la forma recomendada para sacar todos los datos crudos de la banda.</div>
+  </div>
+
+  <div class="step">
+    <span class="step-num">PASO 3</span>
+    <h2>3 · Obtén la "AUTH KEY" (llave de la pulsera)</h2>
+    <p class="muted">
+      La Mi Band 5 cifra la conexión. Gadgetbridge te pedirá una clave (32 caracteres hexadecimales) que Xiaomi guarda
+      dentro de tu cuenta. Cómo sacarla:
+    </p>
+    <ul>
+      <li><b>Opción A (la más fácil):</b> en el teléfono abre la app oficial <b>Mi Fit / Mi Fitness</b>, o <b>Notify for Mi Band</b>, y ponte en "Empareja una pulsera de Huami". Gadgetbridge ofrece un asistente que captura la clave automáticamente al vincular.</li>
+      <li><b>Opción B (avanzado):</b> con terminal Android (<code>adb shell</code>) lees el banco <code>auth key</code> de la app. <i>No es necesario si haces la Opción A.</i></li>
+    </ul>
+    <div class="warn"><b>Atención:</b> si tu pulsera ya estaba vinculada a Mi Fit, primero <b>desvincula</b> en la app oficial. No puedes tenerla en dos apps a la vez.</div>
+  </div>
+
+  <div class="step">
+    <span class="step-num">PASO 4</span>
+    <h2>4 · Vincula tu Mi Band 5 a Gadgetbridge</h2>
+    <ul>
+      <li>Abre <b>Gadgetbridge</b> → botón <b style="color:var(--accent)">+</b> o "Añadir dispositivo".</li>
+      <li>Dale permisos de ubicación cuando pregunte (requisito de Android para BLE).</li>
+      <li>Acerca la pulsera (que no esté vinculada a otra app) y aparece → <b>Mi Band 5</b>.</li>
+      <li>Cuando pida la página <i>verification code</i> / <i>auth key</i>, pégala la que obtuviste en el paso 3.</li>
+      <li>Confirma el emparejamiento (aparece una notificación en el teléfono y en la banda se confirma con vibración).</li>
+    </ul>
+    <div class="ok">Si todo salió bien verás en Gadgetbridge: <code>Mi Band 5 (Mac ...)</code> conectada y comenzando a sincronizar actividad, sueño y ritmo cardíaco.</div>
+  </div>
+
+  <div class="step">
+    <span class="step-num">PASO 5</span>
+    <h2>5 · Deja que sincronice unos días</h2>
+    <p class="muted">
+      La pulsera guarda hasta ~15 días de datos por defecto. Lo ideal es llevar la banda 3–7 días conectada con
+      Gadgetbridge para tener rango de historial. La app sincroniza cada vez que abres y tocas el icono de refrescar.
+    </p>
+    <p class="muted">Consejo: sincroniza una vez al día y ten el teléfono cerca de la pulsera.</p>
+  </div>
+
+  <div class="step">
+    <span class="step-num">PASO 6</span>
+    <h2>6 · Exporta la base de datos de Gadgetbridge</h2>
+    <ul>
+      <li>En Gadgetbridge: ícono <b>⋮</b> (menú de 3 puntos) → <b>Rutinas y dispositivos</b> (a veces "Database management").</li>
+      <li>Toca <b>Export DB</b> (Export Database). Esto crea un archivo llamado <code>Gadgetbridge</code> (sin extensión), que en realidad es una base SQLite.</li>
+      <li>Se guarda en: <code>Android/data/nodomain.gadgetbridge.gadgetbridge/files/</code> (si la ruta no es visible, conecta el teléfono por USB y activa "Ver archivos ocultos").</li>
+      <li>También puede exportar como <i>CSV</i> en la misma pantalla, si prefieres la ruta C.</li>
+    </ul>
+    <div class="warn"><b>Nota para Android 11+: </b>la ruta <code>Android/data</code> a veces requiere un gestor de archivos con acceso especial. Alternativa fácil: activa en Gadgetbridge <b>Exportación automática periódica</b> para que quede archivado en tu carpeta normal.</div>
+  </div>
+
+  <div class="step">
+    <span class="step-num">PASO 7</span>
+    <h2>7 · Convierte la BD a JSON con el script</h2>
+    <p class="muted">Desde tu PC (necesitas <b>Python 3</b> instalado):</p>
+    <pre>cd D:\Programacion\web3
+python scripts\miband_export_to_json.py Gadgetbridge -o mi-band-import.json</pre>
+    <p class="muted">Salida esperada:</p>
+    <pre><span class="p">OK:</span> 120 días (2024-01-01 .. 2024-04-29), 940,000 pasos totales.
+<span class="p">Archivo creado:</span> mi-band-import.json</pre>
+    <div class="card">
+      <b>Qué exporta por día:</b>
+      <table>
+        <tr><th>Campo</th><th>Origen</th><th>Observación</th></tr>
+        <tr><td><code>date</code></td><td>fecha local</td><td>AAAA-MM-DD de cada día</td></tr>
+        <tr><td><code>steps</code></td><td>suma de <code>STEPS</code></td><td>real</td></tr>
+        <tr><td><code>distanceKm</code></td><td>derivado</td><td>pasos ÷ 1350</td></tr>
+        <tr><td><code>calories</code></td><td>derivado</td><td>pasos × 0.04 kcal</td></tr>
+        <tr><td><code>activeMinutes</code></td><td>minutos con pasos</td><td>real</td></tr>
+        <tr><td><code>heartRate</code></td><td><code>HEART_RATE</code></td><td>avg / resting / min / max</td></tr>
+        <tr><td><code>sleep</code></td><td><code>RAW_KIND</code> 112/117/96</td><td>profundo y ligero; REM no lo da Gadgetbridge</td></tr>
+        <tr><td><code>spo2/stress/pai</code></td><td>—</td><td>queda <code>null</code></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="step-num">PASO 8</span>
+    <h2>8 · Importa el JSON en el dashboard</h2>
+    <ol>
+      <li>Abre la web del proyecto (es: <code>npm run dev</code> → <code>http://localhost:5173</code> o el deploy).</li>
+      <li>En el menú lateral entra a <b>Mi Band 5</b>.</li>
+      <li>Ve a la pestaña <code>Importar datos</code> (ícono ↑).</li>
+      <li><b>Arrastra</b> el archivo <code>mi-band-import.json</code> sobre el recuadro (o haz clic para seleccionarlo).</li>
+      <li>Revisa la <b>vista previa</b>: días, rango, pasos totales.</li>
+      <li>Si todo bien → <b>Importar N días</b>.</li>
+    </ol>
+    <div class="ok">✅ Listo. El badge del encabezado pasará a "Datos reales". Historial, comparaciones y métricas de hoy usarán tus datos reales.</div>
+    <p class="muted" style="margin-top:10px;margin-bottom:0">
+      El botón <code>Volver a simulados</code> en la pestaña importación restaura los 120 días de demostración si lo necesitas.
+    </p>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <!-- ITINERARIO 2: MI FITNESS OFICIAL                              -->
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div id="mifitness"></div>
+
+  <div class="step">
+    <span class="step-num">RUTA B</span>
+    <h2>Alternativa: exportación oficial de Mi Fitness</h2>
+    <p class="muted">Si no quieres usar Gadgetbridge, Xiaomi permite descargar un respaldo de tus datos.</p>
+    <ol>
+      <li>Entra en la app <b>Mi Fitness</b> (o Mi Fit) → <b>Perfil</b> → <b>Centro de privacidad</b>.</li>
+      <li>Busca la opción <b>"Descarga de datos"</b> / <b>"Data export"</b>. Te envía un enlace/archivo ZIP con tus datos.</li>
+      <li>
+        Dentro del ZIP encontrarás carpetas tipo
+        <code>ACTIVITY_*.csv</code>, <code>SLEEP_*.csv</code>, <code>HEARTRATE_*.csv</code>.
+        Cada día suele tener su carpeta o las filas agrupadas.
+      </li>
+      <li>Abre ese CSV (por ejemplo la herramienta <i>xiaomi-band-ios-export</i> también genera <code>daily_summary.csv</code>) y/o ajusta a las columnas de la <b>plantilla CSV</b> de la ruta C.
+      </li>
+      <li>Carga el CSV en el mismo panel <code>Importar datos</code>.</li>
+    </ol>
+    <div class="warn">
+      Las columnas del export oficial pueden variar según la región/versión. Si el archivo no es reconocido al instante,
+      usa la ruta C para normalizar las columnas. (Algunas versiones de apps Xiaomi conservan <code>daily_summary.csv</code> listo para mapear.)
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <!-- RUTA 3 CSV -->
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div id="csv"></div>
+
+  <div class="step">
+    <span class="step-num">RUTA C</span>
+    <h2>CSV a mano: si ya tienes los valores en Excel/Google</h2>
+    <p class="muted">Ideal si algo falla en las rutas anteriores: construye tu CSV con las columnas exactas.</p>
+    <ol>
+      <li>En la pestaña <code>Importar datos</code> pulsa <b>"Descargar plantilla CSV"</b>.</li>
+      <li>Ábrela en Excel/GSheets y pega tus valores reales (una fila por día).</li>
+      <li>Guarda como <code>.csv</code> y súbela.</li>
+    </ol>
+    <p>Formato exacto:</p>
+    <pre>date,steps,distance_km,calories,active_min,hr_avg,hr_resting,hr_min,hr_max,spo2,stress,pai,energy,sleep_deep,sleep_light,sleep_rem,sleep_awake
+2024-01-01,10452,7.74,520,84,72,58,52,128,97,22,58,71,95,232,90,32</pre>
+    <p class="muted" style="margin-bottom:0">
+      Puedes usar cabeceras en camelCase (<code>distanceKm</code>) o snake_case (<code>distance_km</code>); el importador las
+      reconoce ambas, igual que <code>HR</code> como <code>hr_avg</code>. Las que falten se rellenan con 0 y el sueño
+      total (<code>sleep</code>) se reparte en fases.
+    </p>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <!-- CHEQUEO / TROUBLESHOOTING -->
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="step">
+    <span class="step-num">CHECKS</span>
+    <h2>Comprobación final y solución de problemas</h2>
+
+    <h3 style="color:var(--accent)">✓ Comprobación</h3>
+    <ul>
+      <li><b>En el dashboard:</b> Mi Band 5 → Importar datos → el encabezado muestra "Datos reales importados".</li>
+      <li><b>Historial:</b> números cambiarán a tus valores reales (vista 7/30/90 días).</li>
+      <li><b>localStorage:</b> todo queda en tu navegador; no se sube a ningún servidor.</li>
+    </ul>
+
+    <h3 style="margin-top:18px;color:var(--warn)">⚠️ Errores comunes</h3>
+    <table>
+      <tr><th>Síntoma</th><th>Causa</th><th>Sol.</th></tr>
+      <tr>
+        <td>"No se reconoció ningún día"</td>
+        <td>Sin columna <code>date</code> o fechas mal formateadas</td>
+        <td>Usa la plantilla CSV (Ruta C)</td>
+      </tr>
+      <tr>
+        <td>Gadgetbridge pide auth key y no procede</td>
+        <td>El método de captura de la clave falló</td>
+        <td>Desbloquea la pulsera de Mi Fit y captura la clave con el asistente (Paso 3A)</td>
+      </tr>
+      <tr>
+        <td>El archivo <code>Gadgetbridge</code> no tiene las columnas esperadas</td>
+        <td>La BD se exportó incompleta</td>
+        <td>Verifica versión de Gadgetbridge y vuelve a exportar</td>
+      </tr>
+      <tr>
+        <td>Ruta <code>Android/data</code> no aparece</td>
+        <td>Permisos de archivos de Android 12+</td>
+        <td>Usa el export a ZIP o un gestor tipo ZArchiver</td>
+      </tr>
+      <tr>
+        <td>La banda no se aparea con otra app</td>
+        <td>Ya está vinculada a Mi Fit</td>
+        <td>Desvincúlala en la app oficial y repite el Paso 3</td>
+      </tr>
+    </table>
+
+    <div class="warn" style="margin-top:16px">
+      <b>¿REM/SpO₂/estrés/PAI quedan vacíos?</b> Gadgetbridge no exporta esas métricas de la Mi Band 5 en su base
+      cruda. Por defecto quedan <code>null</code> (filas '—' en la UI). Es una limitación de lo que reporta el
+      hardware/la app, no un error de código.
+    </div>
+  </div>
+
+  <div class="footer">
+    Guía del proyecto del dashboard · Módulo "Mi Band 5" · 2026<br>
+    Script: <code>scripts/miband_export_to_json.py</code> · Importador: <code>BandImport.tsx</code>
+  </div>
+
+</div>
+</body>
+</html>

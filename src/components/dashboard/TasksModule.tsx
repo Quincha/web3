@@ -33,6 +33,12 @@ function formatDueDate(iso: string | null): { label: string; urgent: boolean } {
   return { label: `${diff} días`, urgent: false };
 }
 
+function formatDateTime(iso: string): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', ' a las');
+}
+
 // ─────────────────────────────────────────────
 // QUICK ENTRY BAR
 // ─────────────────────────────────────────────
@@ -44,6 +50,7 @@ const QuickEntryBar: React.FC = () => {
   
   const [title, setTitle] = useState('');
   const [defaultClientId, setDefaultClientId] = useState('');
+  const [selectedDate, setSelectedDate] = useState(''); // ISO string YYYY-MM-DD
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && title.trim()) {
@@ -55,7 +62,7 @@ const QuickEntryBar: React.FC = () => {
         category: 'general',
         priority: 'medium',
         status: 'pending',
-        dueDate: null,
+        dueDate: selectedDate || null,
         tags: [],
         estimatedPomodoros: 1,
         isBillable: false,
@@ -98,6 +105,21 @@ const QuickEntryBar: React.FC = () => {
           <option value="">Sin Cliente</option>
           {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
+        
+        <div style={{ width: '1px', height: '20px', background: 'rgba(255,255,255,0.1)', margin: '0 4px' }} />
+        
+        <Calendar size={16} color="rgba(255,255,255,0.5)" />
+        <input 
+          type="date" 
+          value={selectedDate}
+          onChange={e => setSelectedDate(e.target.value)}
+          title="Programar fecha"
+          style={{
+            background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '6px', 
+            color: 'white', padding: '2px 8px', fontSize: '13px', outline: 'none', cursor: 'pointer',
+            fontFamily: 'inherit', colorScheme: 'dark'
+          }}
+        />
       </div>
     </div>
   );
@@ -134,10 +156,35 @@ const TaskRow: React.FC<{
         </button>
 
         <div className="task-row-content" onClick={() => onClick(task.id)} style={{ cursor: 'pointer' }}>
-          <div className="task-row-title-bar">
+          <div className="task-row-title-bar" style={{ marginBottom: '2px' }}>
             <span className="task-row-title">{task.title}</span>
           </div>
+          
+          {/* Subtle timestamps */}
+          <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', display: 'flex', gap: '6px', alignItems: 'center', marginBottom: '8px' }}>
+            <span>Creada: {formatDateTime(task.createdAt)}</span>
+            {task.status === 'completed' && task.completedAt && (
+              <>
+                <span style={{ fontSize: '8px' }}>•</span>
+                <span style={{ color: 'rgba(16,185,129,0.7)' }}>Completada: {formatDateTime(task.completedAt)}</span>
+              </>
+            )}
+            {task.status === 'cancelled' && (
+              <>
+                <span style={{ fontSize: '8px' }}>•</span>
+                <span style={{ color: 'rgba(239,68,68,0.7)' }}>Descartada</span>
+              </>
+            )}
+          </div>
+
           <div className="task-row-meta">
+            
+            {task.subtasks.length > 0 && (
+               <span className="task-meta-pill" style={{ color: 'rgba(255,255,255,0.6)', background: 'rgba(255,255,255,0.05)' }}>
+                 {task.subtasks.filter(s => s.completed).length}/{task.subtasks.length} subtareas
+               </span>
+            )}
+
             {project && (
               <span className="task-meta-pill" style={{ color: project.color, background: `${project.color}15` }}>
                 <Briefcase size={12} /> {project.name}
@@ -231,28 +278,45 @@ const TaskRow: React.FC<{
 // MAIN MODULE
 // ─────────────────────────────────────────────
 
-type TaskFilter = 'today' | 'all' | 'urgent' | 'completed';
+type TaskFilter = 'today' | 'all' | 'pendientes' | 'urgent' | 'completed';
 const FILTER_OPTIONS: { id: TaskFilter; label: string }[] = [
-  { id: 'today',     label: 'Hoy' },
-  { id: 'all',       label: 'Todas' },
-  { id: 'urgent',    label: 'Urgentes' },
-  { id: 'completed', label: 'Completadas' },
+  { id: 'today',      label: 'Hoy' },
+  { id: 'all',        label: 'Todas' },
+  { id: 'pendientes', label: 'Pendientes' },
+  { id: 'urgent',     label: 'Urgentes' },
+  { id: 'completed',  label: 'Completadas' },
 ];
 
 export const TasksModule: React.FC = () => {
   const { tasks, getActiveProjects, updateTask, getTodayTasks } = useTasks();
   const { removeDeudaByTaskId } = useFinance();
   const [filter, setFilter] = useState<TaskFilter>('today');
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const projects = getActiveProjects();
 
   const getFilteredTasks = (): Task[] => {
     let base: Task[] = [];
     if (filter === 'today')     base = getTodayTasks();
+    else if (filter === 'pendientes') base = tasks.filter(t => t.status === 'pending' || t.status === 'in-progress');
     else if (filter === 'urgent') base = tasks.filter(t => t.priority === 'urgent' && t.status !== 'completed');
     else if (filter === 'completed') base = tasks.filter(t => t.status === 'completed');
     else base = tasks.filter(t => t.status !== 'cancelled');
-    return base;
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      base = base.filter(t => t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q));
+    }
+
+    return base.sort((a, b) => {
+      // Sort completed tasks by completedAt descending
+      if (filter === 'completed') {
+        const da = a.completedAt ? new Date(a.completedAt).getTime() : 0;
+        const db = b.completedAt ? new Date(b.completedAt).getTime() : 0;
+        return db - da;
+      }
+      return 0;
+    });
   };
 
   const filteredTasks = getFilteredTasks();
@@ -261,7 +325,7 @@ export const TasksModule: React.FC = () => {
     <div className="tasks-module-container">
       <QuickEntryBar />
 
-      <div className="tasks-filter-bar">
+      <div className="tasks-filter-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', overflowX: 'auto', gap: '16px' }}>
         <div className="tasks-filter-tabs">
           {FILTER_OPTIONS.map(opt => (
             <button
@@ -272,6 +336,15 @@ export const TasksModule: React.FC = () => {
               {opt.label}
             </button>
           ))}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '4px 12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+          <input 
+            type="text"
+            placeholder="Buscar tareas..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '13px', outline: 'none', width: '150px' }}
+          />
         </div>
       </div>
 

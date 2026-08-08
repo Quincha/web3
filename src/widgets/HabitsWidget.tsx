@@ -13,17 +13,24 @@ interface WeekDay {
   isToday: boolean;
 }
 
+function getLocalISO(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 function getThisWeekDays(): WeekDay[] {
   const today = new Date();
   const weekStart = new Date(today);
   const day = today.getDay();
   weekStart.setDate(today.getDate() - ((day + 6) % 7));
-  const todayIso = today.toISOString().split('T')[0];
+  const todayIso = getLocalISO(today);
 
   return HABIT_LABELS.map((label, i) => {
     const d = new Date(weekStart);
     d.setDate(weekStart.getDate() + i);
-    const iso = d.toISOString().split('T')[0];
+    const iso = getLocalISO(d);
     return { label, iso, isToday: iso === todayIso };
   });
 }

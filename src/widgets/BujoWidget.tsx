@@ -4,6 +4,7 @@ import { WidgetRegistry } from './WidgetRegistry';
 import { tokens } from '../theme/tokens';
 import { useBujo } from '../context/BujoContext';
 import { useHabits } from '../context/HabitsContext';
+import { useTasks } from '../context/TasksContext';
 import type { BujoEntryType } from '../context/BujoContext';
 
 const getBujoIcon = (type: BujoEntryType, color: string) => {
@@ -32,16 +33,19 @@ const getBujoColor = (type: BujoEntryType) => {
   }
 };
 
+const getLocalISO = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
 export const BujoWidget: React.FC = () => {
   const { getTodayEntries, addEntry, toggleEntryType, getDailyMood, setDailyMood } = useBujo();
   const { habitsWithStats, toggleHabitToday } = useHabits();
+  const { addTask, completeTask } = useTasks();
   
   const entries = getTodayEntries().slice(0, 5);
   const [inputValue, setInputValue] = useState('');
   
   // Menu and Mood state
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
-  const todayISO = new Date().toISOString().split('T')[0];
+  const todayISO = getLocalISO(new Date());
   const currentMood = getDailyMood(todayISO) || 0;
 
   // Active habits limited to top 4 for the Quick Check bar
@@ -52,23 +56,46 @@ export const BujoWidget: React.FC = () => {
     if (!inputValue.trim()) return;
     
     let type: BujoEntryType = 'task';
-    let content = inputValue.trim();
+    let rawContent = inputValue.trim();
 
-    if (content.startsWith('- ')) {
-      type = 'note'; content = content.substring(2);
-    } else if (content.startsWith('o ') || content.startsWith('O ')) {
-      type = 'event'; content = content.substring(2);
-    } else if (content.startsWith('> ') || content.startsWith('-> ')) {
-      type = 'migrated'; content = content.substring(2).trim();
-    } else if (content.startsWith('< ') || content.startsWith('<- ')) {
-      type = 'scheduled'; content = content.substring(2).trim();
-    } else if (content.startsWith('x ') || content.startsWith('X ') || content.startsWith('v ')) {
-      type = 'completed'; content = content.substring(2);
-    } else if (content.startsWith('• ') || content.startsWith('. ')) {
-      type = 'task'; content = content.substring(2);
+    if (rawContent.startsWith('- ')) {
+      type = 'note'; rawContent = rawContent.substring(2);
+    } else if (rawContent.startsWith('o ') || rawContent.startsWith('O ')) {
+      type = 'event'; rawContent = rawContent.substring(2);
+    } else if (rawContent.startsWith('> ') || rawContent.startsWith('-> ')) {
+      type = 'migrated'; rawContent = rawContent.substring(2).trim();
+    } else if (rawContent.startsWith('< ') || rawContent.startsWith('<- ')) {
+      type = 'scheduled'; rawContent = rawContent.substring(2).trim();
+    } else if (rawContent.startsWith('x ') || rawContent.startsWith('X ') || rawContent.startsWith('v ')) {
+      type = 'completed'; rawContent = rawContent.substring(2);
+    } else if (rawContent.startsWith('• ') || rawContent.startsWith('. ')) {
+      type = 'task'; rawContent = rawContent.substring(2);
     }
 
-    addEntry(content, type);
+    let content = rawContent;
+    if (content.length > 0) {
+      content = content.charAt(0).toUpperCase() + content.slice(1);
+    }
+
+    let linkedTaskId: string | undefined = undefined;
+    if (type === 'task') {
+      linkedTaskId = addTask({
+        title: content,
+        description: '',
+        project_id: null,
+        client_id: null,
+        category: 'general',
+        priority: 'medium',
+        status: 'pending',
+        dueDate: null,
+        tags: [],
+        estimatedPomodoros: 1,
+        isBillable: false,
+        price: 0
+      }, true);
+    }
+
+    addEntry(content, type, [], undefined, undefined, undefined, linkedTaskId);
     setInputValue('');
   };
 
@@ -192,7 +219,11 @@ export const BujoWidget: React.FC = () => {
                         borderRadius: '8px', padding: '4px', zIndex: 10,
                         boxShadow: '0 4px 12px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: '2px'
                       }}>
-                        <button onClick={() => { toggleEntryType(entry.id, 'completed'); setMenuOpenId(null); }} style={dropdownBtnStyle}>
+                        <button onClick={() => { 
+                          toggleEntryType(entry.id, 'completed'); 
+                          setMenuOpenId(null); 
+                          if (entry.linkedTaskId) completeTask(entry.linkedTaskId);
+                        }} style={dropdownBtnStyle}>
                           <X size={12} strokeWidth={3} color={tokens.colors.accent.green} /> Completar
                         </button>
                         <button onClick={() => { toggleEntryType(entry.id, 'migrated'); setMenuOpenId(null); }} style={dropdownBtnStyle}>

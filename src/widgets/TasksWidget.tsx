@@ -18,8 +18,8 @@ const getPriorityStyle = (priority: Priority) => {
 };
 
 const TasksWidget: React.FC = () => {
-  const { getPendingTasks, completeTask, addTask, projects } = useTasks();
-  const tasks = getPendingTasks();
+  const { getTodayTasks, completeTask, addTask, projects } = useTasks();
+  const tasks = getTodayTasks();
 
   const [isAdding, setIsAdding] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');

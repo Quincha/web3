@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
    LayoutDashboard, Briefcase, CheckSquare, Calendar, 
-   BarChart3, Mail, FileText, Users, Settings, ClipboardCheck, BookOpen, Heart, Wallet, ShoppingBag
+   BarChart3, Mail, FileText, Users, Settings, ClipboardCheck, BookOpen, Heart, Wallet, ShoppingBag, Activity
 } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
 import { PermissionService } from '../../services/PermissionService';
@@ -20,17 +20,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} strokeWidth={1.5} fill="currentColor" />, module: 'dashboard' as Module },
-    { id: 'tareas', label: 'Tareas', icon: <CheckSquare size={20} strokeWidth={1.5} fill="currentColor" />, module: 'tareas' as Module },
     { id: 'bujo', label: 'Bullet Journal', icon: <BookOpen size={20} strokeWidth={1.5} fill="currentColor" />, module: 'bujo' as Module },
-    { id: 'habitos', label: 'Hábitos', icon: <ClipboardCheck size={20} strokeWidth={1.5} fill="currentColor" />, module: 'habitos' as Module },
-    { id: 'health', label: 'Salud', icon: <Heart size={20} strokeWidth={1.5} fill="currentColor" />, module: 'health' as Module },
-    { id: 'proyectos', label: 'Proyectos', icon: <Briefcase size={20} strokeWidth={1.5} fill="currentColor" />, module: 'proyectos' as Module },
-    { id: 'calendario', label: 'Calendario', icon: <Calendar size={20} strokeWidth={1.5} fill="currentColor" />, module: 'calendario' as Module },
     { id: 'estadisticas', label: 'Estadísticas', icon: <BarChart3 size={20} strokeWidth={1.5} fill="currentColor" />, module: 'estadisticas' as Module },
     { id: 'mensajes', label: 'Mensajes', icon: <Mail size={20} strokeWidth={1.5} fill="currentColor" />, module: 'mensajes' as Module },
     { id: 'documentos', label: 'Documentos', icon: <FileText size={20} strokeWidth={1.5} fill="currentColor" />, module: 'documentos' as Module },
     { id: 'finanzas', label: 'Finanzas', icon: <Wallet size={20} strokeWidth={1.5} fill="currentColor" />, module: 'finanzas' as Module },
-    { id: 'shopping', label: 'Compras', icon: <ShoppingBag size={20} strokeWidth={1.5} fill="currentColor" />, module: 'shopping' as Module },
     { id: 'clientes', label: 'Clientes', icon: <Users size={20} strokeWidth={1.5} fill="currentColor" />, module: 'clientes' as Module },
     { id: 'ajustes', label: 'Ajustes', icon: <Settings size={20} strokeWidth={1.5} fill="currentColor" />, module: 'ajustes' as Module }
   ];

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Terminal, Flame, Heart, BookOpen, Sun, Moon, Sparkles, CheckSquare, ShoppingBag, DollarSign, Calendar as CalendarIcon, FileText, UserCheck, Briefcase, User } from 'lucide-react';
+import { Search, Terminal, Flame, Heart, BookOpen, Sun, Moon, Sparkles, CheckSquare, ShoppingBag, DollarSign, Calendar as CalendarIcon, FileText, UserCheck, Briefcase, User, Watch } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useTasks } from '../../context/TasksContext';
 import { useBujo } from '../../context/BujoContext';
@@ -39,6 +39,7 @@ export const CommandPalette: React.FC = () => {
     { id: 'go_pomo',     category: 'Módulo', label: 'Iniciar Enfoque Pomodoro', icon: <Flame size={15} />, action: () => navigateTo('pomodoro') },
     { id: 'go_bujo',     category: 'Módulo', label: 'Bullet Journal (BuJo)', icon: <BookOpen size={15} />, action: () => navigateTo('bujo') },
     { id: 'go_health',   category: 'Módulo', label: 'Salud, Fichas y Hábitos', icon: <Heart size={15} />, action: () => navigateTo('health') },
+    { id: 'go_band',     category: 'Módulo', label: 'Mi Band 5 (Actividad)', icon: <Watch size={15} />, action: () => navigateTo('band') },
     { id: 'go_cal',      category: 'Módulo', label: 'Calendario y Horarios', icon: <CalendarIcon size={15} />, action: () => navigateTo('calendario') },
     { id: 'go_tasks',    category: 'Módulo', label: 'Gestión de Tareas', icon: <CheckSquare size={15} />, action: () => navigateTo('tareas') },
     { id: 'go_docs',     category: 'Módulo', label: 'Documentos y Notas', icon: <FileText size={15} />, action: () => navigateTo('documentos') },

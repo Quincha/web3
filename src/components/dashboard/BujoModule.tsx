@@ -2,7 +2,16 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useBujo } from '../../context/BujoContext';
 import type { BujoEntryType, BujoEntry } from '../../context/BujoContext';
 import { usePomodoro } from '../../context/PomodoroContext';
+import { useTasks } from '../../context/TasksContext';
 import { DailyCheckInBlock } from './DailyCheckInBlock';
+import { TasksModule } from './TasksModule';
+import { HabitsModule } from './HabitsModule';
+import { HealthModule } from './HealthModule';
+import { BandModule } from './BandModule';
+import { ProjectsModule } from './ProjectsModule';
+import { CalendarModule } from './CalendarModule';
+import { ShoppingModule } from './ShoppingModule';
+import { GoalsModule } from './GoalsModule';
 import { 
   Trash2, Circle, X, ArrowRight, ArrowLeft, Minus, Tag, Plus,
   Star, MoreHorizontal, ChevronLeft, ChevronRight, Clock, User, 
@@ -22,13 +31,16 @@ const BUJO_SYMBOLS: Record<BujoEntryType, { icon: React.ReactNode; label: string
 const DEFAULT_TAGS = ['Trabajo', 'Clientes', 'Personal', 'Sistema', 'Estudio'];
 
 export const BujoModule: React.FC = () => {
-  const { entries, addEntry, deleteEntry, toggleEntryType, toggleFavorite } = useBujo();
+  const { entries, addEntry, deleteEntry, toggleEntryType, toggleFavorite, updateEntry } = useBujo();
   const { completedSessions } = usePomodoro();
+  const { addTask, completeTask } = useTasks();
 
   const [inputValue, setInputValue] = useState('');
   const [selectedType, setSelectedType] = useState<BujoEntryType>('task');
   // @ts-expect-error unused
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const [activeTab, setActiveTab] = useState<'diario' | 'calendario' | 'tareas' | 'habitos' | 'bienestar' | 'proyectos' | 'compras' | 'metas'>('diario');
   
   // Date and Calendar states
   const todayISO = new Date().toISOString().split('T')[0];
@@ -54,6 +66,37 @@ export const BujoModule: React.FC = () => {
     document.addEventListener('click', handleOutsideClick);
     return () => document.removeEventListener('click', handleOutsideClick);
   }, []);
+
+  // Retroactive Sync for today's unsynced tasks
+  const [hasMigrated, setHasMigrated] = useState(false);
+  useEffect(() => {
+    if (hasMigrated) return;
+    const unsynced = entries.filter(e => 
+      (e.type === 'task' || e.type === 'completed') && 
+      !e.linkedTaskId &&
+      e.date === todayISO
+    );
+    if (unsynced.length > 0) {
+      unsynced.forEach(entry => {
+        const linkedTaskId = addTask({
+          title: entry.content,
+          description: '',
+          project_id: null,
+          client_id: null,
+          category: 'general',
+          priority: 'medium',
+          status: entry.type === 'completed' ? 'completed' : 'pending',
+          dueDate: null,
+          tags: [],
+          estimatedPomodoros: 1,
+          isBillable: false,
+          price: 0
+        });
+        updateEntry(entry.id, { linkedTaskId });
+      });
+    }
+    setHasMigrated(true);
+  }, [entries, addTask, updateEntry, hasMigrated, todayISO]);
 
   // Filter logic
   const getFilteredEntries = (): BujoEntry[] => {
@@ -116,7 +159,31 @@ export const BujoModule: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
-    addEntry(inputValue.trim(), selectedType, [], undefined, undefined, selectedDateStr);
+    
+    let content = inputValue.trim();
+    if (content.length > 0) {
+      content = content.charAt(0).toUpperCase() + content.slice(1);
+    }
+    
+    let linkedTaskId: string | undefined = undefined;
+    if (selectedType === 'task') {
+      linkedTaskId = addTask({
+        title: content,
+        description: '',
+        project_id: null,
+        client_id: null,
+        category: 'general',
+        priority: 'medium',
+        status: 'pending',
+        dueDate: null,
+        tags: [],
+        estimatedPomodoros: 1,
+        isBillable: false,
+        price: 0
+      }, true);
+    }
+
+    addEntry(content, selectedType, [], undefined, undefined, selectedDateStr, linkedTaskId);
     setInputValue('');
     if (inputRef.current) inputRef.current.focus();
   };
@@ -233,26 +300,53 @@ export const BujoModule: React.FC = () => {
   return (
     <div className="bujo-module-container">
       {/* 1. HEADER ROW */}
-      <div className="bujo-header-row">
-        <div className="bujo-header-left">
-          <h2>Bullet Journal</h2>
-          <p>{formatDateLabel(selectedDateStr)}</p>
+      <div className="bujo-header-row" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '16px', paddingBottom: '0' }}>
+        <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div className="bujo-header-left">
+            <h2>Bullet Journal</h2>
+            <p>{formatDateLabel(selectedDateStr)}</p>
+          </div>
+          {activeTab === 'diario' && (
+            <div className="bujo-header-stats">
+              <div className="bujo-stat-badge" style={{ color: '#00E676' }}>
+                <span className="count">{todayTasks.length}</span>
+                <span>tareas</span>
+              </div>
+              <div className="bujo-stat-badge" style={{ color: '#AB47BC' }}>
+                <span className="count">{todayNotesCount}</span>
+                <span>notas</span>
+              </div>
+              <div className="bujo-stat-badge" style={{ color: '#FFA726' }}>
+                <span className="count">{todayEventsCount}</span>
+                <span>evento{todayEventsCount !== 1 ? 's' : ''}</span>
+              </div>
+            </div>
+          )}
         </div>
-        <div className="bujo-header-stats">
-          <div className="bujo-stat-badge" style={{ color: '#00E676' }}>
-            <span className="count">{todayTasks.length}</span>
-            <span>tareas</span>
-          </div>
-          <div className="bujo-stat-badge" style={{ color: '#AB47BC' }}>
-            <span className="count">{todayNotesCount}</span>
-            <span>notas</span>
-          </div>
-          <div className="bujo-stat-badge" style={{ color: '#FFA726' }}>
-            <span className="count">{todayEventsCount}</span>
-            <span>evento{todayEventsCount !== 1 ? 's' : ''}</span>
-          </div>
+        
+        {/* Sub-navigation Tabs */}
+        <div style={{ display: 'flex', gap: '16px', width: '100%', borderBottom: '1px solid rgba(255,255,255,0.1)', overflowX: 'auto', paddingBottom: '4px' }}>
+          {['diario', 'calendario', 'tareas', 'habitos', 'bienestar', 'proyectos', 'compras', 'metas'].map(tab => (
+            <button 
+              key={tab}
+              onClick={() => setActiveTab(tab as any)}
+              style={{ 
+                background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px', 
+                padding: '8px 4px', position: 'relative', textTransform: 'capitalize',
+                color: activeTab === tab ? '#fff' : 'rgba(255,255,255,0.5)',
+                fontWeight: activeTab === tab ? 600 : 400,
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {tab}
+              {activeTab === tab && <div style={{ position: 'absolute', bottom: -1, left: 0, right: 0, height: 2, background: 'var(--accent-primary)', borderRadius: 2 }} />}
+            </button>
+          ))}
         </div>
       </div>
+      
+      {activeTab === 'diario' && (
+        <>
 {/* Alert if no bullet entry today */}
 {(() => {
   const hasToday = entries.some(e => e.date === todayISO);
@@ -298,7 +392,7 @@ export const BujoModule: React.FC = () => {
             </form>
 
             <div className="bujo-inline-pills">
-              {(Object.keys(BUJO_SYMBOLS) as BujoEntryType[]).map(type => {
+              {(['task', 'note', 'event'] as BujoEntryType[]).map(type => {
                 const sym = BUJO_SYMBOLS[type];
                 const isActive = selectedType === type;
                 return (
@@ -361,6 +455,9 @@ export const BujoModule: React.FC = () => {
                                 onClick={() => {
                                   toggleEntryType(entry.id, type);
                                   setMenuOpenId(null);
+                                  if (type === 'completed' && entry.linkedTaskId) {
+                                    completeTask(entry.linkedTaskId);
+                                  }
                                 }}
                               >
                                 <span style={{ color: BUJO_SYMBOLS[type].color, display: 'flex', alignItems: 'center' }}>
@@ -697,6 +794,51 @@ export const BujoModule: React.FC = () => {
           </div>
         </div>
       </div>
+        </>
+      )}
+
+      {activeTab === 'calendario' && (
+        <div style={{ marginTop: '24px' }}>
+          <CalendarModule />
+        </div>
+      )}
+
+      {activeTab === 'tareas' && (
+        <div style={{ marginTop: '24px' }}>
+          <TasksModule />
+        </div>
+      )}
+
+      {activeTab === 'habitos' && (
+        <div style={{ marginTop: '24px' }}>
+          <HabitsModule />
+        </div>
+      )}
+
+      {activeTab === 'bienestar' && (
+        <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <HealthModule />
+          <BandModule />
+        </div>
+      )}
+
+      {activeTab === 'proyectos' && (
+        <div style={{ marginTop: '24px' }}>
+          <ProjectsModule />
+        </div>
+      )}
+
+      {activeTab === 'compras' && (
+        <div style={{ marginTop: '24px' }}>
+          <ShoppingModule />
+        </div>
+      )}
+
+      {activeTab === 'metas' && (
+        <div style={{ marginTop: '24px' }}>
+          <GoalsModule />
+        </div>
+      )}
     </div>
   );
 };

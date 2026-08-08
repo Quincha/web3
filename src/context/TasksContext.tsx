@@ -56,7 +56,7 @@ interface TasksContextType {
   projects: Project[];
 
   // Tasks CRUD
-  addTask: (task: Omit<Task, 'id' | 'createdAt' | 'completedAt' | 'syncId' | 'subtasks' | 'completedPomodoros' | 'timeSpentSeconds'>) => string;
+  addTask: (task: Omit<Task, 'id' | 'createdAt' | 'completedAt' | 'syncId' | 'subtasks' | 'completedPomodoros' | 'timeSpentSeconds'>, skipBujoEvent?: boolean) => string;
   updateTask: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string) => void;
   completeTask: (id: string) => void;
@@ -298,10 +298,16 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // ── TASKS ─────────────────────────────────────────
 
-  const addTask = useCallback((task: Omit<Task, 'id' | 'createdAt' | 'completedAt' | 'syncId' | 'subtasks' | 'completedPomodoros' | 'timeSpentSeconds'>): string => {
+  const addTask = useCallback((task: Omit<Task, 'id' | 'createdAt' | 'completedAt' | 'syncId' | 'subtasks' | 'completedPomodoros' | 'timeSpentSeconds'>, skipBujoEvent?: boolean): string => {
     const id = genId('task');
+    let cTitle = task.title.trim();
+    if (cTitle.length > 0) {
+      cTitle = cTitle.charAt(0).toUpperCase() + cTitle.slice(1);
+    }
+    
     const newTask: Task = {
       ...task,
+      title: cTitle,
       id,
       subtasks: [],
       completedPomodoros: 0,
@@ -316,6 +322,11 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return updated;
     });
     SyncQueueService.enqueue('CREATE_TASK', { ...newTask });
+    
+    if (!skipBujoEvent) {
+      window.dispatchEvent(new CustomEvent('task-added', { detail: newTask }));
+    }
+    
     return id;
   }, []);
 
@@ -335,6 +346,7 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return updated;
     });
     SyncQueueService.enqueue('DELETE_TASK', { id });
+    window.dispatchEvent(new CustomEvent('task-deleted', { detail: { id } }));
   }, []);
 
   const completeTask = useCallback((id: string) => {
@@ -347,6 +359,7 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return updated;
     });
     SyncQueueService.enqueue('COMPLETE_TASK', { id, completedAt });
+    window.dispatchEvent(new CustomEvent('task-completed', { detail: { id, completedAt } }));
   }, []);
 
   const setTaskInProgress = useCallback((id: string) => {

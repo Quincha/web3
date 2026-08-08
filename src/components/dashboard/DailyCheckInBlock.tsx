@@ -34,39 +34,9 @@ export const DailyCheckInBlock: React.FC<DailyCheckInBlockProps> = ({ selectedDa
     setNotes(c.notes || '');
   }, [selectedDateStr, getCheckIn]);
 
-  // Sync answer with Habits Context
-  const syncWithHabits = (key: 'medsTaken' | 'readBook' | 'exercised' | 'drankAlcohol', value: boolean) => {
-    let targetName = '';
-    let isNegative = false;
-
-    if (key === 'readBook') targetName = 'Lectura';
-    else if (key === 'exercised') targetName = 'Ejercicio';
-    else if (key === 'medsTaken') targetName = 'Medicamentos';
-    else if (key === 'drankAlcohol') {
-      targetName = 'Alcohol';
-      isNegative = true;
-    }
-
-    const matchedHabit = habits.find(h => 
-      h.name.toLowerCase().includes(targetName.toLowerCase()) || 
-      (isNegative && (h.name.toLowerCase().includes('alcohol') || h.name.toLowerCase().includes('sobrio') || h.type === 'negative'))
-    );
-
-    if (matchedHabit) {
-      if (!isNegative) {
-        // Positive habit: Yes -> completed (green check), No -> un-completed
-        setHabitStateForDate(matchedHabit.id, selectedDateStr, value, false);
-      } else {
-        // Negative habit (drankAlcohol): 
-        // "No" -> clean day (completed = true, violation = false)
-        // "Yes" -> violation (completed = true, violation = true)
-        if (value === false) {
-          setHabitStateForDate(matchedHabit.id, selectedDateStr, true, false, 'Día limpio sin consumo');
-        } else if (value === true) {
-          setHabitStateForDate(matchedHabit.id, selectedDateStr, true, true, 'Interrupción de racha (Consumo registrado)');
-        }
-      }
-    }
+  // Dynamic habit toggle handler
+  const handleHabitToggle = (habitId: string, completed: boolean, isViolation: boolean = false, note?: string) => {
+    setHabitStateForDate(habitId, selectedDateStr, completed, isViolation, note);
   };
 
   const handleRatingChange = (stars: number) => {
@@ -80,6 +50,7 @@ export const DailyCheckInBlock: React.FC<DailyCheckInBlockProps> = ({ selectedDa
   };
 
   const handleToggle = (key: 'medsTaken' | 'readBook' | 'exercised' | 'drankAlcohol', value: boolean) => {
+    // Keep this only for legacy daily checkin fallback logic if needed
     let updatedMeds = medsTaken;
     let updatedRead = readBook;
     let updatedEx = exercised;
@@ -97,8 +68,6 @@ export const DailyCheckInBlock: React.FC<DailyCheckInBlockProps> = ({ selectedDa
       exercised: updatedEx ?? undefined,
       drankAlcohol: updatedAlc ?? undefined,
     });
-
-    syncWithHabits(key, value);
   };
 
   const handleNotesChange = (txt: string) => {
@@ -210,148 +179,92 @@ export const DailyCheckInBlock: React.FC<DailyCheckInBlockProps> = ({ selectedDa
         
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
           
-          {/* Medicamentos */}
-          <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px', padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#E2E8F0', fontWeight: 500 }}>
-              <Pill size={15} color="#A78BFA" />
-              ¿Tomaste medicamentos?
-            </div>
-            <div style={{ display: 'flex', gap: '4px' }}>
-              <button
-                type="button"
-                onClick={() => handleToggle('medsTaken', true)}
-                style={{
-                  background: medsTaken === true ? 'rgba(16, 185, 129, 0.25)' : 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${medsTaken === true ? '#10B981' : 'rgba(255,255,255,0.1)'}`,
-                  color: medsTaken === true ? '#34D399' : 'rgba(255,255,255,0.5)',
-                  borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px',
-                  boxShadow: medsTaken === true ? '0 0 10px rgba(16, 185, 129, 0.3)' : 'none'
-                }}
-              >
-                <Check size={12} /> Sí
-              </button>
-              <button
-                type="button"
-                onClick={() => handleToggle('medsTaken', false)}
-                style={{
-                  background: medsTaken === false ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${medsTaken === false ? '#EF4444' : 'rgba(255,255,255,0.1)'}`,
-                  color: medsTaken === false ? '#F87171' : 'rgba(255,255,255,0.5)',
-                  borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px'
-                }}
-              >
-                <X size={12} /> No
-              </button>
-            </div>
-          </div>
+          {/* Render Active Habits dynamically */}
+          {habits.filter(h => !h.archived).map(habit => {
+            const completion = habit.completions.find(c => c.date === selectedDateStr);
+            const isCompleted = !!completion;
+            const isNegative = habit.type === 'negative';
+            const isViolation = completion?.isViolation === true;
+            
+            // For negative habits:
+            // "No (Limpio)" means completed=true, isViolation=false
+            // "Sí (Consumo)" means completed=true, isViolation=true
+            // Not registered means completed=false
+            
+            const isCleanDay = isNegative && isCompleted && !isViolation;
+            const isFailedDay = isNegative && isCompleted && isViolation;
 
-          {/* Lectura */}
-          <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px', padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#E2E8F0', fontWeight: 500 }}>
-              <BookOpen size={15} color="#F59E0B" />
-              ¿Leíste tu libro?
-            </div>
-            <div style={{ display: 'flex', gap: '4px' }}>
-              <button
-                type="button"
-                onClick={() => handleToggle('readBook', true)}
-                style={{
-                  background: readBook === true ? 'rgba(16, 185, 129, 0.25)' : 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${readBook === true ? '#10B981' : 'rgba(255,255,255,0.1)'}`,
-                  color: readBook === true ? '#34D399' : 'rgba(255,255,255,0.5)',
-                  borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px',
-                  boxShadow: readBook === true ? '0 0 10px rgba(16, 185, 129, 0.3)' : 'none'
-                }}
-              >
-                <Check size={12} /> Sí
-              </button>
-              <button
-                type="button"
-                onClick={() => handleToggle('readBook', false)}
-                style={{
-                  background: readBook === false ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${readBook === false ? '#EF4444' : 'rgba(255,255,255,0.1)'}`,
-                  color: readBook === false ? '#F87171' : 'rgba(255,255,255,0.5)',
-                  borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px'
-                }}
-              >
-                <X size={12} /> No
-              </button>
-            </div>
-          </div>
-
-          {/* Ejercicio */}
-          <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px', padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#E2E8F0', fontWeight: 500 }}>
-              <Activity size={15} color="#38BDF8" />
-              ¿Hiciste ejercicio?
-            </div>
-            <div style={{ display: 'flex', gap: '4px' }}>
-              <button
-                type="button"
-                onClick={() => handleToggle('exercised', true)}
-                style={{
-                  background: exercised === true ? 'rgba(16, 185, 129, 0.25)' : 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${exercised === true ? '#10B981' : 'rgba(255,255,255,0.1)'}`,
-                  color: exercised === true ? '#34D399' : 'rgba(255,255,255,0.5)',
-                  borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px',
-                  boxShadow: exercised === true ? '0 0 10px rgba(16, 185, 129, 0.3)' : 'none'
-                }}
-              >
-                <Check size={12} /> Sí
-              </button>
-              <button
-                type="button"
-                onClick={() => handleToggle('exercised', false)}
-                style={{
-                  background: exercised === false ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${exercised === false ? '#EF4444' : 'rgba(255,255,255,0.1)'}`,
-                  color: exercised === false ? '#F87171' : 'rgba(255,255,255,0.5)',
-                  borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px'
-                }}
-              >
-                <X size={12} /> No
-              </button>
-            </div>
-          </div>
-
-          {/* Consumo de Alcohol (Hábito Negativo / Evitación) */}
-          <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px', padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#E2E8F0', fontWeight: 500 }}>
-              <Wine size={15} color="#F43F5E" />
-              ¿Bebiste alcohol hoy?
-            </div>
-            <div style={{ display: 'flex', gap: '4px' }}>
-              <button
-                type="button"
-                onClick={() => handleToggle('drankAlcohol', false)}
-                title="Día Limpio (Suma racha positiva)"
-                style={{
-                  background: drankAlcohol === false ? 'rgba(16, 185, 129, 0.25)' : 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${drankAlcohol === false ? '#10B981' : 'rgba(255,255,255,0.1)'}`,
-                  color: drankAlcohol === false ? '#34D399' : 'rgba(255,255,255,0.5)',
-                  borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px',
-                  boxShadow: drankAlcohol === false ? '0 0 10px rgba(16, 185, 129, 0.3)' : 'none'
-                }}
-              >
-                <Check size={12} /> No (Limpio)
-              </button>
-              <button
-                type="button"
-                onClick={() => handleToggle('drankAlcohol', true)}
-                title="Consumo (Interrumpe racha)"
-                style={{
-                  background: drankAlcohol === true ? 'rgba(239, 68, 68, 0.3)' : 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${drankAlcohol === true ? '#EF4444' : 'rgba(255,255,255,0.1)'}`,
-                  color: drankAlcohol === true ? '#F87171' : 'rgba(255,255,255,0.5)',
-                  borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px',
-                  boxShadow: drankAlcohol === true ? '0 0 10px rgba(239, 68, 68, 0.4)' : 'none'
-                }}
-              >
-                <X size={12} /> Sí
-              </button>
-            </div>
-          </div>
+            return (
+              <div key={habit.id} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px', padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#E2E8F0', fontWeight: 500 }} title={habit.description}>
+                  <span style={{ fontSize: '15px' }}>{habit.icon}</span>
+                  {habit.name}
+                </div>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  {!isNegative ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => handleHabitToggle(habit.id, true)}
+                        style={{
+                          background: isCompleted ? 'rgba(16, 185, 129, 0.25)' : 'rgba(255,255,255,0.04)',
+                          border: `1px solid ${isCompleted ? '#10B981' : 'rgba(255,255,255,0.1)'}`,
+                          color: isCompleted ? '#34D399' : 'rgba(255,255,255,0.5)',
+                          borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px',
+                          boxShadow: isCompleted ? '0 0 10px rgba(16, 185, 129, 0.3)' : 'none'
+                        }}
+                      >
+                        <Check size={12} /> Sí
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleHabitToggle(habit.id, false)}
+                        style={{
+                          background: !isCompleted && completion !== undefined ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255,255,255,0.04)',
+                          border: `1px solid ${!isCompleted && completion !== undefined ? '#EF4444' : 'rgba(255,255,255,0.1)'}`,
+                          color: !isCompleted && completion !== undefined ? '#F87171' : 'rgba(255,255,255,0.5)',
+                          borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px'
+                        }}
+                      >
+                        <X size={12} /> No
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => handleHabitToggle(habit.id, true, false, 'Día limpio')}
+                        title="Día Limpio (Suma racha positiva)"
+                        style={{
+                          background: isCleanDay ? 'rgba(16, 185, 129, 0.25)' : 'rgba(255,255,255,0.04)',
+                          border: `1px solid ${isCleanDay ? '#10B981' : 'rgba(255,255,255,0.1)'}`,
+                          color: isCleanDay ? '#34D399' : 'rgba(255,255,255,0.5)',
+                          borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px',
+                          boxShadow: isCleanDay ? '0 0 10px rgba(16, 185, 129, 0.3)' : 'none'
+                        }}
+                      >
+                        <Check size={12} /> No (Limpio)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleHabitToggle(habit.id, true, true, 'Interrupción de racha')}
+                        title="Consumo (Interrumpe racha)"
+                        style={{
+                          background: isFailedDay ? 'rgba(239, 68, 68, 0.3)' : 'rgba(255,255,255,0.04)',
+                          border: `1px solid ${isFailedDay ? '#EF4444' : 'rgba(255,255,255,0.1)'}`,
+                          color: isFailedDay ? '#F87171' : 'rgba(255,255,255,0.5)',
+                          borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px',
+                          boxShadow: isFailedDay ? '0 0 10px rgba(239, 68, 68, 0.4)' : 'none'
+                        }}
+                      >
+                        <X size={12} /> Sí
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })}
 
         </div>
       </div>

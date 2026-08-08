@@ -17,7 +17,8 @@ export type Module =
   | 'health'
   | 'habitos'
   | 'finanzas'
-  | 'shopping';
+  | 'shopping'
+  | 'band';
 
 // Permissions matrix: module -> role -> set of allowed actions
 const PERMISSIONS: Record<Module, Record<Role, Action[]>> = {
@@ -125,6 +126,13 @@ const PERMISSIONS: Record<Module, Record<Role, Action[]>> = {
     'supervisor': ['view', 'create', 'edit'],
     'user': ['view', 'create'],
     'guest': [],
+  },
+  band: {
+    'super-admin': ['view', 'create', 'edit', 'delete', 'admin'],
+    'admin': ['view', 'create', 'edit'],
+    'supervisor': ['view'],
+    'user': ['view'],
+    'guest': ['view'],
   }
 };
 

@@ -13,6 +13,7 @@ export interface BujoEntry {
   isFavorite?: boolean;
   duration?: string;
   assignee?: string;
+  linkedTaskId?: string;
 }
 
 export interface BujoCheckIn {
@@ -29,7 +30,7 @@ export interface BujoCheckIn {
 
 interface BujoContextType {
   entries: BujoEntry[];
-  addEntry: (content: string, type: BujoEntryType, tags?: string[], duration?: string, assignee?: string, date?: string) => void;
+  addEntry: (content: string, type: BujoEntryType, tags?: string[], duration?: string, assignee?: string, date?: string, linkedTaskId?: string) => void;
   addOrUpdateReflectionEntry: (date: string, reflectionText: string) => void;
   updateEntry: (id: string, updates: Partial<BujoEntry>) => void;
   deleteEntry: (id: string) => void;
@@ -128,8 +129,12 @@ export const BujoProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const addEntry = useCallback((content: string, type: BujoEntryType, tags: string[] = [], initialDuration?: string, initialAssignee?: string, date?: string) => {
+  const addEntry = useCallback((content: string, type: BujoEntryType, tags: string[] = [], initialDuration?: string, initialAssignee?: string, date?: string, linkedTaskId?: string) => {
     let parsedContent = content.trim();
+    if (parsedContent.length > 0) {
+      parsedContent = parsedContent.charAt(0).toUpperCase() + parsedContent.slice(1);
+    }
+    
     let duration = initialDuration;
     let assignee = initialAssignee;
     const tagsSet = new Set<string>(tags);
@@ -168,6 +173,7 @@ export const BujoProvider: React.FC<{ children: React.ReactNode }> = ({ children
       tags: Array.from(tagsSet),
       duration,
       assignee,
+      linkedTaskId,
     };
     setEntries(prev => {
       const updated = [newEntry, ...prev];
@@ -282,7 +288,64 @@ export const BujoProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
     window.addEventListener('bujo-add-entry', handleBujoEvent);
-    return () => window.removeEventListener('bujo-add-entry', handleBujoEvent);
+
+    const handleTaskAdded = (e: Event) => {
+      const task = (e as CustomEvent).detail;
+      setEntries(prev => {
+        if (prev.some(entry => entry.linkedTaskId === task.id)) return prev;
+        
+        const newEntry: BujoEntry = {
+          id: `bujo_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+          type: task.status === 'completed' ? 'completed' : 'task',
+          content: task.title,
+          date: task.dueDate || task.createdAt.split('T')[0],
+          timestamp: task.createdAt,
+          tags: task.tags || [],
+          linkedTaskId: task.id,
+        };
+        const updated = [newEntry, ...prev];
+        saveToCache(updated);
+        return updated;
+      });
+    };
+    window.addEventListener('task-added', handleTaskAdded);
+
+    const handleTaskCompleted = (e: Event) => {
+      const { id } = (e as CustomEvent).detail;
+      setEntries(prev => {
+        let changed = false;
+        const updated = prev.map(entry => {
+          if (entry.linkedTaskId === id && entry.type !== 'completed') {
+            changed = true;
+            return { ...entry, type: 'completed' as BujoEntryType };
+          }
+          return entry;
+        });
+        if (changed) saveToCache(updated);
+        return changed ? updated : prev;
+      });
+    };
+    window.addEventListener('task-completed', handleTaskCompleted);
+
+    const handleTaskDeleted = (e: Event) => {
+      const { id } = (e as CustomEvent).detail;
+      setEntries(prev => {
+        const updated = prev.filter(entry => entry.linkedTaskId !== id);
+        if (updated.length !== prev.length) {
+          saveToCache(updated);
+          return updated;
+        }
+        return prev;
+      });
+    };
+    window.addEventListener('task-deleted', handleTaskDeleted);
+
+    return () => {
+      window.removeEventListener('bujo-add-entry', handleBujoEvent);
+      window.removeEventListener('task-added', handleTaskAdded);
+      window.removeEventListener('task-completed', handleTaskCompleted);
+      window.removeEventListener('task-deleted', handleTaskDeleted);
+    };
   }, [addEntry]);
 
   return (

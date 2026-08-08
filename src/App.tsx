@@ -9,8 +9,10 @@ import { TransitionProvider, useTransition } from './context/TransitionContext';
 import { PomodoroProvider } from './context/PomodoroContext';
 import { BujoProvider } from './context/BujoContext';
 import { HealthProvider } from './context/HealthContext';
+import { BandProvider } from './context/BandContext';
 import { TasksProvider } from './context/TasksContext';
 import { HabitsProvider } from './context/HabitsContext';
+import { GoalsProvider } from './context/GoalsContext';
 import { TransitionManager } from './components/layout/TransitionManager';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 import { ClientPortal } from './components/portal/ClientPortal';
@@ -76,19 +78,23 @@ function App() {
             <HabitsProvider>
               <PomodoroProvider>
                 <BujoProvider>
-                  <HealthProvider>
-                    <FinanceProvider>
-                      <InsightsProvider>
-                        <ClientsProvider>
-                          <ShoppingProvider>
-                            <MessagesProvider>
-                              <MainAppContent />
-                            </MessagesProvider>
-                          </ShoppingProvider>
-                        </ClientsProvider>
-                      </InsightsProvider>
-                    </FinanceProvider>
-                  </HealthProvider>
+                  <GoalsProvider>
+                    <HealthProvider>
+                      <BandProvider>
+                        <FinanceProvider>
+                        <InsightsProvider>
+                          <ClientsProvider>
+                            <ShoppingProvider>
+                              <MessagesProvider>
+                                <MainAppContent />
+                              </MessagesProvider>
+                            </ShoppingProvider>
+                          </ClientsProvider>
+                        </InsightsProvider>
+                      </FinanceProvider>
+                      </BandProvider>
+                    </HealthProvider>
+                  </GoalsProvider>
                 </BujoProvider>
               </PomodoroProvider>
             </HabitsProvider>
