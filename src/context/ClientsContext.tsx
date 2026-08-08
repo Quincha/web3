@@ -33,41 +33,18 @@ interface ClientsContextType {
 // HELPERS
 // ─────────────────────────────────────────────
 
-const CLIENTS_KEY = 'quincha_clients';
+const CLIENTS_KEY = 'quincha_clients_v2';
 
 function isoNow(): string { return new Date().toISOString(); }
 function genId(prefix: string): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
 }
 
-const INITIAL_CLIENTS: Client[] = [
-  {
-    id: 'cli_1',
-    name: 'Roberto Gómez',
-    company: 'Constructora GALTEC',
-    email: 'roberto@galtec.com',
-    phone: '+56 9 1234 5678',
-    color: '#3B82F6', // Blue
-    archived: false,
-    createdAt: isoNow()
-  },
-  {
-    id: 'cli_2',
-    name: 'Ana Martínez',
-    company: 'EcoVertical',
-    email: 'ana@ecovertical.cl',
-    phone: '+56 9 8765 4321',
-    color: '#10B981', // Emerald
-    archived: false,
-    createdAt: isoNow()
-  }
-];
-
 function loadClients(): Client[] {
   try {
     const raw = localStorage.getItem(CLIENTS_KEY);
-    return raw ? JSON.parse(raw) : INITIAL_CLIENTS;
-  } catch { return INITIAL_CLIENTS; }
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
 }
 
 function saveClients(clients: Client[]): void {

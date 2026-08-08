@@ -15,35 +15,10 @@ interface FinanceContextType {
   markInsightAsRead: (id: string) => void;
 }
 
-const mockStats: FinanceDashboardStats = {
-  availableBalance: 4820000,
-  monthlyIncome: 3200000,
-  monthlyIncomeVariation: 12,
-  monthlyExpenses: 1950000,
-  monthlyExpensesVariation: -6,
-  monthlyResult: 1250000,
-  totalReceivables: 980000,
-  receivablesCount: 5,
-  totalPayables: 620000,
-  payablesCount: 3,
-  nextDueCard: {
-    name: 'Hosting AWS',
-    dueDate: 'Mañana',
-    amount: 48000
-  }
-};
-
-const mockInsights: FinanceInsight[] = [
-  { id: 'i1', type: 'warning', message: 'Tienes $430.000 vencidos hace 8 días.', date: new Date().toISOString(), read: false },
-  { id: 'i2', type: 'info', message: 'Tus gastos en Combustible aumentaron 18%.', date: new Date().toISOString(), read: false },
-  { id: 'i3', type: 'warning', message: 'Ya utilizaste el 90% del presupuesto de Marketing.', date: new Date().toISOString(), read: false },
-  { id: 'i4', type: 'danger', message: 'Quedan 2 días para pagar el servidor.', date: new Date().toISOString(), read: false }
-];
-
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
 
-const CACHE_KEY = 'quincha_finance_movimientos';
-const CACHE_KEY_DEUDAS = 'quincha_finance_deudas';
+const CACHE_KEY = 'quincha_finance_movimientos_v2';
+const CACHE_KEY_DEUDAS = 'quincha_finance_deudas_v2';
 
 function loadMovimientosFromCache(): Movimiento[] {
   try {
@@ -93,19 +68,17 @@ const computeStats = (movs: Movimiento[], deudas: Deuda[]): FinanceDashboardStat
   const totalPayables = deudas.filter(d => d.type === 'Por Pagar' && d.status !== 'Pagada').reduce((sum, d) => sum + (d.amount - d.paidAmount), 0);
   const payablesCount = deudas.filter(d => d.type === 'Por Pagar' && d.status !== 'Pagada').length;
 
-  // Static mock base + computed for demo purposes
-  const baseBalance = 4820000; 
-
   return {
-    ...mockStats, // carry over static variations/nextDueCard
-    availableBalance: baseBalance + income - expenses,
+    availableBalance: income - expenses,
     monthlyIncome: income,
+    monthlyIncomeVariation: 0,
     monthlyExpenses: expenses,
+    monthlyExpensesVariation: 0,
     monthlyResult: income - expenses,
-    totalReceivables: totalReceivables || mockStats.totalReceivables,
-    receivablesCount: receivablesCount || mockStats.receivablesCount,
-    totalPayables: totalPayables || mockStats.totalPayables,
-    payablesCount: payablesCount || mockStats.payablesCount,
+    totalReceivables,
+    receivablesCount,
+    totalPayables,
+    payablesCount,
   };
 };
 
@@ -113,7 +86,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [cuentas] = useState<Cuenta[]>([]);
   const [movimientos, setMovimientos] = useState<Movimiento[]>(() => loadMovimientosFromCache());
   const [deudas, setDeudas] = useState<Deuda[]>(() => loadDeudasFromCache());
-  const [insights, setInsights] = useState<FinanceInsight[]>(mockInsights);
+  const [insights, setInsights] = useState<FinanceInsight[]>([]);
   
   const stats = computeStats(movimientos, deudas);
 

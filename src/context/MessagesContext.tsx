@@ -35,20 +35,15 @@ interface MessagesContextType {
 
 const MessagesContext = createContext<MessagesContextType | undefined>(undefined);
 
-const MESSAGES_KEY = 'quincha_messages';
-const READ_NOTIFS_KEY = 'quincha_read_notifications';
-
-const SEED_MESSAGES: Message[] = [
-  { id: 'm1', sender: 'Roberto Gómez', company: 'GALTEC', text: 'Hola Daniel, te envié la aprobación del presupuesto.', time: 'Hace 15 min', unread: true },
-  { id: 'm2', sender: 'Ana Martínez', company: 'EcoVertical', text: '¿Podemos mover la reunión de revisión a las 15:00?', time: 'Hace 1 hora', unread: true },
-];
+const MESSAGES_KEY = 'quincha_messages_v2';
+const READ_NOTIFS_KEY = 'quincha_read_notifications_v2';
 
 function loadMessages(): Message[] {
   try {
     const raw = localStorage.getItem(MESSAGES_KEY);
     if (raw) return JSON.parse(raw);
   } catch { /* ignore */ }
-  return SEED_MESSAGES;
+  return [];
 }
 
 function loadReadIds(): string[] {

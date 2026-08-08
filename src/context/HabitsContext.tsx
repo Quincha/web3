@@ -170,132 +170,20 @@ function enrichHabit(habit: Habit): HabitWithStats {
 }
 
 // ─────────────────────────────────────────────
-// MOCK DATA
+// CACHE HELPERS
 // ─────────────────────────────────────────────
+
+const CACHE_KEY = 'quincha_habits_v2';
 
 function genId(prefix: string): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
 }
 
-// Generate past completions for realistic streaks
-function mockCompletions(daysBack: number, skipDays: number[] = []): HabitCompletion[] {
-  const completions: HabitCompletion[] = [];
-  const today = new Date();
-
-  for (let i = daysBack; i >= 0; i--) {
-    if (skipDays.includes(i)) continue;
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
-    const dateISO = toLocalISO(d);
-    completions.push({
-      date: dateISO,
-      timestamp: d.toISOString()
-    });
-  }
-  return completions;
-}
-
-const SEED_ALCOHOL_HABIT: Habit = {
-  id: 'habit_alcohol',
-  name: 'Beber alcohol',
-  description: 'Hábito negativo: seguimiento de los días con consumo (racha = días sin beber).',
-  icon: '🍷',
-  color: '#F43F5E',
-  type: 'negative',
-  frequency: 'daily',
-  targetDays: [0, 1, 2, 3, 4, 5, 6],
-  completions: [],
-  startDate: subtractDay(todayISO(), 14),
-  archived: false,
-  syncId: null
-};
-
-const INITIAL_HABITS: Habit[] = [
-  SEED_ALCOHOL_HABIT,
-  {
-    id: 'habit_water',
-    name: 'Hidratación 2L',
-    description: 'Tomar al menos 2 litros de agua durante el día',
-    icon: '💧',
-    color: '#3B82F6',
-    frequency: 'daily',
-    targetDays: [0, 1, 2, 3, 4, 5, 6],
-    completions: mockCompletions(18, [3, 8, 15]),  // 15-day streak with some gaps
-    startDate: subtractDay(todayISO(), 20),
-    archived: false,
-    syncId: null
-  },
-  {
-    id: 'habit_meditation',
-    name: 'Meditación 10 min',
-    description: 'Sesión de mindfulness o respiración consciente',
-    icon: '🧘',
-    color: '#8B5CF6',
-    frequency: 'daily',
-    targetDays: [0, 1, 2, 3, 4, 5, 6],
-    completions: mockCompletions(11, [5, 6]),  // 5-day streak
-    startDate: subtractDay(todayISO(), 15),
-    archived: false,
-    syncId: null
-  },
-  {
-    id: 'habit_reading',
-    name: 'Lectura 30 min',
-    description: 'Leer libros de no-ficción o técnicos',
-    icon: '📚',
-    color: '#F59E0B',
-    frequency: 'daily',
-    targetDays: [0, 1, 2, 3, 4, 5, 6],
-    completions: mockCompletions(7, [2]),  // 7-day run mostly
-    startDate: subtractDay(todayISO(), 30),
-    archived: false,
-    syncId: null
-  },
-  {
-    id: 'habit_exercise',
-    name: 'Ejercicio',
-    description: 'Al menos 30 min de actividad física',
-    icon: '🏃',
-    color: '#10B981',
-    frequency: 'weekdays',
-    targetDays: [1, 2, 3, 4, 5],
-    completions: mockCompletions(10, [1, 4, 7]),
-    startDate: subtractDay(todayISO(), 21),
-    archived: false,
-    syncId: null
-  },
-  {
-    id: 'habit_no_social',
-    name: 'Sin redes antes de las 9am',
-    description: 'No revisar Instagram/Twitter hasta después de las 9am',
-    icon: '📵',
-    color: '#EF4444',
-    frequency: 'daily',
-    targetDays: [0, 1, 2, 3, 4, 5, 6],
-    completions: mockCompletions(5, [1, 3]),
-    startDate: subtractDay(todayISO(), 14),
-    archived: false,
-    syncId: null
-  }
-];
-
-// ─────────────────────────────────────────────
-// CACHE HELPERS
-// ─────────────────────────────────────────────
-
-const CACHE_KEY = 'quincha_habits';
-
 function loadHabits(): Habit[] {
   try {
     const raw = localStorage.getItem(CACHE_KEY);
-    if (!raw) return INITIAL_HABITS;
-    const parsed = JSON.parse(raw) as Habit[];
-    // One-time seed: ensure the "Beber alcohol" negative habit exists even for existing saved data
-    if (!parsed.some(h => h.id === SEED_ALCOHOL_HABIT.id)) {
-      parsed.unshift({ ...SEED_ALCOHOL_HABIT, completions: [] });
-    }
-    return parsed;
-  } catch { return INITIAL_HABITS; }
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
 }
 
 function saveHabits(habits: Habit[]): void {

@@ -1,3 +1,6 @@
+# Credenciales de despliegue remotas (nunca commitees)
+scripts/quincha-creds.env
+
 # Logs
 logs
 *.log

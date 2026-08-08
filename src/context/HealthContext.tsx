@@ -103,179 +103,10 @@ interface HealthContextType {
 }
 
 // ─────────────────────────────────────────────
-// MOCK DATA
-// ─────────────────────────────────────────────
-
-const TODAY = new Date().toISOString().split('T')[0];
-
-function futureDate(daysFromNow: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() + daysFromNow);
-  return d.toISOString();
-}
-
-function pastDate(daysAgo: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - daysAgo);
-  return d.toISOString().split('T')[0];
-}
-
-const INITIAL_PROFILES: HealthProfile[] = [
-  {
-    id: 'profile_me',
-    name: 'Mi Ficha',
-    relation: 'principal',
-    avatar: '🧑',
-    bloodType: 'O+',
-    allergies: ['Penicilina', 'Polen'],
-    chronicConditions: ['Hipertensión leve'],
-    emergencyContacts: [
-      { id: 'ec_1', name: 'Ana Quinchahual', relation: 'Esposa', phone: '+56 9 8765 4321' }
-    ]
-  },
-  {
-    id: 'profile_mom',
-    name: 'Mamá',
-    relation: 'familiar',
-    avatar: '👩',
-    bloodType: 'A+',
-    allergies: [],
-    chronicConditions: ['Diabetes tipo 2', 'Hipotiroidismo'],
-    emergencyContacts: [
-      { id: 'ec_2', name: 'Daniel Quinchahual', relation: 'Hijo', phone: '+56 9 1234 5678' }
-    ]
-  },
-  {
-    id: 'profile_dad',
-    name: 'Papá',
-    relation: 'familiar',
-    avatar: '👨',
-    bloodType: 'B+',
-    allergies: ['Aspirina', 'Ibuprofeno'],
-    chronicConditions: ['Hipertensión', 'Arritmia cardíaca'],
-    emergencyContacts: [
-      { id: 'ec_3', name: 'Daniel Quinchahual', relation: 'Hijo', phone: '+56 9 1234 5678' }
-    ]
-  }
-];
-
-const INITIAL_MEDICATIONS: Medication[] = [
-  // Mi Ficha
-  {
-    id: 'med_1', profile_id: 'profile_me',
-    name: 'Vitamina D3', dose: '2000 UI', frequency: '1 vez al día',
-    schedule: ['08:00'], stockTotal: 30, stockRemaining: 25,
-    doseHistory: [], color: '#F59E0B', notes: 'Tomar con el desayuno'
-  },
-  {
-    id: 'med_2', profile_id: 'profile_me',
-    name: 'Losartán', dose: '50mg', frequency: '2 veces al día',
-    schedule: ['08:00', '20:00'], stockTotal: 60, stockRemaining: 48,
-    doseHistory: [], color: '#3B82F6', notes: 'Antihipertensivo'
-  },
-  // Mamá
-  {
-    id: 'med_3', profile_id: 'profile_mom',
-    name: 'Metformina', dose: '850mg', frequency: '2 veces al día',
-    schedule: ['08:00', '20:00'], stockTotal: 60, stockRemaining: 20,
-    doseHistory: [], color: '#10B981', notes: 'Tomar con comida para evitar náuseas'
-  },
-  {
-    id: 'med_4', profile_id: 'profile_mom',
-    name: 'Atorvastatina', dose: '20mg', frequency: '1 vez al día',
-    schedule: ['21:00'], stockTotal: 30, stockRemaining: 12,
-    doseHistory: [], color: '#8B5CF6', notes: 'Tomar en la noche'
-  },
-  {
-    id: 'med_5', profile_id: 'profile_mom',
-    name: 'Levotiroxina', dose: '50mcg', frequency: '1 vez al día (ayunas)',
-    schedule: ['07:00'], stockTotal: 30, stockRemaining: 18,
-    doseHistory: [], color: '#EC4899', notes: 'En ayunas, 30min antes del desayuno'
-  },
-  // Papá
-  {
-    id: 'med_6', profile_id: 'profile_dad',
-    name: 'Enalapril', dose: '10mg', frequency: '1 vez al día',
-    schedule: ['08:00'], stockTotal: 30, stockRemaining: 10,
-    doseHistory: [], color: '#EF4444', notes: '⚠️ Stock bajo — renovar pronto'
-  },
-  {
-    id: 'med_7', profile_id: 'profile_dad',
-    name: 'Bisoprolol', dose: '5mg', frequency: '1 vez al día',
-    schedule: ['08:00'], stockTotal: 30, stockRemaining: 8,
-    doseHistory: [], color: '#F97316', notes: 'Para arritmia. No suspender sin aviso médico'
-  }
-];
-
-const INITIAL_APPOINTMENTS: Appointment[] = [
-  {
-    id: 'appt_1', profile_id: 'profile_me',
-    specialty: 'Cardiología', professional: 'Dr. Rodrigo Pérez',
-    clinic: 'Clínica Bío-Bío', dateTime: futureDate(16),
-    notes: 'Traer resultados de exámenes de sangre', status: 'scheduled'
-  },
-  {
-    id: 'appt_2', profile_id: 'profile_me',
-    specialty: 'Oftalmología', professional: 'Dra. Carmen López',
-    clinic: 'Centro Médico Sur', dateTime: futureDate(35),
-    notes: 'Control anual de vista', status: 'scheduled'
-  },
-  {
-    id: 'appt_3', profile_id: 'profile_mom',
-    specialty: 'Endocrinología', professional: 'Dra. Patricia Vega',
-    clinic: 'Hospital Regional', dateTime: futureDate(5),
-    notes: 'Control HbA1c trimestral', status: 'scheduled'
-  },
-  {
-    id: 'appt_4', profile_id: 'profile_mom',
-    specialty: 'Medicina General', professional: 'Dr. Juan Castro',
-    clinic: 'Consultorio Centro', dateTime: futureDate(2),
-    notes: 'Control de tiroides', status: 'scheduled'
-  },
-  {
-    id: 'appt_5', profile_id: 'profile_dad',
-    specialty: 'Cardiología', professional: 'Dr. Miguel Fuentes',
-    clinic: 'Clínica Bío-Bío', dateTime: futureDate(1),
-    notes: 'Urgente — control de arritmia y tensión', status: 'scheduled'
-  }
-];
-
-const INITIAL_CLINICAL_RECORDS: ClinicalRecord[] = [
-  {
-    id: 'cr_1', profile_id: 'profile_me',
-    date: pastDate(180), title: 'Examen de sangre anual',
-    diagnosis: 'Presión arterial elevada. Inicio de tratamiento con Losartán.',
-    professional: 'Dr. Rodrigo Pérez', clinic: 'Clínica Bío-Bío',
-    attachments: ['hemograma_2026.pdf', 'lipidograma_2026.pdf']
-  },
-  {
-    id: 'cr_2', profile_id: 'profile_me',
-    date: pastDate(90), title: 'Control Cardiológico',
-    diagnosis: 'Presión controlada. Mantener tratamiento.',
-    professional: 'Dr. Rodrigo Pérez', clinic: 'Clínica Bío-Bío',
-    attachments: ['control_cardio_julio.pdf']
-  },
-  {
-    id: 'cr_3', profile_id: 'profile_mom',
-    date: pastDate(95), title: 'Control Endocrinológico',
-    diagnosis: 'HbA1c en 7.2%. Ajuste de dosis de Metformina.',
-    professional: 'Dra. Patricia Vega', clinic: 'Hospital Regional',
-    attachments: ['hba1c_resultado.pdf']
-  },
-  {
-    id: 'cr_4', profile_id: 'profile_dad',
-    date: pastDate(45), title: 'Holter cardíaco 24h',
-    diagnosis: 'Arritmia supraventricular confirmada. Inicio de Bisoprolol.',
-    professional: 'Dr. Miguel Fuentes', clinic: 'Clínica Bío-Bío',
-    attachments: ['holter_resultado.pdf', 'ecg_24h.pdf']
-  }
-];
-
-// ─────────────────────────────────────────────
 // CACHE HELPERS
 // ─────────────────────────────────────────────
 
-const CACHE_KEY = 'quincha_health_data';
+const CACHE_KEY = 'quincha_health_data_v2';
 
 interface HealthCacheData {
   profiles: HealthProfile[];
@@ -290,10 +121,10 @@ function loadFromCache(): HealthCacheData {
     if (raw) return JSON.parse(raw);
   } catch { /* ignore */ }
   return {
-    profiles: INITIAL_PROFILES,
-    medications: INITIAL_MEDICATIONS,
-    appointments: INITIAL_APPOINTMENTS,
-    clinicalRecords: INITIAL_CLINICAL_RECORDS
+    profiles: [],
+    medications: [],
+    appointments: [],
+    clinicalRecords: []
   };
 }
 
@@ -304,6 +135,8 @@ function saveToCache(data: HealthCacheData) {
 function genId(prefix: string): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
 }
+
+const TODAY = new Date().toISOString().split('T')[0];
 
 // ─────────────────────────────────────────────
 // CONTEXT + PROVIDER

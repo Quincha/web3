@@ -33,12 +33,7 @@ export const CalendarWidget: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const [events, setEvents] = useState<CalendarEvent[]>([
-    { id: '1', time: '09:00', title: 'Daily Sync con Equipo', tag: 'REUNIÓN', duration: '25 min', color: '#10B981', location: 'Google Meet' },
-    { id: '2', time: '12:30', title: 'Diseño UX/UI Dashboard', tag: 'PROYECTO', duration: '60 min', color: '#00E5D9', location: 'Figma' },
-    { id: '3', time: '16:20', title: 'Revisión Sprint Agosto', tag: 'REVISIÓN', duration: '45 min', color: '#FBBF24' },
-    { id: '4', time: '18:00', title: 'Desarrollo Frontend Web3', tag: 'CÓDIGO', duration: '90 min', color: '#A78BFA' },
-  ]);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
 
   const [isAddingEvent, setIsAddingEvent] = useState(false);
   const [newTitle, setNewTitle] = useState('');

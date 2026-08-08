@@ -7,6 +7,7 @@ import { useTasks } from '../../context/TasksContext';
 import { useInsights } from '../../context/InsightsContext';
 import { useFinance } from '../../context/FinanceContext';
 import { useHabits } from '../../context/HabitsContext';
+import { useMessages } from '../../context/MessagesContext';
 import { SyncStatusBar } from '../layout/SyncStatusBar';
 import { WeatherWidget } from './WeatherWidget';
 import { CheckCircle2, Search, Bell, Mail, Sparkles, Moon, Sun, Calendar, DollarSign, Plus, BookOpen } from 'lucide-react';
@@ -19,19 +20,20 @@ export const DashboardHero: React.FC = () => {
   const { insights: _insights } = useInsights();
   const { stats: financeStats } = useFinance();
   const { habitsWithStats } = useHabits();
+  const { messages, notifications, unreadMessages } = useMessages();
   const firstName = userConfig.userName.split(' ')[0];
 
   // Dynamic calculations for Progress Ring
   const healthHabits = habitsWithStats || [];
   const healthPercentage = healthHabits.length > 0 
     ? Math.round(healthHabits.reduce((acc, h) => acc + h.completionRate30d, 0) / healthHabits.length)
-    : 85;
+    : 0;
 
   const totalTasksCount = (tasks || []).length;
   const completedTasksCount = (tasks || []).filter(t => t.status === 'completed').length;
   const devPercentage = totalTasksCount > 0
     ? Math.round((completedTasksCount / totalTasksCount) * 100)
-    : 60;
+    : 0;
 
   const overallProgress = Math.round((healthPercentage + devPercentage) / 2);
 
@@ -48,16 +50,9 @@ export const DashboardHero: React.FC = () => {
   const [showMailMenu, setShowMailMenu] = useState(false);
   const [showBellMenu, setShowBellMenu] = useState(false);
 
-  const mockMessages = [
-    { id: 'm1', sender: 'Roberto Gómez (GALTEC)', text: 'Hola Daniel, te envié la aprobación del presupuesto.', time: 'Hace 15 min', unread: true },
-    { id: 'm2', sender: 'Ana Martínez (EcoVertical)', text: '¿Podemos mover la reunión de revisión a las 15:00?', time: 'Hace 1 hora', unread: true }
-  ];
+  const recentMessages = messages.slice(0, 3);
 
-  const mockNotifications = [
-    { id: 'n1', title: 'Factura por cobrar', desc: 'Factura #1042 lista para cobro ($980.000)', time: 'Hace 30 min', type: 'warning' },
-    { id: 'n2', title: 'Racha de Hábitos', desc: '¡Llevas 7 días seguidos en Meditación!', time: 'Hace 2 horas', type: 'success' },
-    { id: 'n3', title: 'Próxima reunión', desc: 'Daily Sync con el equipo de Dev a las 09:00 AM', time: 'En 45 min', type: 'info' }
-  ];
+  const recentNotifications = notifications.slice(0, 3);
 
   const themeOptions = [
     { id: 'dark' as Theme, label: 'Modo Oscuro', icon: <Moon size={16} /> },
@@ -196,17 +191,17 @@ export const DashboardHero: React.FC = () => {
               title="Mensajes directos"
             >
               <Mail size={16} />
-              <span style={{ position: 'absolute', top: '-4px', right: '-4px', background: tokens.colors.accent.danger, color: '#fff', fontSize: '10px', fontWeight: 'bold', width: '16px', height: '16px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>2</span>
+              <span style={{ position: 'absolute', top: '-4px', right: '-4px', background: tokens.colors.accent.danger, color: '#fff', fontSize: '10px', fontWeight: 'bold', width: '16px', height: '16px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{unreadMessages}</span>
             </button>
 
             {showMailMenu && (
               <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '8px', background: 'rgba(15, 23, 42, 0.98)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '14px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px', width: '300px', backdropFilter: 'blur(20px)', boxShadow: '0 10px 30px rgba(0,0,0,0.6)', zIndex: 100 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '8px' }}>
                   <span style={{ fontSize: '12px', fontWeight: 700, color: '#fff', letterSpacing: '0.05em' }}>MENSAJES RECIENTES</span>
-                  <span style={{ fontSize: '10px', color: tokens.colors.accent.green, fontWeight: 600 }}>2 Sin leer</span>
+                  <span style={{ fontSize: '10px', color: tokens.colors.accent.green, fontWeight: 600 }}>{unreadMessages} Sin leer</span>
                 </div>
                 
-                {mockMessages.map(msg => (
+                {recentMessages.map(msg => (
                   <div 
                     key={msg.id}
                     onClick={() => { setShowMailMenu(false); window.dispatchEvent(new CustomEvent('change-view', { detail: 'mensajes' })); }}
@@ -240,17 +235,17 @@ export const DashboardHero: React.FC = () => {
               title="Notificaciones y alertas"
             >
               <Bell size={16} />
-              <span style={{ position: 'absolute', top: '-4px', right: '-4px', background: tokens.colors.accent.warning, color: '#111', fontSize: '10px', fontWeight: 'bold', width: '16px', height: '16px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>3</span>
+              <span style={{ position: 'absolute', top: '-4px', right: '-4px', background: tokens.colors.accent.warning, color: '#111', fontSize: '10px', fontWeight: 'bold', width: '16px', height: '16px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{notifications.length}</span>
             </button>
 
             {showBellMenu && (
               <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '8px', background: 'rgba(15, 23, 42, 0.98)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '14px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px', width: '320px', backdropFilter: 'blur(20px)', boxShadow: '0 10px 30px rgba(0,0,0,0.6)', zIndex: 100 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '8px' }}>
                   <span style={{ fontSize: '12px', fontWeight: 700, color: '#fff', letterSpacing: '0.05em' }}>NOTIFICACIONES DE SISTEMA</span>
-                  <span style={{ fontSize: '10px', color: '#FBBF24', fontWeight: 600 }}>3 Alertas</span>
+                  <span style={{ fontSize: '10px', color: '#FBBF24', fontWeight: 600 }}>{notifications.length} Alertas</span>
                 </div>
                 
-                {mockNotifications.map(notif => (
+                {recentNotifications.map(notif => (
                   <div 
                     key={notif.id}
                     style={{ background: 'rgba(255,255,255,0.03)', borderLeft: `3px solid ${notif.type === 'warning' ? '#FBBF24' : notif.type === 'success' ? '#10B981' : '#38BDF8'}`, borderRadius: '6px', padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: '2px' }}
@@ -370,7 +365,7 @@ export const DashboardHero: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <Calendar size={18} color="rgba(255,255,255,0.6)" />
               <div>
-                <div style={{ fontSize: '16px', fontWeight: 700, color: '#fff', lineHeight: 1 }}>2</div>
+                <div style={{ fontSize: '16px', fontWeight: 700, color: '#fff', lineHeight: 1 }}>0</div>
                 <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>Reuniones</div>
               </div>
             </div>

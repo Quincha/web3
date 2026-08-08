@@ -50,9 +50,9 @@ interface BujoContextType {
 
 const BujoContext = createContext<BujoContextType | undefined>(undefined);
 
-const CACHE_KEY = 'quincha_bujo_entries';
-const MOOD_CACHE_KEY = 'quincha_bujo_moods';
-const CHECKIN_CACHE_KEY = 'quincha_bujo_checkins';
+const CACHE_KEY = 'quincha_bujo_entries_v2';
+const MOOD_CACHE_KEY = 'quincha_bujo_moods_v2';
+const CHECKIN_CACHE_KEY = 'quincha_bujo_checkins_v2';
 
 function loadFromCache(): BujoEntry[] {
   try {

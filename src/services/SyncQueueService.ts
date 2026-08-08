@@ -35,7 +35,7 @@ export interface SyncEvent {
   error: string | null;     // last error message
 }
 
-const QUEUE_KEY = 'quincha_sync_queue';
+const QUEUE_KEY = 'quincha_sync_queue_v2';
 const MAX_RETRIES = 3;
 const FLUSH_DEBOUNCE_MS = 1500;  // batch events within 1.5s window
 

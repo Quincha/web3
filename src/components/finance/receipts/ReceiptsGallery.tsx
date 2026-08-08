@@ -11,12 +11,7 @@ interface MockReceipt {
   status: 'Pendiente OCR' | 'Procesado' | 'Con errores';
 }
 
-const mockReceipts: MockReceipt[] = [
-  { id: '1', thumbnailUrl: 'https://images.unsplash.com/photo-1607513524945-81206d21f83c?w=400&q=80', amount: 45000, date: '2023-10-12', category: 'Combustible', status: 'Procesado' },
-  { id: '2', thumbnailUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400&q=80', amount: 120000, date: '2023-10-15', category: 'Insumos', status: 'Procesado' },
-  { id: '3', thumbnailUrl: 'https://images.unsplash.com/photo-1626071465942-0f9c2d1b7454?w=400&q=80', amount: 0, date: '2023-10-18', category: 'Desconocido', status: 'Pendiente OCR' },
-  { id: '4', thumbnailUrl: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=400&q=80', amount: 85000, date: '2023-10-20', category: 'Marketing', status: 'Procesado' },
-];
+const mockReceipts: MockReceipt[] = [];
 
 export const ReceiptsGallery: React.FC = () => {
   const formatCurrency = (amount: number) => {

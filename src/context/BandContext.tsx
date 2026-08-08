@@ -247,22 +247,14 @@ const DEFAULT_SETTINGS: BandSettings = {
   batteryNotify: true,
 };
 
-function seedAlarms(): BandAlarm[] {
-  return [
-    { id: 'al_wake', time: '06:45', label: 'Despertar', repeatDays: [0, 1, 2, 3, 4], enabled: true, smartWake: true, snooze: true },
-    { id: 'al_siesta', time: '13:30', label: 'Siesta corta', repeatDays: [4], enabled: false, smartWake: false, snooze: true },
-    { id: 'al_agua', time: '11:00', label: 'Hidratación', repeatDays: [], enabled: false, smartWake: false, snooze: false },
-  ];
-}
-
 // ─────────────────────────────────────────────
 // LOCAL STORAGE
 // ─────────────────────────────────────────────
 
-const DAYS_KEY = 'quincha_band_miband5';
-const ALARMS_KEY = 'quincha_band_alarms_v2';
-const SETTINGS_KEY = 'quincha_band_settings_v2';
-const SOURCE_KEY = 'quincha_band_source_v1';
+const DAYS_KEY = 'quincha_band_miband5_v2';
+const ALARMS_KEY = 'quincha_band_alarms_v3';
+const SETTINGS_KEY = 'quincha_band_settings_v3';
+const SOURCE_KEY = 'quincha_band_source_v2';
 
 function loadFromStorage<T>(key: string): T | null {
   try {
@@ -278,19 +270,12 @@ function saveToStorage<T>(key: string, value: T): void {
 
 function loadDays(): BandDayData[] {
   const stored = loadFromStorage<BandDayData[]>(DAYS_KEY);
-  // garantizar al menos ~90 días para el historial
-  if (Array.isArray(stored) && stored.length >= 90) return stored;
-  const fresh = seedDays(120);
-  saveToStorage(DAYS_KEY, fresh);
-  return fresh;
+  return Array.isArray(stored) ? stored : [];
 }
 
 function loadAlarms(): BandAlarm[] {
   const stored = loadFromStorage<BandAlarm[]>(ALARMS_KEY);
-  if (Array.isArray(stored)) return stored;
-  const fresh = seedAlarms();
-  saveToStorage(ALARMS_KEY, fresh);
-  return fresh;
+  return Array.isArray(stored) ? stored : [];
 }
 
 function loadSettings(): BandSettings {

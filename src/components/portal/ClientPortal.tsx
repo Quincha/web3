@@ -69,10 +69,10 @@ export const ClientPortal: React.FC = () => {
     };
 
     // Store in localStorage cache
-    const existing = localStorage.getItem('quincha_client_requests');
+    const existing = localStorage.getItem('quincha_client_requests_v2');
     const list = existing ? JSON.parse(existing) : [];
     list.push(newRequest);
-    localStorage.setItem('quincha_client_requests', JSON.stringify(list));
+    localStorage.setItem('quincha_client_requests_v2', JSON.stringify(list));
 
     setSubmittedId(reqId);
     setName('');
@@ -83,25 +83,14 @@ export const ClientPortal: React.FC = () => {
 
   const handleTrackSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    const existing = localStorage.getItem('quincha_client_requests');
+    const existing = localStorage.getItem('quincha_client_requests_v2');
     const list: ClientRequest[] = existing ? JSON.parse(existing) : [];
     const found = list.find(r => r.id.toUpperCase() === searchId.trim().toUpperCase());
     
     if (found) {
       setTrackedOrder(found);
     } else {
-      // Mock static tracking for demonstration if id doesn't exist
-      setTrackedOrder({
-        id: searchId.toUpperCase(),
-        name: 'Cliente Demo',
-        company: 'Demo Corp',
-        email: 'demo@example.com',
-        serviceType: 'desarrollo',
-        description: 'Proyecto de software',
-        budget: 'medium',
-        status: 'progress',
-        submittedAt: new Date().toLocaleDateString()
-      });
+      setTrackedOrder(null);
     }
   };
 

@@ -61,7 +61,7 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Load initial logs from cache
   useEffect(() => {
-    const cachedLogs = localStorage.getItem('quincha_pomodoro_logs');
+    const cachedLogs = localStorage.getItem('quincha_pomodoro_logs_v2');
     if (cachedLogs) {
       try {
         setCompletedSessions(JSON.parse(cachedLogs));
@@ -72,7 +72,7 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   const saveLogsToCache = (newLogs: PomodoroSessionRecord[]) => {
-    localStorage.setItem('quincha_pomodoro_logs', JSON.stringify(newLogs));
+    localStorage.setItem('quincha_pomodoro_logs_v2', JSON.stringify(newLogs));
     
     // Simulate background API sync
     const config = ConfigService.loadConfig();

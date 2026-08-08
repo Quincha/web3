@@ -24,7 +24,7 @@ interface GoalsContextType {
 
 const GoalsContext = createContext<GoalsContextType | undefined>(undefined);
 
-const CACHE_KEY = 'quincha_goals';
+const CACHE_KEY = 'quincha_goals_v2';
 
 export const GoalsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -35,30 +35,6 @@ export const GoalsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const raw = localStorage.getItem(CACHE_KEY);
       if (raw) {
         setGoals(JSON.parse(raw));
-      } else {
-        // Initial mock data to guide the user
-        const initial: Goal[] = [
-          {
-            id: 'goal_1',
-            title: 'Lanzar Quincha OS V1',
-            description: 'Terminar todos los módulos principales del sistema operativo personal',
-            timeframe: 'quarterly',
-            progress: 85,
-            status: 'active',
-            createdAt: new Date().toISOString()
-          },
-          {
-            id: 'goal_2',
-            title: 'Hacer ejercicio 3 veces a la semana',
-            description: 'Mantener la rutina de gimnasio',
-            timeframe: 'weekly',
-            progress: 30,
-            status: 'active',
-            createdAt: new Date().toISOString()
-          }
-        ];
-        setGoals(initial);
-        localStorage.setItem(CACHE_KEY, JSON.stringify(initial));
       }
     } catch {
       // ignore

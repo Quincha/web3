@@ -23,7 +23,7 @@ interface ShoppingContextType {
 
 const ShoppingContext = createContext<ShoppingContextType | undefined>(undefined);
 
-const CACHE_KEY = 'quincha_shopping_products';
+const CACHE_KEY = 'quincha_shopping_products_v2';
 
 function loadFromCache(): ShoppingProduct[] {
   try {
@@ -31,28 +31,7 @@ function loadFromCache(): ShoppingProduct[] {
     if (raw) return JSON.parse(raw);
   } catch {}
   
-  return [
-    {
-      id: 'shop_1',
-      url: 'https://www.amazon.com/dp/B08N5WRWNW',
-      name: 'MacBook Air M1 13"',
-      imageUrl: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=300&h=200&q=80',
-      priceBase: 699,
-      shippingCost: 45,
-      storeName: 'Amazon',
-      timestamp: new Date().toISOString()
-    },
-    {
-      id: 'shop_2',
-      url: 'https://articulo.mercadolibre.cl/MLC-macbook-air-m1',
-      name: 'MacBook Air M1 13"',
-      imageUrl: 'https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?auto=format&fit=crop&w=300&h=200&q=80',
-      priceBase: 720,
-      shippingCost: 15,
-      storeName: 'MercadoLibre',
-      timestamp: new Date().toISOString()
-    }
-  ];
+  return [];
 }
 
 function saveToCache(products: ShoppingProduct[]) {

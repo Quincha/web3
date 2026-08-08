@@ -38,7 +38,7 @@ const DEFAULT_CONFIG: UserConfig = {
   userName: 'Invitado'
 };
 
-const CACHE_KEY = 'quincha_user_config';
+const CACHE_KEY = 'quincha_user_config_v2';
 
 export class ConfigService {
   // Simulated backend sync state

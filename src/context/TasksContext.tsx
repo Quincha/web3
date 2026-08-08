@@ -85,197 +85,34 @@ interface TasksContextType {
 }
 
 // ─────────────────────────────────────────────
-// MOCK DATA
+// HELPERS
 // ─────────────────────────────────────────────
 
 function isoNow(): string { return new Date().toISOString(); }
 function today(): string { return new Date().toISOString().split('T')[0]; }
-function futureDate(days: number): string {
-  const d = new Date(); d.setDate(d.getDate() + days);
-  return d.toISOString().split('T')[0];
-}
 function genId(prefix: string): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
 }
-
-const INITIAL_PROJECTS: Project[] = [
-  {
-    id: 'proj_quincha',
-    name: 'QuinchaDoro',
-    color: '#10B981',
-    description: 'Desarrollo del sistema operativo personal Quincha Systems',
-    client_id: null,
-    archived: false,
-    createdAt: isoNow()
-  },
-  {
-    id: 'proj_admin',
-    name: 'Administración',
-    color: '#3B82F6',
-    description: 'Gestión interna y operaciones',
-    client_id: null,
-    archived: false,
-    createdAt: isoNow()
-  },
-  {
-    id: 'proj_personal',
-    name: 'Personal',
-    color: '#8B5CF6',
-    description: 'Objetivos y tareas personales',
-    client_id: null,
-    archived: false,
-    createdAt: isoNow()
-  }
-];
-
-const INITIAL_TASKS: Task[] = [
-  {
-    id: 'task_1',
-    title: 'Integrar módulo de Tareas con Pomodoro',
-    description: 'Conectar el selector de tareas en PomodoroModule con el TasksContext real.',
-    project_id: 'proj_quincha',
-    client_id: null,
-    category: 'desarrollo',
-    priority: 'urgent',
-    status: 'in-progress',
-    isBillable: false,
-    price: 0,
-    dueDate: today(),
-    subtasks: [
-      { id: 'st_1', content: 'Extender startSession() con taskId', completed: true, createdAt: isoNow() },
-      { id: 'st_2', content: 'Crear TaskSelector en PomodoroModule', completed: false, createdAt: isoNow() },
-      { id: 'st_3', content: 'Sincronizar completedPomodoros al finalizar', completed: false, createdAt: isoNow() },
-    ],
-    tags: ['frontend', 'context'],
-    estimatedPomodoros: 3,
-    completedPomodoros: 1,
-    timeSpentSeconds: 1500, // 25 min
-    createdAt: isoNow(),
-    completedAt: null,
-    syncId: null
-  },
-  {
-    id: 'task_2',
-    title: 'Diseñar Portal de Clientes',
-    description: 'Crear el front-office comercial dual con semáforo de disponibilidad y formulario de solicitudes.',
-    project_id: 'proj_quincha',
-    client_id: null,
-    category: 'diseño',
-    priority: 'high',
-    status: 'pending',
-    dueDate: futureDate(2),
-    subtasks: [
-      { id: 'st_4', content: 'Hero + AvailabilityBadge', completed: false, createdAt: isoNow() },
-      { id: 'st_5', content: 'RequestForm con validación', completed: false, createdAt: isoNow() },
-      { id: 'st_6', content: 'Portfolio grid', completed: false, createdAt: isoNow() },
-    ],
-    tags: ['portal', 'cliente'],
-    estimatedPomodoros: 5,
-    completedPomodoros: 0,
-    timeSpentSeconds: 0,
-    createdAt: isoNow(),
-    completedAt: null,
-    syncId: null
-  },
-  {
-    id: 'task_3',
-    title: 'Llamar al contador',
-    description: 'Revisar balance trimestral',
-    project_id: 'proj_admin',
-    client_id: null,
-    category: 'comunicación',
-    priority: 'medium',
-    status: 'pending',
-    dueDate: today(),
-    subtasks: [],
-    tags: ['health', 'qa'],
-    estimatedPomodoros: 1,
-    completedPomodoros: 0,
-    timeSpentSeconds: 0,
-    createdAt: isoNow(),
-    completedAt: null,
-    syncId: null
-  },
-  {
-    id: 'task_4',
-    title: 'Actualizar documentación técnica del proyecto',
-    description: 'README, contextos exportados, arquitectura de módulos.',
-    project_id: 'proj_quincha',
-    category: 'documentación',
-    priority: 'low',
-    status: 'pending',
-    dueDate: futureDate(7),
-    subtasks: [],
-    tags: ['docs'],
-    estimatedPomodoros: 2,
-    completedPomodoros: 0,
-    timeSpentSeconds: 0,
-    createdAt: isoNow(),
-    completedAt: null,
-    syncId: null
-  },
-  {
-    id: 'task_5',
-    title: 'Preparar presentación de avance del cliente',
-    description: 'Deck de 10 slides con capturas del sistema y hoja de ruta.',
-    project_id: 'proj_admin',
-    client_id: null,
-    category: 'comunicación',
-    priority: 'high',
-    status: 'pending',
-    dueDate: futureDate(3),
-    subtasks: [
-      { id: 'st_7', content: 'Capturas de pantalla del sistema', completed: false, createdAt: isoNow() },
-      { id: 'st_8', content: 'Redactar hoja de ruta Fase 3', completed: false, createdAt: isoNow() },
-    ],
-    tags: ['cliente', 'presentación'],
-    estimatedPomodoros: 3,
-    completedPomodoros: 0,
-    timeSpentSeconds: 0,
-    createdAt: isoNow(),
-    completedAt: null,
-    syncId: null
-  },
-  {
-    id: 'task_6',
-    title: 'Pagar impuestos mensuales',
-    description: 'Declaración F29',
-    project_id: 'proj_admin',
-    client_id: null,
-    category: 'finanzas',
-    priority: 'medium',
-    status: 'pending',
-    dueDate: today(),
-    subtasks: [],
-    tags: ['salud', 'rutina'],
-    estimatedPomodoros: 0,
-    completedPomodoros: 0,
-    timeSpentSeconds: 0,
-    createdAt: isoNow(),
-    completedAt: null,
-    syncId: null
-  }
-];
 
 // ─────────────────────────────────────────────
 // CACHE HELPERS
 // ─────────────────────────────────────────────
 
-const TASKS_KEY = 'quincha_tasks';
-const PROJECTS_KEY = 'quincha_projects';
+const TASKS_KEY = 'quincha_tasks_v2';
+const PROJECTS_KEY = 'quincha_projects_v2';
 
 function loadTasks(): Task[] {
   try {
     const raw = localStorage.getItem(TASKS_KEY);
-    return raw ? JSON.parse(raw) : INITIAL_TASKS;
-  } catch { return INITIAL_TASKS; }
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
 }
 
 function loadProjects(): Project[] {
   try {
     const raw = localStorage.getItem(PROJECTS_KEY);
-    return raw ? JSON.parse(raw) : INITIAL_PROJECTS;
-  } catch { return INITIAL_PROJECTS; }
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
 }
 
 function saveTasks(tasks: Task[]): void {
