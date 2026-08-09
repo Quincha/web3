@@ -135,6 +135,54 @@ export const Api = {
     const res = await request<{ db: { key: string; data: unknown }[] }>('/sync');
     return res.db;
   },
+
+  // Google Calendar
+  async gcalStatus(): Promise<{ configured: boolean; connected: boolean; profile: unknown; calName: string | null }> {
+    return request('/gcal/status');
+  },
+
+  /** Obtiene la URL de autorización de Google (autenticada) para redirigir la pestaña. */
+  async gcalAuthUrl(): Promise<{ url: string }> {
+    return request<{ url: string }>('/gcal/auth');
+  },
+
+  async gcalDisconnect(): Promise<void> {
+    await request('/gcal/disconnect', { method: 'POST' });
+  },
+
+  async gcalEvents(days = 60): Promise<{ connected: boolean; items: unknown[]; error?: string }> {
+    return request(`/gcal/events?days=${days}`);
+  },
+
+  async gcalCreateEvent(payload: {
+    summary: string;
+    start: string;
+    end?: string;
+    allDay?: boolean;
+    description?: string;
+    location?: string;
+    timeZone?: string;
+  }): Promise<{ ok: boolean; id?: string }> {
+    return request('/gcal/event', { method: 'POST', body: JSON.stringify(payload) });
+  },
+
+  async gcalUpdateEvent(eventId: string, payload: {
+    start: string;
+    end?: string;
+    allDay?: boolean;
+    summary?: string;
+    timeZone?: string;
+  }): Promise<{ ok: boolean; id?: string }> {
+    return request(`/gcal/event/${encodeURIComponent(eventId)}`, { method: 'PATCH', body: JSON.stringify(payload) });
+  },
+
+  async gcalDeleteEvent(eventId: string): Promise<{ ok: boolean }> {
+    return request(`/gcal/event/${encodeURIComponent(eventId)}`, { method: 'DELETE' });
+  },
+
+  async gcalClear(prefix = ''): Promise<{ ok: boolean; removed?: number }> {
+    return request('/gcal/clear', { method: 'POST', body: JSON.stringify({ prefix }) });
+  },
 };
 
 export { getToken, setToken, getProfile, setProfile };

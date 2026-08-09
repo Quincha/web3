@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  CheckCircle2, Plus, Circle, 
+  CheckCircle2, Plus, Circle, Trash2,
   Briefcase, Tag, Calendar, User, DollarSign,
   ChevronDown
 } from 'lucide-react';
@@ -137,7 +137,8 @@ const TaskRow: React.FC<{
   onToggleSubtask: (taskId: string, subtaskId: string) => void;
   onAddSubtask: (taskId: string, content: string) => void;
   onClick: (taskId: string) => void;
-}> = ({ task, project, onComplete, onUpdate, onClick }) => {
+  onDelete: (id: string) => void;
+}> = ({ task, project, onComplete, onUpdate, onClick, onDelete }) => {
   const { getClientById, getActiveClients } = useClients();
   const clients = getActiveClients();
   
@@ -270,6 +271,22 @@ const TaskRow: React.FC<{
           </div>
         </div>
       </div>
+
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete(task.id);
+        }}
+        title="Borrar tarea"
+        className="task-delete-btn"
+        style={{
+          background: 'transparent', border: 'none', cursor: 'pointer',
+          color: 'rgba(255,255,255,0.3)', padding: '8px', marginLeft: 'auto',
+          flexShrink: 0, borderRadius: '8px', transition: 'all 0.15s ease'
+        }}
+      >
+        <Trash2 size={16} />
+      </button>
     </div>
   );
 };
@@ -288,7 +305,7 @@ const FILTER_OPTIONS: { id: TaskFilter; label: string }[] = [
 ];
 
 export const TasksModule: React.FC = () => {
-  const { tasks, getActiveProjects, updateTask, getTodayTasks } = useTasks();
+  const { tasks, getActiveProjects, updateTask, getTodayTasks, deleteTask } = useTasks();
   const { removeDeudaByTaskId } = useFinance();
   const [filter, setFilter] = useState<TaskFilter>('today');
   const [searchQuery, setSearchQuery] = useState('');
@@ -373,6 +390,13 @@ export const TasksModule: React.FC = () => {
                 }}
                 onToggleSubtask={() => {}}
                 onClick={taskId => setSelectedTaskId(taskId)}
+                onDelete={(id) => {
+                  if (window.confirm('¿Borrar esta tarea?')) {
+                    deleteTask(id);
+                    removeDeudaByTaskId(id);
+                    if (selectedTaskId === id) setSelectedTaskId(null);
+                  }
+                }}
               />
             );
         })}

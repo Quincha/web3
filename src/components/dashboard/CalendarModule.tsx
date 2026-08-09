@@ -1,11 +1,12 @@
-import React, { useState, useMemo } from 'react';
-import { Calendar as  ChevronLeft, ChevronRight, Stethoscope, CheckSquare, Clock, BookOpen, Plus, X } from 'lucide-react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { LayoutGrid, List, CalendarDays, Stethoscope, CheckSquare, Clock, BookOpen, Plus, X, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useHealth } from '../../context/HealthContext';
 import { useTasks } from '../../context/TasksContext';
 import { usePomodoro } from '../../context/PomodoroContext';
 import { useBujo } from '../../context/BujoContext';
+import { Api } from '../../services/ApiClient';
 
-type EventSource = 'health' | 'tasks' | 'pomodoro' | 'bujo';
+type EventSource = 'health' | 'tasks' | 'pomodoro' | 'bujo' | 'google';
 
 interface CalendarEvent {
   id: string;
@@ -20,36 +21,79 @@ interface CalendarEvent {
     profileName?: string;
     priority?: string;
     projectName?: string;
+    location?: string;
   };
 }
 
+// Fecha local "YYYY-MM-DD" sin depender de UTC (evita marcar el día siguiente
+// por la zona horaria, p.ej. remarcar domingo cuando localmente es sábado).
+function localDateToStr(d: Date): string {
+  const y = d.getFullYear();
+  const m = (d.getMonth() + 1).toString().padStart(2, '0');
+  const day = d.getDate().toString().padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 export const CalendarModule: React.FC = () => {
-  const { appointments, profiles } = useHealth();
-  const { tasks, projects } = useTasks();
+  const { appointments, profiles, updateAppointment, deleteAppointment } = useHealth();
+  const { tasks, projects, updateTask, deleteTask } = useTasks();
   const { completedSessions } = usePomodoro();
-  const { entries, addEntry } = useBujo();
+  const { entries, addEntry, updateEntry, deleteEntry } = useBujo();
 
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDateStr, setSelectedDateStr] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [selectedDateStr, setSelectedDateStr] = useState<string>(localDateToStr(new Date()));
+  const [view, setView] = useState<'day' | 'week' | 'month'>('month');
+
+  // Drag & drop state
+  const [draggingEvent, setDraggingEvent] = useState<CalendarEvent | null>(null);
   
   // Add Event Modal State
   const [showAddModal, setShowAddModal] = useState(false);
   const [newEventTitle, setNewEventTitle] = useState('');
   const [newEventTag, setNewEventTag] = useState('Personal');
 
+  // Google Calendar events (external)
+  const [googleEvents, setGoogleEvents] = useState<any[]>([]);
+  const [gcalConnected, setGcalConnected] = useState(false);
+
+  const loadGoogleEvents = useCallback(async () => {
+    try {
+      const res = await Api.gcalEvents(90);
+      setGcalConnected(!!res.connected);
+      setGoogleEvents(Array.isArray(res.items) ? res.items : []);
+    } catch {
+      setGcalConnected(false);
+      setGoogleEvents([]);
+    }
+  }, []);
+
+  useEffect(() => { loadGoogleEvents(); }, [loadGoogleEvents]);
+
   const handleAddEvent = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newEventTitle.trim()) return;
-    
-    // Add event to BujoContext for the selected date
-    addEntry(
-      newEventTitle.trim(),
-      'event',
-      [newEventTag, 'Calendario'],
-      undefined,
-      undefined,
-      selectedDateStr
-    );
+
+    // Si Google Calendar está conectado, el evento vive en Google (evita
+    // crear una copia BuJo extra que se vería duplicada en el calendario).
+    if (gcalConnected) {
+      Api.gcalCreateEvent({
+        summary: newEventTitle.trim(),
+        start: `${selectedDateStr}T12:00:00`,
+        allDay: true,
+      })
+        .then(() => loadGoogleEvents())
+        .catch(err => console.error('No se pudo crear evento en Google:', err));
+    } else {
+      // Sin conexión a Google: guarda el evento en el BuJo local
+      addEntry(
+        newEventTitle.trim(),
+        'event',
+        [newEventTag, 'Calendario'],
+        undefined,
+        undefined,
+        selectedDateStr
+      );
+    }
 
     setNewEventTitle('');
     setShowAddModal(false);
@@ -110,6 +154,15 @@ export const CalendarModule: React.FC = () => {
 
     // 4. Bullet Journal Daily Logs & Events
     entries.forEach(entry => {
+      // Entradas espejo automáticas (ya mostradas por su fuente real):
+      // tareas → linkedTaskId; pomodoros → "⏱️ Sesión completada";
+      // tareas completadas → "✅ Tarea completada". Evitan duplicados.
+      if (entry.linkedTaskId) return;
+      if (entry.content.startsWith('⏱️ Sesión completada')) return;
+      if (entry.content.startsWith('✅ Tarea completada')) return;
+      // Ya sincronizados con Google (aparecen como evento de Google en la sección 5)
+      if (entry.gcalEventId) return;
+
       let iconPrefix = '📓';
       let eventColor = '#9CA3AF'; // Default gray for generic entries
 
@@ -133,14 +186,44 @@ export const CalendarModule: React.FC = () => {
         sourceId: entry.id,
         title: `${iconPrefix} ${entry.content}`,
         description: `Entrada BuJo (${entry.type}) ${entry.duration ? `• ${entry.duration}` : ''} ${entry.assignee ? `• @${entry.assignee}` : ''}`,
-        start: `${entry.date}T12:00:00`,
-        allDay: true,
+        start: `${entry.date}T${entry.time || '12:00'}:00`,
+        allDay: !entry.time,
         color: eventColor
       });
     });
 
-    return list;
-  }, [appointments, tasks, completedSessions, entries, projects, profiles]);
+    // 5. Google Calendar events (external)
+    googleEvents.forEach((ev: any) => {
+      const start = ev.start?.dateTime || ev.start?.date || '';
+      if (!start) return;
+      const allDay = Boolean(ev.start?.date);
+      list.push({
+        id: `cal_google_${ev.id}`,
+        source: 'google',
+        sourceId: ev.id,
+        title: `🗓 ${ev.summary || 'Evento Google'}`,
+        description: ev.description || (allDay ? 'Evento de Google Calendar' : ''),
+        start: allDay ? `${start}T12:00:00` : start,
+        allDay,
+        color: '#4285F4',
+        meta: { location: ev.location }
+      });
+    });
+
+    // Sort chronological: timed events first (by time), then all-day in place
+    return list.sort((a, b) => {
+      const ta = (a.start || '').split('T')[1] || '';
+      const tb = (b.start || '').split('T')[1] || '';
+      if (a.allDay && !b.allDay) return 1;
+      if (!a.allDay && b.allDay) return -1;
+      if (!a.allDay && !b.allDay) {
+        const aT = new Date(a.start).getTime();
+        const bT = new Date(b.start).getTime();
+        if (!isNaN(aT) && !isNaN(bT) && aT !== bT) return aT - bT;
+      }
+      return ta < tb ? -1 : ta > tb ? 1 : 0;
+    });
+  }, [appointments, tasks, completedSessions, entries, projects, profiles, googleEvents]);
 
   // Calendar math helpers
   const year = currentDate.getFullYear();
@@ -151,16 +234,171 @@ export const CalendarModule: React.FC = () => {
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
   ];
 
+  const weekdayLong = [
+    'Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'
+  ];
+
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDayIndex = new Date(year, month, 1).getDay(); // 0 = Sunday, 1 = Monday...
 
   const handlePrevMonth = () => {
-    setCurrentDate(new Date(year, month - 1, 1));
+    if (view === 'day') {
+      const d = new Date(dayDate);
+      d.setDate(d.getDate() - 1);
+      setSelectedDateStr(localDateToStr(d));
+    } else if (view === 'week') {
+      const d = new Date(weekStart);
+      d.setDate(d.getDate() - 7);
+      setCurrentDate(d);
+    } else {
+      setCurrentDate(new Date(year, month - 1, 1));
+    }
   };
 
   const handleNextMonth = () => {
-    setCurrentDate(new Date(year, month + 1, 1));
+    if (view === 'day') {
+      const d = new Date(dayDate);
+      d.setDate(d.getDate() + 1);
+      setSelectedDateStr(localDateToStr(d));
+    } else if (view === 'week') {
+      const d = new Date(weekStart);
+      d.setDate(d.getDate() + 7);
+      setCurrentDate(d);
+    } else {
+      setCurrentDate(new Date(year, month + 1, 1));
+    }
   };
+
+  const goToday = () => {
+    const t = new Date();
+    setSelectedDateStr(localDateToStr(t));
+    if (view === 'day') {
+      setCurrentDate(t);
+    } else if (view === 'week') {
+      setCurrentDate(t);
+    } else {
+      setCurrentDate(new Date(t.getFullYear(), t.getMonth(), 1));
+    }
+  };
+
+  const todayStr = localDateToStr(new Date());
+  const isSelectedToday = selectedDateStr === todayStr;
+
+  const fmtTime = (iso: string) => {
+    const t = iso?.split('T')[1];
+    return t ? t.slice(0, 5) : '';
+  };
+
+  // Week view helpers: days of the week that contains currentDate (Monday-first)
+  const weekStart = useMemo(() => {
+    const d = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
+    const day = d.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    d.setDate(d.getDate() + diff);
+    return d;
+  }, [currentDate]);
+
+  const weekDays = useMemo(() => {
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(weekStart);
+      d.setDate(weekStart.getDate() + i);
+      return d;
+    });
+  }, [weekStart]);
+
+  // Day view: the date to show in "Día" mode
+  const dayDate = useMemo(() => {
+    const [y, m, d] = selectedDateStr.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }, [selectedDateStr]);
+
+  // Days rendered in the timeline: 1 for "Día", 7 for "Semana"
+  const timelineDays = view === 'day' ? [dayDate] : weekDays;
+  const timelineCols = timelineDays.length;
+
+  // Drag & drop: persist a date (or datetime) change to the right source
+  const moveEventToDate = async (ev: CalendarEvent, targetDateStr: string, targetTime?: string) => {
+    const iso = targetTime ? `${targetDateStr}T${targetTime}:00` : `${targetDateStr}T${(ev.start.split('T')[1] || '09:00:00')}`;
+    if (ev.source === 'google') {
+      // Mover en Google Calendar (usa el id real del evento)
+      try {
+        await Api.gcalUpdateEvent(ev.sourceId, {
+          start: ev.allDay ? `${targetDateStr}T12:00:00` : iso,
+          allDay: ev.allDay,
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        });
+        await loadGoogleEvents();
+      } catch (err) {
+        console.error('No se pudo mover evento en Google:', err);
+      }
+    } else if (ev.source === 'health') {
+      updateAppointment(ev.sourceId, { dateTime: iso });
+    } else if (ev.source === 'tasks') {
+      updateTask(ev.sourceId, { dueDate: targetDateStr });
+    } else if (ev.source === 'bujo') {
+      const e = entries.find(x => `cal_bujo_${x.id}` === ev.id);
+      if (e) {
+        // Si el evento tenía hora, actualizarla al mover por el timeline; si es
+        // all-day, solo la fecha.
+        const updates: Record<string, unknown> = { date: targetDateStr };
+        if (targetTime) updates.time = targetTime;
+        updateEntry(e.id, updates);
+      }
+    }
+    // pomodoro = immutable historical log; ignored
+    setDraggingEvent(null);
+  };
+
+  // Delete an event from its source (Google Calendar o el contexto local)
+  const deleteEvent = async (ev: CalendarEvent) => {
+    const label = ev.title.replace(/^[^\s]+\s/, '').slice(0, 40);
+    if (!window.confirm(`¿Eliminar "${label}"?`)) return;
+    try {
+      if (ev.source === 'google') {
+        await Api.gcalDeleteEvent(ev.sourceId);
+        await loadGoogleEvents();
+      } else if (ev.source === 'health') {
+        deleteAppointment(ev.sourceId);
+      } else if (ev.source === 'tasks') {
+        deleteTask(ev.sourceId);
+      } else if (ev.source === 'bujo') {
+        const e = entries.find(x => `cal_bujo_${x.id}` === ev.id);
+        if (e) deleteEntry(e.id);
+      }
+      // pomodoro = immutable historical log; ignored
+    } catch (err) {
+      console.error('No se pudo eliminar el evento:', err);
+    }
+  };
+
+  const handleDragStart = (e: React.DragEvent, ev: CalendarEvent) => {
+    setDraggingEvent(ev);
+    e.dataTransfer.setData('text/plain', `${ev.id}`);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDropOnDay = (e: React.DragEvent, targetDateStr: string) => {
+    e.preventDefault();
+    if (draggingEvent) moveEventToDate(draggingEvent, targetDateStr);
+    setDraggingEvent(null);
+  };
+
+  const handleDropOnTime = (e: React.DragEvent, targetDateStr: string) => {
+    e.preventDefault();
+    if (!draggingEvent) { setDraggingEvent(null); return; }
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    const hour = Math.max(0, Math.min(23, Math.floor(y / 44)));
+    const minuteH = (y - hour * 44) / 44;
+    const minutes = Math.floor(minuteH * 60);
+    const mm = Math.floor(minutes / 15) * 15;
+    const time = `${hour.toString().padStart(2, '0')}:${mm.toString().padStart(2, '0')}`;
+    moveEventToDate(draggingEvent, targetDateStr, time);
+    setDraggingEvent(null);
+  };
+
+  const HOUR_LABELS = Array.from({ length: 24 }, (_, h) => `${h.toString().padStart(2, '0')}:00`);
+  const HOUR_PX = 44;
 
   // Filter events for active selected day details
   const selectedDayEvents = useMemo(() => {
@@ -175,39 +413,116 @@ export const CalendarModule: React.FC = () => {
       case 'health':   return <Stethoscope size={14} style={{ color: '#EF4444' }} />;
       case 'tasks':    return <CheckSquare size={14} style={{ color: '#3B82F6' }} />;
       case 'pomodoro': return <Clock size={14} style={{ color: '#F97316' }} />;
+      case 'google':   return <span style={{ color: '#4285F4', fontSize: '11px', fontWeight: 800, lineHeight: 1 }}>G</span>;
       default:         return <BookOpen size={14} style={{ color: color || '#FFA726' }} />;
     }
   };
 
   return (
-    <div className="calendar-module-container" style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '20px' }}>
-      
-      {/* Left Column: Monthly View Grid */}
-      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '20px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600 }}>
-            {monthNames[month]} {year}
-          </h3>
-          <div style={{ display: 'flex', gap: '6px' }}>
-            <button className="outline-action-btn" onClick={handlePrevMonth} style={{ padding: '6px' }}>
+    <div className="calendar-module-container" style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
+
+      {/* Main Calendar Card (full width) */}
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', width: '100%' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+              {view === 'month' ? (
+                <>{monthNames[month]} <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{year}</span></>
+              ) : view === 'day' ? (
+                <>{weekdayLong[dayDate.getDay()]}, {dayDate.getDate()} de {monthNames[dayDate.getMonth()]} <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{dayDate.getFullYear()}</span></>
+              ) : (
+                <>{HOUR_LABELS.length > 0 && weekDays[0] && `${weekDays[0].getDate()} ${monthNames[weekDays[0].getMonth()].slice(0,3)}`} - {weekDays[6] && `${weekDays[6].getDate()} ${monthNames[weekDays[6].getMonth()].slice(0,3)} ${weekDays[6].getFullYear()}`}</>
+              )}
+            </h3>
+            {gcalConnected && (
+              <span style={{ fontSize: '9px', color: '#4285F4', background: 'rgba(66,133,244,0.12)', border: '1px solid rgba(66,133,244,0.3)', padding: '2px 8px', borderRadius: '8px', fontWeight: 700, letterSpacing: '0.04em' }}>
+                GOOGLE ✓
+              </span>
+            )}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <button className="outline-action-btn" onClick={goToday} style={{ padding: '4px 10px', fontSize: '12px', fontWeight: 600, borderRadius: '8px' }}>
+              Hoy
+            </button>
+            <button className="outline-action-btn" onClick={handlePrevMonth} style={{ padding: '6px', borderRadius: '8px' }}>
               <ChevronLeft size={16} />
             </button>
-            <button className="outline-action-btn" onClick={handleNextMonth} style={{ padding: '6px' }}>
+            <button className="outline-action-btn" onClick={handleNextMonth} style={{ padding: '6px', borderRadius: '8px' }}>
               <ChevronRight size={16} />
+            </button>
+            <div style={{ display: 'flex', gap: '2px', marginLeft: '6px', background: 'var(--bg-secondary)', borderRadius: '8px', padding: '2px', border: '1px solid var(--border-color)' }}>
+              <button
+                onClick={() => setView('day')}
+                title="Vista diaria"
+                style={{
+                  border: 'none', cursor: 'pointer', borderRadius: '6px', padding: '4px 8px',
+                  background: view === 'day' ? 'var(--accent-green)' : 'transparent',
+                  color: view === 'day' ? '#031b0f' : 'var(--text-secondary)',
+                  display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 700
+                }}
+              >
+                <CalendarDays size={13} /> Día
+              </button>
+              <button
+                onClick={() => setView('month')}
+                title="Vista mensual"
+                style={{
+                  border: 'none', cursor: 'pointer', borderRadius: '6px', padding: '4px 8px',
+                  background: view === 'month' ? 'var(--accent-green)' : 'transparent',
+                  color: view === 'month' ? '#031b0f' : 'var(--text-secondary)',
+                  display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 700
+                }}
+              >
+                <LayoutGrid size={13} /> Mes
+              </button>
+              <button
+                onClick={() => setView('week')}
+                title="Vista semanal"
+                style={{
+                  border: 'none', cursor: 'pointer', borderRadius: '6px', padding: '4px 8px',
+                  background: view === 'week' ? 'var(--accent-green)' : 'transparent',
+                  color: view === 'week' ? '#031b0f' : 'var(--text-secondary)',
+                  display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 700
+                }}
+              >
+                <List size={13} /> Semana
+              </button>
+            </div>
+            <button
+              onClick={() => setShowAddModal(true)}
+              style={{
+                background: '#FFA726',
+                border: 'none',
+                borderRadius: '8px',
+                color: '#111827',
+                padding: '6px 14px',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                marginLeft: '6px',
+                boxShadow: '0 0 10px rgba(255, 167, 38, 0.4)',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              <Plus size={14} /> Nuevo Evento
             </button>
           </div>
         </div>
 
+        {view === 'month' && (<>
         {/* Days of week header */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', textAlign: 'center', fontWeight: 600, fontSize: '0.75rem', color: 'var(--text-subtle)', marginBottom: '8px' }}>
-          <span>DOM</span><span>LUN</span><span>MAR</span><span>MIÉ</span><span>JUE</span><span>VIE</span><span>SÁB</span>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', textAlign: 'center', fontWeight: 600, fontSize: '0.68rem', textTransform: 'uppercase', color: 'var(--text-subtle)', letterSpacing: '0.06em', marginBottom: '6px' }}>
+          <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
         </div>
 
         {/* Grid Cells */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px' }}>
-          {/* Empty placeholders before first day */}
-          {[...Array(firstDayIndex)].map((_, i) => (
-            <div key={`empty-${i}`} style={{ height: '70px', background: 'transparent' }} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px' }}>
+          {/* Empty leading cells (si el mes empieza en domingo, 0; lunes offset para cuadrar con la cabecera) */}
+          {[...Array((firstDayIndex + 6) % 7)].map((_, i) => (
+            <div key={`empty-${i}`} style={{ minHeight: '92px', background: 'transparent' }} />
           ))}
 
           {/* Days of the month */}
@@ -215,46 +530,77 @@ export const CalendarModule: React.FC = () => {
             const dayNum = i + 1;
             const dayStr = `${year}-${(month + 1).toString().padStart(2, '0')}-${dayNum.toString().padStart(2, '0')}`;
             const isSelected = selectedDateStr === dayStr;
+            const isToday = todayStr === dayStr;
             const dayEvents = aggregatedEvents.filter(e => e.start.split('T')[0] === dayStr);
+            const visible = dayEvents.slice(0, 3);
 
             return (
               <div
                 key={`day-${dayNum}`}
                 onClick={() => setSelectedDateStr(dayStr)}
+                onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
+                onDrop={e => handleDropOnDay(e, dayStr)}
                 style={{
-                  height: '70px',
-                  background: isSelected ? 'rgba(16, 185, 129, 0.08)' : 'var(--bg-secondary)',
-                  border: `1px solid ${isSelected ? 'var(--accent-green)' : 'var(--border-color)'}`,
-                  borderRadius: '6px',
-                  padding: '6px',
+                  minHeight: '92px',
+                  background: isSelected ? 'rgba(22,240,181,0.07)' : (isToday ? 'rgba(22,240,181,0.045)' : 'var(--bg-secondary)'),
+                  border: isSelected ? '1px solid var(--accent-green)' : '1px solid var(--border-color)',
+                  borderTop: isToday ? '3px solid var(--accent-green)' : '1px solid var(--border-color)',
+                  borderRadius: '8px',
+                  padding: '5px',
                   cursor: 'pointer',
                   display: 'flex',
                   flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  transition: 'all 0.15s ease'
+                  gap: '3px',
+                  transition: 'all 0.12s ease',
+                  overflow: 'hidden'
                 }}
               >
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: isSelected ? 'var(--accent-green)' : 'var(--text-primary)' }}>
+                <span style={{
+                  fontSize: '0.72rem',
+                  fontWeight: isToday ? 800 : 600,
+                  color: isToday ? '#031b0f' : 'var(--text-secondary)',
+                  background: isToday ? 'var(--accent-green)' : 'transparent',
+                  width: '20px', height: '20px', borderRadius: '50%',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  alignSelf: 'flex-start'
+                }}>
                   {dayNum}
                 </span>
 
-                {/* Event indicators */}
-                <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap', overflow: 'hidden', height: '24px' }}>
-                  {dayEvents.slice(0, 3).map(e => (
+                {/* Event chips (Google style) */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', overflow: 'hidden' }}>
+                  {visible.map(e => (
                     <div
                       key={e.id}
+                      title={`${fmtTime(e.start) ? fmtTime(e.start) + ' · ' : ''}${e.title}`}
+                      draggable
+                      onDragStart={ev => handleDragStart(ev, e)}
+                      onDragEnd={() => setDraggingEvent(null)}
                       style={{
-                        width: '6px',
-                        height: '6px',
-                        borderRadius: '50%',
-                        backgroundColor: e.color
+                        display: 'flex', alignItems: 'center', gap: '4px',
+                        background: `${e.color}22`,
+                        borderLeft: `3px solid ${e.color}`,
+                        borderRadius: '3px',
+                        padding: '1px 4px',
+                        fontSize: '0.58rem',
+                        fontWeight: 600,
+                        color: 'var(--text-primary)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        lineHeight: 1.4,
+                        cursor: 'grab'
                       }}
-                      title={e.title}
-                    />
+                    >
+                      {!e.allDay && fmtTime(e.start) && (
+                        <span style={{ color: e.color, fontWeight: 800, flexShrink: 0 }}>{fmtTime(e.start)}</span>
+                      )}
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{e.title.replace(/^[^\s]+\s/, '')}</span>
+                    </div>
                   ))}
                   {dayEvents.length > 3 && (
-                    <span style={{ fontSize: '0.62rem', color: 'var(--text-subtle)', lineHeight: 1 }}>
-                      +{dayEvents.length - 3}
+                    <span style={{ fontSize: '0.58rem', color: 'var(--text-subtle)', paddingLeft: '2px', fontWeight: 600 }}>
+                      +{dayEvents.length - 3} más
                     </span>
                   )}
                 </div>
@@ -262,60 +608,194 @@ export const CalendarModule: React.FC = () => {
             );
           })}
         </div>
+        </>)}
+
+        {/* Day / Week View */}
+        {view !== 'month' && (<>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          {/* Day / week day headers */}
+          <div style={{ display: 'grid', gridTemplateColumns: `32px repeat(${timelineCols}, 1fr)`, gap: '2px' }}>
+            <span />
+            {timelineDays.map(d => {
+              const dStr = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`;
+              const isToday = todayStr === dStr;
+              const isSelected = selectedDateStr === dStr;
+              const weekdayNames = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+              return (
+                <div key={dStr} onClick={() => setSelectedDateStr(dStr)} style={{
+                  textAlign: 'center', cursor: 'pointer', padding: '2px 0',
+                  background: isSelected ? 'rgba(22,240,181,0.1)' : 'transparent',
+                  borderRadius: '6px'
+                }}>
+                  <div style={{ fontSize: '0.62rem', fontWeight: 600, color: 'var(--text-subtle)', textTransform: 'uppercase' }}>{weekdayNames[(d.getDay() + 6) % 7]}</div>
+                  <div style={{
+                    fontSize: '0.8rem', fontWeight: 700, width: '24px', height: '24px', margin: '0 auto',
+                    borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: isToday ? '#031b0f' : 'var(--text-primary)',
+                    background: isToday ? 'var(--accent-green)' : 'transparent'
+                  }}>{d.getDate()}</div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Time grid: 24 h × N days */}
+          <div style={{ display: 'grid', gridTemplateColumns: `32px repeat(${timelineCols}, 1fr)`, gap: '2px', fontSize: '0.6rem', color: 'var(--text-subtle)', overflowY: 'auto', maxHeight: '420px' }}>
+            {/* hour labels column */}
+            <div style={{ position: 'relative', height: `${HOUR_LABELS.length * HOUR_PX}px` }}>
+              {HOUR_LABELS.map((h, idx) => (
+                <div key={idx} style={{ position: 'absolute', top: `${idx * HOUR_PX - 6}px`, right: '4px' }}>{h}</div>
+              ))}
+            </div>
+
+            {/* day columns */}
+            {timelineDays.map(d => {
+              const dbStr = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`;
+              const dayEvents = aggregatedEvents
+                .filter(e => e.start.split('T')[0] === dbStr)
+                .filter(e => !e.allDay);
+              const dayAllDay = aggregatedEvents.filter(e => e.start.split('T')[0] === dbStr && e.allDay);
+
+              return (
+                <div
+                  key={dbStr}
+                  onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
+                  onDrop={e => handleDropOnTime(e, dbStr)}
+                  style={{ position: 'relative', height: `${HOUR_LABELS.length * HOUR_PX}px`, borderLeft: '1px solid var(--border-color)' }}
+                >
+                  {/* hour lines */}
+                  {HOUR_LABELS.map((_, idx) => (
+                    <div key={idx} style={{ position: 'absolute', left: 0, right: 0, top: `${idx * HOUR_PX - 0.5}px`, height: '1px', background: 'var(--border-color)', opacity: 0.5 }} />
+                  ))}
+
+                  {/* all-day events pinned at top */}
+                  {dayAllDay.map(e => (
+                    <div
+                      key={e.id}
+                      title={e.title}
+                      onClick={() => setSelectedDateStr(dbStr)}
+                      draggable
+                      onDragStart={ev => handleDragStart(ev, e)}
+                      onDragEnd={() => setDraggingEvent(null)}
+                      style={{
+                        position: 'absolute', left: 2, right: 2, top: 2, zIndex: 2,
+                        background: `${e.color}26`, borderLeft: `3px solid ${e.color}`, borderRadius: '3px',
+                        padding: '0 3px', fontSize: '0.55rem', fontWeight: 700, color: 'var(--text-primary)',
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'grab'
+                      }}
+                    >
+                      {e.title.replace(/^[^\s]+\s/, '').slice(0, 30)}
+                    </div>
+                  ))}
+
+                  {/* timed events positioned on the timeline */}
+                  {dayEvents.map(e => {
+                    const t = e.start.split('T')[1] || '00:00:00';
+                    const [hh, mm] = t.split(':').map(Number);
+                    const minutes = hh * 60 + mm;
+                    const top = (minutes / 60) * HOUR_PX;
+                    const duration = (e.source === 'health' ? 60 : 30);
+                    const height = Math.max(HOUR_PX / 2, (duration / 60) * HOUR_PX);
+                    return (
+                      <div
+                        key={e.id}
+                        onClick={() => setSelectedDateStr(dbStr)}
+                        draggable
+                        onDragStart={ev => handleDragStart(ev, e)}
+                        onDragEnd={() => setDraggingEvent(null)}
+                        style={{
+                          position: 'absolute', left: 2, right: 2, top, height, zIndex: 1,
+                          background: `${e.color}2b`, borderLeft: `3px solid ${e.color}`,
+                          borderRadius: '3px', padding: '1px 3px',
+                          fontSize: '0.55rem', fontWeight: 600, color: 'var(--text-primary)',
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'grab'
+                        }}
+                      >
+                        {fmtTime(e.start) && <span style={{ fontWeight: 800, color: e.color }}>{fmtTime(e.start)} </span>}
+                        {e.title.replace(/^[^\s]+\s/, '').slice(0, 28)}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        </>)}
       </div>
 
-      {/* Right Column: Daily Agenda list details */}
-      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', position: 'relative' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
-          <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>
-            Agenda ({selectedDateStr.split('-').reverse().join('/')})
+      {/* Daily Agenda below calendar (full width) */}
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', position: 'relative', width: '100%' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '10px', borderBottom: '1px solid var(--border-color)' }}>
+          <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+            Agenda del día
           </h3>
-          <button
-            onClick={() => setShowAddModal(true)}
-            style={{
-              background: '#FFA726',
-              border: 'none',
-              borderRadius: '6px',
-              color: '#111827',
-              padding: '6px 12px',
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              boxShadow: '0 0 10px rgba(255, 167, 38, 0.4)'
-            }}
-          >
-            <Plus size={14} /> Nuevo Evento
-          </button>
+          <span style={{ fontSize: '0.72rem', color: 'var(--text-subtle)', fontWeight: 600 }}>
+            {isSelectedToday ? 'Hoy · ' : ''}{selectedDateStr.split('-').reverse().join('/')}
+          </span>
         </div>
 
         {selectedDayEvents.length === 0 ? (
           <p style={{ fontSize: '0.82rem', color: 'var(--text-subtle)', textAlign: 'center', marginTop: '20px' }}>
-            No hay eventos programados para este día.
+            Sin eventos para este día.
           </p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', overflowY: 'auto', maxHeight: '400px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: '8px' }}>
             {selectedDayEvents.map(e => (
               <div
                 key={e.id}
+                draggable
+                onDragStart={ev => handleDragStart(ev, e)}
+                onDragEnd={() => setDraggingEvent(null)}
                 style={{
-                  padding: '10px',
+                  padding: '8px 10px',
                   background: 'var(--bg-secondary)',
                   border: '1px solid var(--border-color)',
-                  borderRadius: '6px',
+                  borderLeft: `3px solid ${e.color}`,
+                  borderRadius: '8px',
                   display: 'flex',
                   gap: '8px',
-                  alignItems: 'flex-start'
+                  alignItems: 'flex-start',
+                  cursor: 'grab',
+                  position: 'relative'
                 }}
               >
-                <div style={{ marginTop: '2px' }}>{getSourceIcon(e.source, e.color)}</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)' }}>{e.title}</span>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{e.description}</span>
+                <button
+                  onClick={ev => { ev.stopPropagation(); deleteEvent(e); }}
+                  title="Eliminar evento"
+                  style={{
+                    position: 'absolute', top: '6px', right: '6px', background: 'transparent',
+                    border: 'none', cursor: 'pointer', color: 'var(--text-subtle)', padding: '2px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    borderRadius: '4px'
+                  }}
+                  onMouseEnter={ev => (ev.currentTarget as HTMLElement).style.color = '#EF4444'}
+                  onMouseLeave={ev => (ev.currentTarget as HTMLElement).style.color = 'var(--text-subtle)'}
+                >
+                  <Trash2 size={13} />
+                </button>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', flexShrink: 0, width: '34px', paddingRight: '18px' }}>
+                  {getSourceIcon(e.source, e.color)}
+                  {!e.allDay && e.start && e.start.split('T')[1] && (
+                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                      {e.start.split('T')[1].slice(0, 5)}
+                    </span>
+                  )}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {e.title.replace(/^[^\s]+\s/, '')}
+                  </span>
+                  {e.description && (
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {e.description}
+                    </span>
+                  )}
+                  {e.meta?.location && (
+                    <span style={{ fontSize: '0.68rem', color: '#4285F4', fontWeight: 600 }}>📍 {e.meta.location}</span>
+                  )}
                   {e.meta?.profileName && (
-                    <span style={{ fontSize: '0.7rem', color: '#EF4444', fontWeight: 600 }}>Paciente: {e.meta.profileName}</span>
+                    <span style={{ fontSize: '0.68rem', color: '#EF4444', fontWeight: 600 }}>Paciente: {e.meta.profileName}</span>
                   )}
                 </div>
               </div>

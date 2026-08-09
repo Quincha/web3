@@ -3,6 +3,7 @@ import { useBujo } from '../../context/BujoContext';
 import type { BujoEntryType, BujoEntry } from '../../context/BujoContext';
 import { usePomodoro } from '../../context/PomodoroContext';
 import { useTasks } from '../../context/TasksContext';
+import { Api } from '../../services/ApiClient';
 import { DailyCheckInBlock } from './DailyCheckInBlock';
 import { TasksModule } from './TasksModule';
 import { HabitsModule } from './HabitsModule';
@@ -30,6 +31,15 @@ const BUJO_SYMBOLS: Record<BujoEntryType, { icon: React.ReactNode; label: string
 
 const DEFAULT_TAGS = ['Trabajo', 'Clientes', 'Personal', 'Sistema', 'Estudio'];
 
+// Fecha local "YYYY-MM-DD" sin depender de la zona horaria UTC
+// (evita que el "día de hoy" se desfase y marque el día siguiente).
+function localDateToStr(d: Date): string {
+  const y = d.getFullYear();
+  const m = (d.getMonth() + 1).toString().padStart(2, '0');
+  const day = d.getDate().toString().padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 export const BujoModule: React.FC = () => {
   const { entries, addEntry, deleteEntry, toggleEntryType, toggleFavorite, updateEntry } = useBujo();
   const { completedSessions } = usePomodoro();
@@ -37,12 +47,13 @@ export const BujoModule: React.FC = () => {
 
   const [inputValue, setInputValue] = useState('');
   const [selectedType, setSelectedType] = useState<BujoEntryType>('task');
+  const [eventTime, setEventTime] = useState('12:00');
   const [searchQuery] = useState('');
   
   const [activeTab, setActiveTab] = useState<'diario' | 'calendario' | 'tareas' | 'habitos' | 'bienestar' | 'proyectos' | 'compras' | 'metas'>('diario');
   
   // Date and Calendar states
-  const todayISO = new Date().toISOString().split('T')[0];
+  const todayISO = localDateToStr(new Date());
   const [selectedDateStr, setSelectedDateStr] = useState(todayISO);
   const [currentYear, setCurrentYear] = useState(new Date(selectedDateStr).getFullYear());
   const [currentMonth, setCurrentMonth] = useState(new Date(selectedDateStr).getMonth()); // 0-11
@@ -155,7 +166,7 @@ export const BujoModule: React.FC = () => {
   };
 
   // Quick action: Submit entry
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
     
@@ -182,9 +193,41 @@ export const BujoModule: React.FC = () => {
       }, true);
     }
 
-    addEntry(content, selectedType, [], undefined, undefined, selectedDateStr, linkedTaskId);
+    // Eventos: intentar crearlo en Google Calendar siempre (si no hay conexión,
+    // la API responde 503 y se crea solo localmente). Así no depende del flag
+    // `gcalConnected` que puede quedar desactualizado al montar.
+    let gcalEventId: string | undefined = undefined;
+    if (selectedType === 'event') {
+      try {
+        const created = await Api.gcalCreateEvent({
+          summary: content,
+          start: `${selectedDateStr}T${eventTime}:00`,
+          allDay: false,
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        });
+        gcalEventId = created.id;
+      } catch (err) {
+        console.error('No se pudo crear evento en Google:', err);
+      }
+    }
+
+    addEntry(content, selectedType, [], undefined, undefined, selectedDateStr, linkedTaskId, gcalEventId, selectedType === 'event' ? eventTime : undefined);
+    setEventTime('12:00');
     setInputValue('');
     if (inputRef.current) inputRef.current.focus();
+  };
+
+  // Eliminar entrada: si era un Evento sincronizado, borrar también de Google Calendar
+  const handleDeleteEntry = async (entry: BujoEntry) => {
+    if (entry.gcalEventId) {
+      try {
+        await Api.gcalDeleteEvent(entry.gcalEventId);
+      } catch (err) {
+        console.error('No se pudo borrar el evento de Google:', err);
+      }
+    }
+    deleteEntry(entry.id);
+    setMenuOpenId(null);
   };
 
   // Calendar Helpers
@@ -408,6 +451,31 @@ export const BujoModule: React.FC = () => {
                 );
               })}
             </div>
+
+            {selectedType === 'event' && (
+              <div className="bujo-event-time-row" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                <label style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.5)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Clock size={13} /> Hora del evento
+                </label>
+                <input
+                  type="time"
+                  value={eventTime}
+                  onChange={e => setEventTime(e.target.value)}
+                  style={{
+                    background: 'rgba(0,0,0,0.25)',
+                    border: '1px solid rgba(255,167,38,0.35)',
+                    borderRadius: '6px',
+                    padding: '4px 8px',
+                    color: '#fff',
+                    fontSize: '0.78rem',
+                    outline: 'none'
+                  }}
+                />
+                <span style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.35)' }}>
+                  Se crea con esa hora en Google Calendar
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Timeline Card */}
@@ -470,8 +538,7 @@ export const BujoModule: React.FC = () => {
                               className="bujo-menu-item"
                               style={{ color: '#EF4444' }}
                               onClick={() => {
-                                deleteEntry(entry.id);
-                                setMenuOpenId(null);
+                                handleDeleteEntry(entry);
                               }}
                             >
                               <Trash2 size={12} />

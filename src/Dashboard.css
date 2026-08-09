@@ -1831,8 +1831,7 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 .bujo-header-row {
@@ -3409,6 +3408,11 @@
   align-items: center;
   padding: 14px 18px;
   gap: 14px;
+}
+
+.task-delete-btn:hover {
+  color: #EF4444 !important;
+  background: rgba(239, 68, 68, 0.12) !important;
 }
 
 .task-completed {

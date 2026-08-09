@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { ArrowLeft, User, Shield, LayoutDashboard, Settings, Moon, Sun, Sparkles, Check } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, User, Shield, LayoutDashboard, Settings, Moon, Sun, Sparkles, Check, CalendarDays, Link2, Unlink, Loader2 } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
 import { useTheme } from '../../context/ThemeContext';
 import type { Theme } from '../../context/ThemeContext';
 import { PermissionService } from '../../services/PermissionService';
 import type { Role } from '../../services/PermissionService';
 import { WidgetRegistry } from '../../widgets/WidgetRegistry';
-import { getProfile } from '../../services/ApiClient';
+import { getProfile, Api } from '../../services/ApiClient';
 
 export const AjustesModule: React.FC = () => {
   const { userConfig, updateConfig, isSyncing } = useUser();
@@ -16,6 +16,39 @@ export const AjustesModule: React.FC = () => {
   const [nameDraft, setNameDraft] = useState(userConfig.userName);
   const [saved, setSaved] = useState(false);
   const [pendingRole, setPendingRole] = useState<Role | null>(null);
+
+  // Google Calendar
+  const [gcalStatus, setGcalStatus] = useState<{ configured: boolean; connected: boolean; calName: string | null } | null>(null);
+  const [gcalLoading, setGcalLoading] = useState(true);
+  const [gcalConnectError, setGcalConnectError] = useState('');
+
+  const loadGcal = async () => {
+    setGcalLoading(true);
+    try {
+      const s = await Api.gcalStatus();
+      setGcalStatus(s);
+    } catch {
+      setGcalStatus(null);
+    } finally {
+      setGcalLoading(false);
+    }
+  };
+
+  useEffect(() => { loadGcal(); }, []);
+
+  const connectGcal = async () => {
+    try {
+      const { url } = await Api.gcalAuthUrl();
+      window.location.href = url;
+    } catch {
+      setGcalConnectError('No se pudo iniciar la conexión. Intenta de nuevo.');
+    }
+  };
+
+  const disconnectGcal = async () => {
+    await Api.gcalDisconnect();
+    await loadGcal();
+  };
 
   const roles = PermissionService.getRoles();
 
@@ -126,6 +159,54 @@ export const AjustesModule: React.FC = () => {
             </button>
           ))}
         </div>
+      </section>
+
+      {/* Google Calendar */}
+      <section style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '14px', padding: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+          <CalendarDays size={16} color="#4285F4" />
+          <h3 style={{ margin: 0, fontSize: '0.95rem', color: 'white' }}>Google Calendar</h3>
+        </div>
+        <p style={{ margin: '0 0 16px', fontSize: '12px', color: 'var(--text-subtle)' }}>
+          Conecta tu Google Calendar para ver tus reuniones en el calendario del sistema. La conexión se maneja desde aquí.
+        </p>
+
+        {gcalLoading ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-subtle)', fontSize: '13px' }}>
+            <Loader2 size={16} className="sync-spinner" /> Consultando estado...
+          </div>
+        ) : gcalStatus ? (
+          gcalStatus.connected ? (
+            <div style={{ background: 'rgba(66,133,244,0.08)', border: '1px solid rgba(66,133,244,0.25)', borderRadius: '10px', padding: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#34D399', boxShadow: '0 0 8px #34D399' }} />
+                <div>
+                  <div style={{ fontSize: '13px', color: 'white', fontWeight: 600 }}>Conectado</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-subtle)' }}>{gcalStatus.calName || 'Calendario primario'}</div>
+                </div>
+              </div>
+              <button onClick={disconnectGcal} style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.35)', color: '#F87171', borderRadius: '10px', padding: '8px 14px', cursor: 'pointer', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Unlink size={14} /> Desconectar
+              </button>
+            </div>
+          ) : gcalStatus.configured ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'flex-start' }}>
+              <button onClick={connectGcal} style={{ background: '#4285F4', color: 'white', borderRadius: '10px', padding: '10px 16px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Link2 size={14} /> Conectar Google Calendar
+              </button>
+              {gcalConnectError && (
+                <span style={{ fontSize: '12px', color: '#F87171' }}>{gcalConnectError}</span>
+              )}
+            </div>
+          ) : (
+            <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '10px', padding: '14px', fontSize: '13px', color: '#FBBF24', lineHeight: 1.6 }}>
+              El servidor aún no tiene configuradas las credenciales de Google (GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET).
+              Pídele al administrador que las configure para habilitar la conexión.
+            </div>
+          )
+        ) : (
+          <div style={{ fontSize: '13px', color: 'var(--text-subtle)' }}>No se pudo consultar el estado del servidor.</div>
+        )}
       </section>
 
       {/* Rol — solo visible para super-admins */}

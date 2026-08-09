@@ -1,6 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { WidgetRegistry } from './WidgetRegistry';
 import { Clock, Plus, Calendar as CalendarIcon, ArrowRight, Video} from 'lucide-react';
+import { useHealth } from '../context/HealthContext';
+import { useTasks } from '../context/TasksContext';
+import { usePomodoro } from '../context/PomodoroContext';
+import { useBujo } from '../context/BujoContext';
+import { Api } from '../services/ApiClient';
 
 export interface CalendarEvent {
   id: string;
@@ -10,9 +15,147 @@ export interface CalendarEvent {
   duration: string;
   color: string;
   location?: string;
+  datetime?: string;
+  date?: string;
+}
+
+function localDateStr(d: Date): string {
+  return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`;
 }
 
 export const CalendarWidget: React.FC = () => {
+  // Real calendar data
+  const { appointments, profiles } = useHealth();
+  const { tasks, projects } = useTasks();
+  const { completedSessions } = usePomodoro();
+  const { entries, addEntry } = useBujo();
+
+  // Google Calendar events (external)
+  const [googleEvents, setGoogleEvents] = useState<any[]>([]);
+  const loadGoogleEvents = useCallback(async () => {
+    try {
+      const res = await Api.gcalEvents(60);
+      setGoogleEvents(Array.isArray(res.items) ? res.items : []);
+    } catch {
+      setGoogleEvents([]);
+    }
+  }, []);
+  useEffect(() => { loadGoogleEvents(); }, [loadGoogleEvents]);
+
+  // From today until +6 days (week window)
+  const scopeDays = useMemo(() => {
+    const days: { date: string; weekday: string }[] = [];
+    const names = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() + i);
+      days.push({ date: localDateStr(d), weekday: names[d.getDay()] });
+    }
+    return days;
+  }, []);
+
+  const events = useMemo<CalendarEvent[]>(() => {
+    const list: CalendarEvent[] = [];
+
+    // Appointments (health) within the 7-day scope
+    appointments.forEach(appt => {
+      const d = appt.dateTime.split('T')[0];
+      if (!scopeDays.some(s => s.date === d)) return;
+      const prof = profiles.find(p => p.id === appt.profile_id);
+      list.push({
+        id: `cal_health_${appt.id}`,
+        time: (appt.dateTime.split('T')[1] || '').slice(0, 5),
+        title: `🩺 ${appt.specialty}${prof ? ` (${prof.name})` : ''}`,
+        tag: 'REUNIÓN',
+        duration: `Dr. ${appt.professional}`,
+        color: '#EF4444',
+        location: appt.clinic,
+        date: d,
+      });
+    });
+
+    // Tasks due within scope
+    tasks.forEach(task => {
+      if (!task.dueDate || task.status === 'cancelled') return;
+      if (!scopeDays.some(s => s.date === task.dueDate)) return;
+      const proj = projects.find(p => p.id === task.project_id);
+      list.push({
+        id: `w_task_${task.id}`,
+        time: '',
+        title: `📋 ${task.title}`,
+        tag: 'PROYECTO',
+        duration: task.priority ? `Prioridad ${task.priority}` : 'Todo el día',
+        color: proj?.color || '#3B82F6',
+        date: task.dueDate,
+      });
+    });
+
+    // Bujo events within scope
+    entries.forEach(entry => {
+      if (!scopeDays.some(s => s.date === entry.date)) return;
+      if (entry.type !== 'event' && entry.type !== 'task' && entry.type !== 'scheduled') return;
+      if (entry.gcalEventId) return;
+      list.push({
+        id: `w_bujo_${entry.id}`,
+        time: entry.time || '',
+        title: `📅 ${entry.content}`,
+        tag: entry.type === 'event' ? 'REUNIÓN' : 'PROYECTO',
+        duration: entry.duration || 'Calendario',
+        color: '#FFA726',
+        date: entry.date,
+      });
+    });
+
+    // Completed pomodoros within scope
+    completedSessions.forEach(session => {
+      const d = session.timestamp.split('T')[0];
+      if (!scopeDays.some(s => s.date === d)) return;
+      list.push({
+        id: `w_pomo_${session.id}`,
+        time: (session.timestamp.split('T')[1] || '').slice(0, 5),
+        title: `🍅 ${session.task}`,
+        tag: 'CÓDIGO',
+        duration: session.project || 'Pomodoro',
+        color: '#F97316',
+        date: d,
+      });
+    });
+
+    // Google Calendar events within scope
+    googleEvents.forEach((ev: any) => {
+      const start = ev.start?.dateTime || ev.start?.date || '';
+      if (!start) return;
+      const d = start.split('T')[0];
+      if (!scopeDays.some(s => s.date === d)) return;
+      const hasTime = Boolean(ev.start?.dateTime);
+      list.push({
+        id: `w_google_${ev.id}`,
+        time: hasTime ? (start.split('T')[1] || '').slice(0, 5) : '',
+        title: `🗓 ${ev.summary || 'Evento Google'}`,
+        tag: 'REUNIÓN',
+        duration: hasTime ? 'Google Calendar' : 'Todo el día',
+        color: '#4285F4',
+        location: ev.location,
+        date: d,
+      });
+    });
+
+    // Sort by date then by time (all-day/no-time entries go first for the day)
+    return list.sort((a, b) => {
+      const ad = a.date || '';
+      const bd = b.date || '';
+      if (ad !== bd) return ad < bd ? -1 : 1;
+      const at = a.time === '' ? '00:00' : a.time;
+      const bt = b.time === '' ? '00:00' : b.time;
+      if (at !== bt) return at < bt ? -1 : 1;
+      return a.time === '' ? -1 : b.time === '' ? 1 : 0;
+    });
+  }, [appointments, profiles, tasks, projects, completedSessions, entries, googleEvents, scopeDays]);
+
+  const todayLocal = localDateStr(new Date());
+
+  const isToday = (d?: string) => d === todayLocal;
+
   // Format current date in Spanish
   const todayDate = new Date();
   const dateStr = todayDate.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
@@ -33,15 +176,13 @@ export const CalendarWidget: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-
   const [isAddingEvent, setIsAddingEvent] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newTime, setNewTime] = useState('11:00');
   const [newTag, setNewTag] = useState('REUNIÓN');
   const [newDuration] = useState('30 min');
 
-  const handleAddEvent = (e: React.FormEvent) => {
+  const handleAddEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
 
@@ -53,20 +194,51 @@ export const CalendarWidget: React.FC = () => {
       'PERSONAL': '#EC4899'
     };
 
+    const dateTime = `${todayLocal}T${newTime}:00`;
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    // Crear en Google Calendar (si la conexión falla, solo queda local)
+    let gcalEventId: string | undefined;
+    try {
+      const created = await Api.gcalCreateEvent({
+        summary: newTitle.trim(),
+        start: dateTime,
+        allDay: false,
+        timeZone: tz,
+      });
+      gcalEventId = created.id;
+    } catch (err) {
+      console.error('No se pudo crear evento en Google:', err);
+    }
+
     const newEv: CalendarEvent = {
       id: Date.now().toString(),
       time: newTime,
       title: newTitle.trim(),
       tag: newTag,
       duration: newDuration,
-      color: colors[newTag] || '#00E5D9'
+      color: colors[newTag] || '#00E5D9',
+      datetime: dateTime,
+      date: todayLocal,
     };
-
-    const updated = [...events, newEv].sort((a, b) => a.time.localeCompare(b.time));
-    setEvents(updated);
+    // Persiste en el BuJo para que también aparezca en el calendario del sistema
+    addEntry(newTitle.trim(), 'event', [newTag, 'Calendario'], newDuration, undefined, todayLocal, undefined, gcalEventId, newTime);
+    if (gcalEventId) {
+      // El evento ya vive en Google; recargar para mostrarlo sin duplicados
+      loadGoogleEvents();
+    } else {
+      // Sin conexión a Google: se muestra local
+      setLocalEvents(prev => [...prev, newEv]);
+    }
     setNewTitle('');
     setIsAddingEvent(false);
   };
+
+  const [localEvents, setLocalEvents] = useState<CalendarEvent[]>([]);
+  const allEvents = useMemo(() => {
+    const merged = [...events, ...localEvents];
+    return merged.sort((a, b) => a.time.localeCompare(b.time));
+  }, [events, localEvents]);
 
   return (
     <div className="dashboard-card" style={{
@@ -241,11 +413,21 @@ export const CalendarWidget: React.FC = () => {
           </div>
         )}
 
-        {events.map((event) => (
-          <div key={event.id} style={{ display: 'flex', gap: '12px', minHeight: '52px', alignItems: 'stretch' }}>
+        {allEvents.map((event, idx) => {
+          const dayInfo = scopeDays.find(s => s.date === event.date);
+          const showDayHeader = idx === 0 || allEvents[idx - 1].date !== event.date;
+          const dayLabel = isToday(event.date) ? 'Hoy' : `${dayInfo?.weekday || ''} ${Number((event.date || '').split('-')[2]) || ''}`;
+          return (
+          <React.Fragment key={event.id}>
+            {showDayHeader && (
+              <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: showDayHeader && idx !== 0 ? '8px' : '0' }}>
+                {dayLabel}
+              </div>
+            )}
+          <div style={{ display: 'flex', gap: '12px', minHeight: '52px', alignItems: 'stretch' }}>
             {/* Time Column */}
             <div style={{ width: '42px', color: 'rgba(255,255,255,0.4)', fontSize: '12px', fontWeight: 700, paddingTop: '10px', flexShrink: 0 }}>
-              {event.time}
+              {event.time || 'Todo el día'}
             </div>
             
             {/* Event Card Pill */}
@@ -293,8 +475,10 @@ export const CalendarWidget: React.FC = () => {
                 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Clock size={12} color={event.color} />
-                    <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', fontWeight: 500 }}>{event.duration}</span>
+                    {event.time ? <Clock size={12} color={event.color} /> : null}
+                    <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', fontWeight: 500 }}>
+                      {event.time ? `${event.time}` : event.duration}
+                    </span>
                   </div>
 
                   {event.location && (
@@ -307,7 +491,9 @@ export const CalendarWidget: React.FC = () => {
               </div>
             </div>
           </div>
-        ))}
+          </React.Fragment>
+          );
+        })}
       </div>
 
       {/* Footer link */}

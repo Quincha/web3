@@ -13,7 +13,9 @@ export interface BujoEntry {
   isFavorite?: boolean;
   duration?: string;
   assignee?: string;
+  time?: string;             // Hora del evento (HH:MM), opcional
   linkedTaskId?: string;
+  gcalEventId?: string; // Evento de Google Calendar sincronizado
 }
 
 export interface BujoCheckIn {
@@ -30,7 +32,7 @@ export interface BujoCheckIn {
 
 interface BujoContextType {
   entries: BujoEntry[];
-  addEntry: (content: string, type: BujoEntryType, tags?: string[], duration?: string, assignee?: string, date?: string, linkedTaskId?: string) => void;
+  addEntry: (content: string, type: BujoEntryType, tags?: string[], duration?: string, assignee?: string, date?: string, linkedTaskId?: string, gcalEventId?: string, time?: string) => void;
   addOrUpdateReflectionEntry: (date: string, reflectionText: string) => void;
   updateEntry: (id: string, updates: Partial<BujoEntry>) => void;
   deleteEntry: (id: string) => void;
@@ -129,7 +131,7 @@ export const BujoProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const addEntry = useCallback((content: string, type: BujoEntryType, tags: string[] = [], initialDuration?: string, initialAssignee?: string, date?: string, linkedTaskId?: string) => {
+  const addEntry = useCallback((content: string, type: BujoEntryType, tags: string[] = [], initialDuration?: string, initialAssignee?: string, date?: string, linkedTaskId?: string, gcalEventId?: string, time?: string) => {
     let parsedContent = content.trim();
     if (parsedContent.length > 0) {
       parsedContent = parsedContent.charAt(0).toUpperCase() + parsedContent.slice(1);
@@ -173,7 +175,9 @@ export const BujoProvider: React.FC<{ children: React.ReactNode }> = ({ children
       tags: Array.from(tagsSet),
       duration,
       assignee,
+      time,
       linkedTaskId,
+      gcalEventId,
     };
     setEntries(prev => {
       const updated = [newEntry, ...prev];
