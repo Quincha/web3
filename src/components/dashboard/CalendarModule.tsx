@@ -5,6 +5,7 @@ import { useTasks } from '../../context/TasksContext';
 import { usePomodoro } from '../../context/PomodoroContext';
 import { useBujo } from '../../context/BujoContext';
 import { Api } from '../../services/ApiClient';
+import { subscribeGcalPush } from '../../services/gcalPush';
 
 type EventSource = 'health' | 'tasks' | 'pomodoro' | 'bujo' | 'google';
 
@@ -68,6 +69,17 @@ export const CalendarModule: React.FC = () => {
   }, []);
 
   useEffect(() => { loadGoogleEvents(); }, [loadGoogleEvents]);
+  // Recarga cuando Google Calendar avisa por webhook (cambio desde otro
+  // dispositivo) o al recuperar el foco de la ventana.
+  useEffect(() => {
+    const unsubscribe = subscribeGcalPush(loadGoogleEvents);
+    const onFocus = () => loadGoogleEvents();
+    window.addEventListener('focus', onFocus);
+    return () => {
+      unsubscribe();
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [loadGoogleEvents]);
 
   const handleAddEvent = (e: React.FormEvent) => {
     e.preventDefault();

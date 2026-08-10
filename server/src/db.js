@@ -5,10 +5,13 @@ import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-export const DATA_DIR = path.join(__dirname, '..', 'data');
-export const DB_PATH = path.join(DATA_DIR, 'quincha.db');
+export const DATA_DIR = process.env.QUINCHA_DATA_DIR || path.join(__dirname, '..', 'data');
+export const DB_PATH = process.env.QUINCHA_DB_PATH || path.join(DATA_DIR, 'quincha.db');
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
+
+// Sesiones: vida util configurable (por defecto 30 dias, se renueva con uso).
+export const SESSION_TTL_MS = Number(process.env.SESSION_TTL_HOURS || 30 * 24) * 3600 * 1000;
 
 export const db = new DatabaseSync(DB_PATH);
 
@@ -28,7 +31,8 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS sessions (
     token      TEXT PRIMARY KEY,
     user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    expires_at INTEGER
   );
 
   CREATE TABLE IF NOT EXISTS configs (
@@ -45,6 +49,18 @@ db.exec(`
     PRIMARY KEY (user_id, key)
   );
 `);
+
+// Migración para bases ya existentes: agrega expires_at a sessions y les da
+// una vida útil completa a las sesiones abiertas hoy (no las invalida).
+const sessionCols = db.prepare('PRAGMA table_info(sessions)').all();
+if (!sessionCols.some((c) => c.name === 'expires_at')) {
+  db.exec('ALTER TABLE sessions ADD COLUMN expires_at INTEGER');
+  db.prepare('UPDATE sessions SET expires_at = ? WHERE expires_at IS NULL').run(Date.now() + SESSION_TTL_MS);
+}
+
+export function pruneExpiredSessions() {
+  db.prepare('DELETE FROM sessions WHERE expires_at IS NOT NULL AND expires_at < ?').run(Date.now());
+}
 
 export function countUsers() {
   const row = db.prepare('SELECT COUNT(*) AS n FROM users').get();
@@ -83,7 +99,7 @@ function hashPassword(password) {
 
 export function createSession(userId) {
   const token = crypto.randomBytes(32).toString('hex');
-  db.prepare('INSERT INTO sessions (token, user_id) VALUES (?, ?)').run(token, userId);
+  db.prepare('INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)').run(token, userId, Date.now() + SESSION_TTL_MS);
   return token;
 }
 
@@ -91,9 +107,18 @@ export function destroySession(token) {
   db.prepare('DELETE FROM sessions WHERE token = ?').run(token);
 }
 
+// Valida el token (incluida la expiración) y, si la sesión ya consumió más de
+// la mitad de su vida útil, la renueva deslizante para no expirar en uso.
 export function getUserByToken(token) {
-  const row = db.prepare('SELECT user_id FROM sessions WHERE token = ?').get(token);
+  const row = db.prepare('SELECT * FROM sessions WHERE token = ?').get(token);
   if (!row) return null;
+  if (row.expires_at && row.expires_at < Date.now()) {
+    db.prepare('DELETE FROM sessions WHERE token = ?').run(token);
+    return null;
+  }
+  if (row.expires_at && row.expires_at - Date.now() < SESSION_TTL_MS / 2) {
+    db.prepare('UPDATE sessions SET expires_at = ? WHERE token = ?').run(Date.now() + SESSION_TTL_MS, token);
+  }
   return db.prepare('SELECT * FROM users WHERE id = ?').get(row.user_id);
 }
 
@@ -117,5 +142,15 @@ export function putStore(userId, key, data, updatedAt) {
 }
 
 export function getAllStore(userId) {
-  return db.prepare('SELECT key, data FROM store WHERE user_id = ?').all(userId);
+  return db.prepare('SELECT key, data, updated_at FROM store WHERE user_id = ?').all(userId);
+}
+
+// Sync incremental: solo las claves modificadas después de `sinceTs`.
+export function getStoreSince(userId, sinceTs) {
+  return db.prepare('SELECT key, data, updated_at FROM store WHERE user_id = ? AND updated_at >= ?').all(userId, sinceTs);
+}
+
+// Elimina claves viejas que empiecen con `prefix` (p. ej. la cola de sync).
+export function pruneStore(userId, prefix, beforeTs) {
+  db.prepare('DELETE FROM store WHERE user_id = ? AND key LIKE ? AND updated_at < ?').run(userId, `${prefix}%`, beforeTs);
 }

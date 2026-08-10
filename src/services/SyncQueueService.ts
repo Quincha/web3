@@ -22,7 +22,9 @@ export type SyncEventType =  | 'CREATE_TASK'        | 'UPDATE_TASK'      | 'COMP
   | 'ADD_BUJO_ENTRY'     | 'UPDATE_BUJO_ENTRY'| 'DELETE_BUJO_ENTRY'
   | 'MARK_DOSE'          | 'ADD_APPOINTMENT'  | 'UPDATE_APPOINTMENT'
   | 'CREATE_PROJECT'     | 'UPDATE_PROJECT'   | 'CREATE_CLIENT'
-  | 'UPDATE_CLIENT'      | 'SET_HABIT_STATE';
+  | 'UPDATE_CLIENT'      | 'SET_HABIT_STATE'
+  | 'CREATE_MOVIMIENTO'  | 'UPDATE_MOVIMIENTO'| 'DELETE_MOVIMIENTO'
+  | 'CREATE_DEUDA'       | 'UPDATE_DEUDA'     | 'DELETE_DEUDA';
 
 export interface SyncEvent {
   id: string;

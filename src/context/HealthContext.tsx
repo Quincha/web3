@@ -51,6 +51,7 @@ export interface Appointment {
   dateTime: string;        // ISO
   notes: string;
   status: 'scheduled' | 'completed' | 'cancelled';
+  gcalEventId?: string;    // Evento sincronizado en Google Calendar
 }
 
 export interface ClinicalRecord {
@@ -138,6 +139,22 @@ function genId(prefix: string): string {
 
 const TODAY = new Date().toISOString().split('T')[0];
 
+// Perfil por defecto: asegura que el módulo siempre tenga un perfil activo.
+// Sin datos ficticios (los demás se crean con el botón "Añadir").
+function defaultProfileIfEmpty(profiles: HealthProfile[]): HealthProfile[] {
+  if (profiles.length > 0) return profiles;
+  return [{
+    id: 'profile_me',
+    name: 'Mi Ficha',
+    relation: 'principal',
+    avatar: '🧑',
+    bloodType: 'No registrado',
+    allergies: [],
+    chronicConditions: [],
+    emergencyContacts: [],
+  }];
+}
+
 // ─────────────────────────────────────────────
 // CONTEXT + PROVIDER
 // ─────────────────────────────────────────────
@@ -146,8 +163,9 @@ const HealthContext = createContext<HealthContextType | undefined>(undefined);
 
 export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const cached = loadFromCache();
+  const initialProfiles = defaultProfileIfEmpty(cached.profiles);
 
-  const [profiles, setProfiles] = useState<HealthProfile[]>(cached.profiles);
+  const [profiles, setProfiles] = useState<HealthProfile[]>(initialProfiles);
   const [medications, setMedications] = useState<Medication[]>(cached.medications);
   const [appointments, setAppointments] = useState<Appointment[]>(cached.appointments);
   const [clinicalRecords, setClinicalRecords] = useState<ClinicalRecord[]>(cached.clinicalRecords);

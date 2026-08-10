@@ -33,7 +33,7 @@ const TasksWidget: React.FC = () => {
     addTask({
       title: newTaskTitle.trim(),
       description: '',
-      project_id: projects[0]?.id || null,
+      project_id: null,
       category: 'general',
       priority: newTaskPriority,
       status: 'pending',

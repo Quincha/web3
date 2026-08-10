@@ -12,15 +12,18 @@ export const HabitsModule: React.FC = () => {
   const [desc, setDesc] = useState('');
   const [icon, setIcon] = useState('🔥');
   const [frequency, setFrequency] = useState<HabitFrequency>('daily');
+  const [customDays, setCustomDays] = useState<number[]>([1]);
   const [color, setColor] = useState('#10B981');
   const [type, setType] = useState<HabitType>('positive');
 
   const EMOJIS = ['🔥', '💧', '🏃', '📚', '🧘', '🚭', '🍎', '💻', '⏰', '✍️', '🍷', '🥗', '😴', '💊'];
   const COLORS = ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444', '#EC4899'];
+  const DAY_LABELS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+  const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
   const openNew = () => {
     setEditingId(null);
-    setName(''); setDesc(''); setIcon('🔥'); setColor('#10B981'); setType('positive'); setFrequency('daily');
+    setName(''); setDesc(''); setIcon('🔥'); setColor('#10B981'); setType('positive'); setFrequency('daily'); setCustomDays([1]);
     setShowAddForm(true);
   };
 
@@ -28,7 +31,15 @@ export const HabitsModule: React.FC = () => {
     setEditingId(habit.id);
     setName(habit.name); setDesc(habit.description); setIcon(habit.icon);
     setColor(habit.color); setType(habit.type || 'positive'); setFrequency(habit.frequency);
+    setCustomDays(habit.targetDays.length > 0 ? habit.targetDays : [1]);
     setShowAddForm(true);
+  };
+
+  const toggleCustomDay = (d: number) => {
+    setCustomDays(prev => {
+      const next = prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d];
+      return next.length > 0 ? next : [d];
+    });
   };
 
   const closeForm = () => {
@@ -49,6 +60,7 @@ export const HabitsModule: React.FC = () => {
     let targetDays = [0, 1, 2, 3, 4, 5, 6];
     if (frequency === 'weekdays') targetDays = [1, 2, 3, 4, 5];
     if (frequency === 'weekends') targetDays = [0, 6];
+    if (frequency === 'custom') targetDays = [...customDays].sort();
 
     if (editingId) {
       updateHabit(editingId, {
@@ -212,10 +224,49 @@ export const HabitsModule: React.FC = () => {
                   onChange={e => setFrequency(e.target.value as HabitFrequency)}
                 >
                   <option value="daily">Diario</option>
-                  <option value="weekday">Días de semana</option>
+                  <option value="weekdays">Días de semana</option>
                   <option value="weekends">Fines de semana</option>
+                  <option value="custom">Días específicos</option>
                 </select>
               </div>
+
+              {frequency === 'custom' && (
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-subtle)', marginBottom: '6px' }}>
+                    ¿Qué días de la semana? (semanal)
+                  </label>
+                  <div style={{ display: 'flex', gap: '5px' }}>
+                    {WEEK_ORDER.map(d => (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => toggleCustomDay(d)}
+                        title={DAY_LABELS[d]}
+                        style={{
+                          width: '34px',
+                          height: '34px',
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: customDays.includes(d) ? 'rgba(16,185,129,0.18)' : 'transparent',
+                          border: `1px solid ${customDays.includes(d) ? '#10B981' : 'var(--border-color)'}`,
+                          color: customDays.includes(d) ? '#34D399' : 'var(--text-subtle)',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        {DAY_LABELS[d]}
+                      </button>
+                    ))}
+                  </div>
+                  <p style={{ margin: '6px 0 0', fontSize: '0.7rem', color: 'var(--text-subtle)' }}>
+                    Ej: "Desear buena semana" solo los lunes.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="task-form-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
@@ -268,6 +319,25 @@ export const HabitsModule: React.FC = () => {
                       </span>
                     </h4>
                     <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: 'var(--text-subtle)' }}>{habit.description}</p>
+                    {habit.frequency === 'custom' && (
+                      <div style={{ marginTop: '4px', fontSize: '0.68rem', color: 'var(--text-subtle)', display: 'flex', gap: '3px', flexWrap: 'wrap' }}>
+                        {WEEK_ORDER.map(d => (
+                          <span
+                            key={d}
+                            style={{
+                              width: '22px', height: '22px', fontSize: '0.6rem', fontWeight: 700,
+                              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                              borderRadius: '6px',
+                              background: habit.targetDays.includes(d) ? 'rgba(16,185,129,0.18)' : 'rgba(255,255,255,0.04)',
+                              border: `1px solid ${habit.targetDays.includes(d) ? 'rgba(16,185,129,0.5)' : 'transparent'}`,
+                              color: habit.targetDays.includes(d) ? '#34D399' : 'var(--text-subtle)'
+                            }}
+                          >
+                            {DAY_LABELS[d]}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <button

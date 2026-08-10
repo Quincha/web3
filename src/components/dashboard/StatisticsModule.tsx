@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Activity, FolderOpen, CheckCircle2, Circle,
-  BarChart3, Clock, Flame, Wallet, HeartPulse, AlarmClock, Lightbulb, AlertTriangle, Info, CheckCircle
+  BarChart3, Clock, Flame, Wallet, HeartPulse, AlarmClock, Lightbulb, AlertTriangle, Info, CheckCircle,
+  TrendingUp
 } from 'lucide-react';
 import { useTasks } from '../../context/TasksContext';
 import { usePomodoro } from '../../context/PomodoroContext';
@@ -25,6 +26,11 @@ function localDay(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 const DAY_LABELS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+const inputStyle: React.CSSProperties = {
+  background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid rgba(255,255,255,0.15)',
+  borderRadius: '8px', padding: '7px 10px', fontSize: '0.8rem', colorScheme: 'dark'
+};
 
 const INSIGHT_META: Record<ProactiveInsight['type'], { color: string; bg: string; Icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }> }> = {
   danger: { color: '#F43F5E', bg: 'rgba(244,63,94,0.12)', Icon: AlertTriangle },
@@ -78,6 +84,97 @@ export const StatisticsModule: React.FC = () => {
   const negative = habitsWithStats.filter(h => h.type === 'negative');
   const avgRate = positive.length > 0 ? Math.round(positive.reduce((s, h) => s + h.completionRate30d, 0) / positive.length) : 0;
   const bestStreak = Math.max(0, ...habitsWithStats.map(h => h.streak));
+
+  // ── ANÁLISIS DE HÁBITOS ──
+  // Positivos: "días cumplidos"; un día sin registro cuenta como "no hecho" (objetivo menos cumplidos).
+  // Evitación: "días de consumo/violación".
+  const [trendMode, setTrendMode] = useState<'week' | 'month' | 'year' | 'range'>('month');
+  const today = new Date();
+  const defaultFrom = new Date(today);
+  defaultFrom.setDate(today.getDate() - 30);
+  const [rangeFrom, setRangeFrom] = useState(() => localDay(defaultFrom));
+  const [rangeTo, setRangeTo] = useState(() => localDay(today));
+
+  const trendYear = today.getFullYear();
+  const trendMonth = today.getMonth();
+
+  const startOfWeek = (d: Date): Date => {
+    const x = new Date(d);
+    const day = (x.getDay() + 6) % 7;
+    x.setDate(x.getDate() - day);
+    x.setHours(0, 0, 0, 0);
+    return x;
+  };
+
+  const habitCountIn = (h: typeof habitsWithStats[number], startISO: string, endISO: string) => {
+    const startT = new Date(startISO + 'T12:00:00').getTime();
+    const endT = new Date(endISO + 'T12:00:00').getTime();
+    return h.completions.filter(c => {
+      if (h.type === 'negative' && c.isViolation !== true) return false;
+      const cT = new Date(String(c.date) + 'T12:00:00').getTime();
+      return cT >= startT && cT <= endT;
+    }).length;
+  };
+
+  const habitEligibleIn = (h: typeof habitsWithStats[number], startISO: string, endISO: string) => {
+    const endT = new Date(endISO + 'T12:00:00').getTime();
+    const startT = Math.max(new Date(startISO + 'T12:00:00').getTime(), new Date(h.startDate + 'T12:00:00').getTime());
+    let n = 0;
+    for (let t = startT; t <= endT; t += 86400000) {
+      if (h.targetDays.includes(new Date(t).getDay())) n++;
+    }
+    return n;
+  };
+
+  // Todos los hábitos activos (incluso con 0 registros, para decidir si usarlos o eliminarlos).
+  const analysisHabits = habitsWithStats.filter(h => !h.archived);
+
+  const monthCols = (() => {
+    const cols: { label: string; startISO: string; endISO: string; isCurrent: boolean }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(trendYear, trendMonth - i, 1);
+      const y = d.getFullYear();
+      const m = d.getMonth();
+      cols.push({
+        label: d.toLocaleDateString('es-CL', { month: 'short' }),
+        startISO: localDay(new Date(y, m, 1)),
+        endISO: localDay(new Date(y, m + 1, 0)),
+        isCurrent: i === 0,
+      });
+    }
+    return cols;
+  })();
+
+  const weekCols = (() => {
+    const cols: { label: string; startISO: string; endISO: string; isCurrent: boolean }[] = [];
+    for (let i = 7; i >= 0; i--) {
+      const anchor = new Date();
+      anchor.setDate(anchor.getDate() - i * 7);
+      const s = startOfWeek(anchor);
+      const e = new Date(s);
+      e.setDate(e.getDate() + 6);
+      cols.push({
+        label: `${s.getDate()}/${s.getMonth() + 1}`,
+        startISO: localDay(s),
+        endISO: localDay(e),
+        isCurrent: i === 0,
+      });
+    }
+    return cols;
+  })();
+
+  const yearCols = (() => {
+    const cols: { label: string; startISO: string; endISO: string; isCurrent: boolean }[] = [];
+    for (let m = 0; m < 12; m++) {
+      cols.push({
+        label: new Date(trendYear, m, 1).toLocaleDateString('es-CL', { month: 'short' }),
+        startISO: localDay(new Date(trendYear, m, 1)),
+        endISO: localDay(new Date(trendYear, m + 1, 0)),
+        isCurrent: m === trendMonth,
+      });
+    }
+    return cols;
+  })();
 
   // ── HEALTH ──
   const upcomingAppts = getUpcomingAppointments(7).length;
@@ -246,6 +343,146 @@ export const StatisticsModule: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Análisis de hábitos (cuadrículas y rango de fechas) */}
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '14px', padding: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px', flexWrap: 'wrap', gap: '10px' }}>
+          <h3 style={{ margin: 0, fontSize: '0.95rem', color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <TrendingUp size={16} color="#16F0B5" /> Análisis de hábitos
+          </h3>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            {(['week', 'month', 'year', 'range'] as const).map(m => (
+              <button
+                key={m}
+                onClick={() => setTrendMode(m)}
+                style={{
+                  background: trendMode === m ? 'rgba(22,240,181,0.16)' : 'rgba(255,255,255,0.05)',
+                  color: trendMode === m ? '#16F0B5' : 'var(--text-secondary)',
+                  border: `1px solid ${trendMode === m ? 'rgba(22,240,181,0.5)' : 'rgba(255,255,255,0.1)'}`,
+                  borderRadius: '8px', padding: '5px 12px', fontSize: '0.74rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s'
+                }}
+              >
+                {m === 'week' ? 'Semana' : m === 'month' ? 'Mes' : m === 'year' ? 'Año' : 'Rango'}
+              </button>
+            ))}
+          </div>
+        </div>
+        <p style={{ margin: '0 0 16px', fontSize: '0.75rem', color: 'var(--text-subtle)' }}>
+          Positivos: "hecho/objetivo" (objetivo − hecho = días sin marcar) · Evitación: días de consumo
+        </p>
+
+        {analysisHabits.length === 0 ? (
+          <div style={{ fontSize: '0.82rem', color: 'var(--text-subtle)', padding: '12px 0' }}>
+            Marca algunos hábitos en tu check-in diario para ver tu análisis.
+          </div>
+        ) : trendMode === 'range' ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px', flexWrap: 'wrap' }}>
+              <label style={{ fontSize: '0.72rem', color: 'var(--text-subtle)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                Desde
+                <input
+                  type="date"
+                  value={rangeFrom}
+                  onChange={e => setRangeFrom(e.target.value)}
+                  style={inputStyle}
+                />
+              </label>
+              <label style={{ fontSize: '0.72rem', color: 'var(--text-subtle)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                Hasta
+                <input
+                  type="date"
+                  value={rangeTo}
+                  onChange={e => setRangeTo(e.target.value)}
+                  style={inputStyle}
+                />
+              </label>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' }}>
+              {analysisHabits.map(h => {
+                const done = habitCountIn(h, rangeFrom, rangeTo);
+                if (h.type === 'negative') {
+                  return (
+                    <div key={h.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '12px 14px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                        <span style={{ fontSize: '16px' }}>{h.icon}</span>
+                        <span style={{ fontSize: '0.82rem', color: 'white', fontWeight: 600 }}>{h.name}</span>
+                        <span style={{ fontSize: '0.62rem', color: '#F43F5E', background: 'rgba(244,63,94,0.12)', padding: '2px 6px', borderRadius: '6px', textTransform: 'uppercase' }}>evitación</span>
+                      </div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                        <b style={{ color: '#F43F5E', fontSize: '1.1rem' }}>{done}</b> día{done === 1 ? '' : 's'} de consumo
+                      </div>
+                    </div>
+                  );
+                }
+                const eligible = habitEligibleIn(h, rangeFrom, rangeTo);
+                const notDone = Math.max(0, eligible - done);
+                const noHistory = eligible === 0 && done === 0;
+                return (
+                  <div key={h.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '12px 14px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '16px' }}>{h.icon}</span>
+                      <span style={{ fontSize: '0.82rem', color: 'white', fontWeight: 600 }}>{h.name}</span>
+                      <span style={{ fontSize: '0.62rem', color: '#10B981', background: 'rgba(16,185,129,0.12)', padding: '2px 6px', borderRadius: '6px', textTransform: 'uppercase' }}>hábito</span>
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                      <b style={{ color: '#10B981', fontSize: '1.1rem' }}>{done}</b> de {eligible} objetivo{done === 1 ? '' : 's'}
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: notDone > 0 ? '#F59E0B' : 'var(--text-subtle)', marginTop: '2px' }}>
+                      {noHistory
+                        ? 'sin días objetivo en el período'
+                        : notDone > 0
+                          ? `${notDone} sin marcar (no) · tasa ${Math.round((done / eligible) * 100)}%`
+                          : 'cumplido al 100%'}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          (() => {
+            const cols = trendMode === 'week' ? weekCols : trendMode === 'year' ? yearCols : monthCols;
+            return (
+              <div style={{ overflowX: 'auto', paddingBottom: '4px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: `130px repeat(${cols.length}, minmax(56px, 1fr))`, gap: '8px 10px', alignItems: 'center', minWidth: 130 + cols.length * 66 }}>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Hábito</div>
+                  {cols.map((c, i) => (
+                    <div
+                      key={i}
+                      style={{ fontSize: '0.68rem', textAlign: 'center', color: c.isCurrent ? '#16F0B5' : 'var(--text-subtle)', fontWeight: c.isCurrent ? 700 : 400, textTransform: 'uppercase', letterSpacing: '0.03em' }}
+                    >
+                      {c.label}
+                    </div>
+                  ))}
+
+                  {analysisHabits.map(h => (
+                    <React.Fragment key={h.id}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                        <span style={{ fontSize: '16px' }}>{h.icon}</span>
+                        <span style={{ fontSize: '0.78rem', color: 'white', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={h.name}>{h.name}</span>
+                      </div>
+                      {cols.map((c, i) => {
+                        const done = habitCountIn(h, c.startISO, c.endISO);
+                        if (h.type === 'negative') {
+                          return <div key={i} style={{ textAlign: 'center', fontSize: '0.8rem', color: done > 0 ? '#F43F5E' : 'var(--text-subtle)', fontWeight: done > 0 ? 700 : 400 }}>{done > 0 ? done : '·'}</div>;
+                        }
+                        const eligible = habitEligibleIn(h, c.startISO, c.endISO);
+                        const notDone = Math.max(0, eligible - done);
+                        const rate = eligible > 0 ? Math.round((done / eligible) * 100) : done > 0 ? 100 : 0;
+                        return (
+                          <div key={i} style={{ textAlign: 'center', fontSize: '0.8rem', fontWeight: 700, color: done === 0 ? 'var(--text-subtle)' : rate >= 70 ? '#10B981' : rate >= 40 ? '#F59E0B' : '#F43F5E' }} title={`${done} de ${eligible} objetivos · ${notDone} no hechos`}>
+                            {eligible > 0 ? `${done}/${eligible}` : done > 0 ? done : '·'}
+                          </div>
+                        );
+                      })}
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+            );
+          })()
+        )}
       </div>
 
       {/* Insights */}

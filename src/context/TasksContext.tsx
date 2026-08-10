@@ -6,7 +6,7 @@ import { SyncQueueService } from '../services/SyncQueueService';
 // ─────────────────────────────────────────────
 
 export type Priority = 'urgent' | 'high' | 'medium' | 'low';
-export type TaskStatus = 'pending' | 'in-progress' | 'completed' | 'cancelled';
+export type TaskStatus = 'pending' | 'in-progress' | 'completed' | 'cancelled' | 'migrated';
 
 export interface Subtask {
   id: string;
@@ -45,6 +45,7 @@ export interface Task {
   createdAt: string;
   completedAt: string | null;
   syncId: string | null;
+  migrationCount?: number;
 }
 
 // ─────────────────────────────────────────────
@@ -61,6 +62,7 @@ interface TasksContextType {
   deleteTask: (id: string) => void;
   completeTask: (id: string) => void;
   setTaskInProgress: (id: string) => void;
+  migrateTask: (id: string, baseDate?: string) => string | null; // devuelve la nueva fecha (YYYY-MM-DD) o null
 
   // Subtasks
   addSubtask: (taskId: string, content: string) => void;
@@ -92,6 +94,18 @@ function isoNow(): string { return new Date().toISOString(); }
 function today(): string { return new Date().toISOString().split('T')[0]; }
 function genId(prefix: string): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+}
+
+// Siguiente día hábil (lunes a viernes) desde una fecha ISO base, saltando findes.
+function nextBusinessDay(fromISO: string | null): string {
+  const base = fromISO ? new Date(fromISO + 'T12:00:00') : new Date();
+  const d = new Date(base);
+  d.setDate(d.getDate() + 1);
+  while (d.getDay() === 0 || d.getDay() === 6) {
+    d.setDate(d.getDate() + 1);
+  }
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
 // ─────────────────────────────────────────────
@@ -202,6 +216,28 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const setTaskInProgress = useCallback((id: string) => {
     updateTask(id, { status: 'in-progress' });
   }, [updateTask]);
+
+  const migrateTask = useCallback((id: string, baseDate?: string): string | null => {
+    const nowISO = today();
+    const target = tasks.find(t => t.id === id);
+    const newDate = baseDate || (target ? target.dueDate || nowISO : nowISO);
+    const next = nextBusinessDay(newDate);
+    setTasks(prev => {
+      const updated = prev.map(t => {
+        if (t.id !== id) return t;
+        return {
+          ...t,
+          status: 'migrated' as TaskStatus,
+          dueDate: next,
+          migrationCount: (t.migrationCount || 0) + 1,
+        };
+      });
+      saveTasks(updated);
+      SyncQueueService.enqueue('UPDATE_TASK', { id, status: 'migrated', dueDate: next, migrationCount: (target?.migrationCount || 0) + 1 });
+      return updated;
+    });
+    return next;
+  }, [tasks]);
 
   // ── SUBTASKS ──────────────────────────────────────
 
@@ -340,7 +376,7 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   return (
     <TasksContext.Provider value={{
       tasks, projects,
-      addTask, updateTask, deleteTask, completeTask, setTaskInProgress,
+      addTask, updateTask, deleteTask, completeTask, setTaskInProgress, migrateTask,
       addSubtask, toggleSubtask, deleteSubtask,
       addProject, updateProject, archiveProject,
       incrementTaskPomodoro, addTimeSpent,

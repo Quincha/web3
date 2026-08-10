@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  CheckCircle2, Plus, Circle, Trash2,
+  CheckCircle2, Plus, Circle, Trash2, ArrowRight,
   Briefcase, Tag, Calendar, User, DollarSign,
   ChevronDown
 } from 'lucide-react';
@@ -138,7 +138,8 @@ const TaskRow: React.FC<{
   onAddSubtask: (taskId: string, content: string) => void;
   onClick: (taskId: string) => void;
   onDelete: (id: string) => void;
-}> = ({ task, project, onComplete, onUpdate, onClick, onDelete }) => {
+  onMigrate: (id: string) => void;
+}> = ({ task, project, onComplete, onUpdate, onClick, onDelete, onMigrate }) => {
   const { getClientById, getActiveClients } = useClients();
   const clients = getActiveClients();
   
@@ -179,7 +180,13 @@ const TaskRow: React.FC<{
           </div>
 
           <div className="task-row-meta">
-            
+
+            {!!task.migrationCount && task.migrationCount > 0 && (
+              <span className="task-meta-pill" style={{ color: '#00E676', background: 'rgba(0,230,118,0.1)' }} title="Veces que fue migrada">
+                <ArrowRight size={12} /> {task.migrationCount} migrada{task.migrationCount > 1 ? 's' : ''}
+              </span>
+            )}
+
             {task.subtasks.length > 0 && (
                <span className="task-meta-pill" style={{ color: 'rgba(255,255,255,0.6)', background: 'rgba(255,255,255,0.05)' }}>
                  {task.subtasks.filter(s => s.completed).length}/{task.subtasks.length} subtareas
@@ -270,23 +277,41 @@ const TaskRow: React.FC<{
             )}
           </div>
         </div>
-      </div>
 
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete(task.id);
-        }}
-        title="Borrar tarea"
-        className="task-delete-btn"
-        style={{
-          background: 'transparent', border: 'none', cursor: 'pointer',
-          color: 'rgba(255,255,255,0.3)', padding: '8px', marginLeft: 'auto',
-          flexShrink: 0, borderRadius: '8px', transition: 'all 0.15s ease'
-        }}
-      >
-        <Trash2 size={16} />
-      </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flexShrink: 0 }}>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onMigrate(task.id);
+            }}
+            title="Migrar tarea: mueve al siguiente día hábil y cuenta la migración"
+            className="task-delete-btn"
+            style={{
+              background: 'transparent', border: 'none', cursor: 'pointer',
+              color: 'rgba(0,230,118,0.5)', padding: '8px', borderRadius: '8px',
+              transition: 'all 0.15s ease', display: 'flex', alignItems: 'center'
+            }}
+          >
+            <ArrowRight size={16} />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(task.id);
+            }}
+            title="Borrar tarea"
+            className="task-delete-btn"
+            style={{
+              background: 'transparent', border: 'none', cursor: 'pointer',
+              color: 'rgba(255,255,255,0.3)', padding: '8px', borderRadius: '8px',
+              transition: 'all 0.15s ease', display: 'flex', alignItems: 'center'
+            }}
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
@@ -305,7 +330,7 @@ const FILTER_OPTIONS: { id: TaskFilter; label: string }[] = [
 ];
 
 export const TasksModule: React.FC = () => {
-  const { tasks, getActiveProjects, updateTask, getTodayTasks, deleteTask } = useTasks();
+  const { tasks, getActiveProjects, updateTask, getTodayTasks, deleteTask, migrateTask } = useTasks();
   const { removeDeudaByTaskId } = useFinance();
   const [filter, setFilter] = useState<TaskFilter>('today');
   const [searchQuery, setSearchQuery] = useState('');
@@ -397,6 +422,7 @@ export const TasksModule: React.FC = () => {
                     if (selectedTaskId === id) setSelectedTaskId(null);
                   }
                 }}
+                onMigrate={(id) => migrateTask(id)}
               />
             );
         })}

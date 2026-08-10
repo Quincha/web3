@@ -1,15 +1,18 @@
 import React, { useState, useMemo } from 'react';
-import { Briefcase, Plus, FolderGit2, Calendar, Target} from 'lucide-react';
+import { Briefcase, Plus, FolderGit2, Calendar, Target, ChevronRight } from 'lucide-react';
 import { useTasks } from '../../context/TasksContext';
 import { ProjectSidebar } from './ProjectSidebar';
+import { ProjectDetailView } from './ProjectDetailView';
 import { tokens } from '../../theme/tokens';
 import { Card } from '../ui/Card';
+import type { Project } from '../../context/TasksContext';
 
 export const ProjectsModule: React.FC = () => {
   const { getActiveProjects, tasks } = useTasks();
   const projects = getActiveProjects();
   
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   // Calcula el progreso de cada proyecto (tareas completadas vs total de tareas del proyecto)
   const projectStats = useMemo(() => {
@@ -95,6 +98,7 @@ export const ProjectsModule: React.FC = () => {
                 transition: 'all 0.3s ease',
                 cursor: 'pointer'
               }}
+              onClick={() => setSelectedProject(proj)}
               onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'}
               onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
               >
@@ -107,9 +111,12 @@ export const ProjectsModule: React.FC = () => {
                       padding: '4px 8px',
                       borderRadius: '8px',
                       fontSize: '12px',
-                      fontWeight: 600
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
                     }}>
-                      Activo
+                      Activo <ChevronRight size={12} />
                     </div>
                   </div>
                   <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '14px', margin: 0, lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
@@ -151,6 +158,9 @@ export const ProjectsModule: React.FC = () => {
       </div>
 
       <ProjectSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      {selectedProject && (
+        <ProjectDetailView project={selectedProject} onClose={() => setSelectedProject(null)} />
+      )}
     </div>
   );
 };

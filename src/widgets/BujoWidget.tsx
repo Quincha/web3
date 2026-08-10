@@ -36,9 +36,9 @@ const getBujoColor = (type: BujoEntryType) => {
 const getLocalISO = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 export const BujoWidget: React.FC = () => {
-  const { getTodayEntries, addEntry, toggleEntryType, getDailyMood, setDailyMood } = useBujo();
+  const { getTodayEntries, addEntry, toggleEntryType, updateEntry, getDailyMood, setDailyMood } = useBujo();
   const { habitsWithStats, toggleHabitToday } = useHabits();
-  const { addTask, completeTask } = useTasks();
+  const { addTask, completeTask, migrateTask } = useTasks();
   
   const entries = getTodayEntries().slice(0, 5);
   const [inputValue, setInputValue] = useState('');
@@ -226,7 +226,7 @@ export const BujoWidget: React.FC = () => {
                         }} style={dropdownBtnStyle}>
                           <X size={12} strokeWidth={3} color={tokens.colors.accent.green} /> Completar
                         </button>
-                        <button onClick={() => { toggleEntryType(entry.id, 'migrated'); setMenuOpenId(null); }} style={dropdownBtnStyle}>
+                        <button onClick={() => { toggleEntryType(entry.id, 'migrated'); setMenuOpenId(null); if (entry.linkedTaskId) { const nd = migrateTask(entry.linkedTaskId, entry.date); if (nd) updateEntry(entry.id, { date: nd }); } }} style={dropdownBtnStyle}>
                           <ArrowRight size={12} color={tokens.colors.accent.cyan} /> Migrar ({">"})
                         </button>
                         <button onClick={() => { toggleEntryType(entry.id, 'scheduled'); setMenuOpenId(null); }} style={dropdownBtnStyle}>
@@ -281,6 +281,10 @@ export const BujoWidget: React.FC = () => {
 
       {/* 5. FOOTER BUTTON */}
       <button 
+        onClick={() => {
+          window.dispatchEvent(new CustomEvent('change-view', { detail: 'bujo' }));
+          window.dispatchEvent(new CustomEvent('navigate-to-module', { detail: 'bujo' }));
+        }}
         style={{
           marginTop: '12px', width: '100%', background: 'rgba(255,255,255,0.05)',
           border: '1px solid rgba(255,255,255,0.1)', padding: '10px',

@@ -1,14 +1,5 @@
-import { DatabaseSync } from 'node:sqlite';
-import path from 'node:path';
-import fs from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { db } from './db.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DB_PATH = path.join(__dirname, '..', 'data', 'quincha.db');
-const dataDir = path.dirname(DB_PATH);
-fs.mkdirSync(dataDir, { recursive: true });
-
-const db = new DatabaseSync(DB_PATH);
 db.exec(`
   CREATE TABLE IF NOT EXISTS gcal_tokens (
     user_id       INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
@@ -19,6 +10,16 @@ db.exec(`
     cal_id        TEXT NOT NULL DEFAULT 'primary',
     cal_name      TEXT NOT NULL DEFAULT 'Quincha',
     connected_at  TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+`);
+
+// Canal de push (Google Calendar Watch) por usuario
+db.exec(`
+  CREATE TABLE IF NOT EXISTS gcal_watch (
+    user_id     INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    channel_id  TEXT NOT NULL,
+    resource_id TEXT NOT NULL DEFAULT '',
+    expires_at  INTEGER NOT NULL
   );
 `);
 
@@ -135,34 +136,54 @@ export async function gcalValidToken(userId) {
 
 // ── Google Calendar API helpers ────────────────────────────────────────────
 
-// Listar eventos entre dos fechas
+// Listar todos los eventos entre dos fechas (paginando hasta 20 paginas de 500
+// para no quedarse corto con historiales largos, p. ej. en gcalClearEvents).
 export async function gcalListEvents(userId, timeMin, timeMax) {
-  const token = await gcalValidToken(userId);
-  const tok = gcalGetTokens(userId);
-  const qs = new URLSearchParams({
-    timeMin: timeMin instanceof Date ? timeMin.toISOString() : timeMin,
-    timeMax: timeMax instanceof Date ? timeMax.toISOString() : timeMax,
-    singleEvents: 'true',
-    orderBy: 'startTime',
-    maxResults: '500',
-  });
+  let token;
   try {
-    const res = await fetch(
-      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(tok.cal_id)}/events?${qs}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    if (!res.ok) {
-      const text = await res.text();
-      const err = new Error(`Google events ${res.status}: ${text.slice(0, 200)}`);
-      if (res.status === 401) err.status = 401;
-      throw err;
-    }
-    const body = await res.json();
-    return body.items || [];
-  } catch (err) {
-    if (err.status === 401) throw err;
+    token = await gcalValidToken(userId);
+  } catch {
     return [];
   }
+  const tok = gcalGetTokens(userId);
+  if (!tok) return [];
+  const base = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(tok.cal_id)}/events`;
+  const all = [];
+  let pageToken = null;
+  const MAX_PAGES = 20;
+
+  for (let i = 0; i < MAX_PAGES; i++) {
+    const qs = new URLSearchParams({
+      timeMin: timeMin instanceof Date ? timeMin.toISOString() : timeMin,
+      timeMax: timeMax instanceof Date ? timeMax.toISOString() : timeMax,
+      singleEvents: 'true',
+      orderBy: 'startTime',
+      maxResults: '500',
+    });
+    if (pageToken) qs.set('pageToken', pageToken);
+    try {
+      const res = await fetch(`${base}?${qs}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        const err = new Error(`Google events ${res.status}: ${text.slice(0, 200)}`);
+        if (res.status === 401) {
+          err.status = 401;
+          throw err;
+        }
+        break; // error transitorio: devolver lo acumulado
+      }
+      const body = await res.json();
+      all.push(...(body.items || []));
+      pageToken = body.nextPageToken || null;
+      if (!pageToken) break;
+    } catch (err) {
+      if (err.status === 401) throw err;
+      break;
+    }
+  }
+  return all;
 }
 
 // Crear un evento
@@ -233,4 +254,106 @@ export async function gcalClearEvents(userId, summaryPrefix = '') {
     if (res.ok) deleted++;
   }
   return deleted;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Push notifications (Google Calendar Watch)
+// ─────────────────────────────────────────────────────────────
+
+// La dirección del webhook se deriva de GOOGLE_REDIRECT_URI (mismo host/base):
+// https://.../api/gcal/callback -> https://.../api/gcal/webhook
+export function gcalWebhookUrl() {
+  return `${GOOGLE_REDIRECT_URI.replace(/\/callback\/?$/, '')}/api/gcal/webhook`;
+}
+
+export function gcalGetWatch(userId) {
+  return db.prepare('SELECT * FROM gcal_watch WHERE user_id = ?').get(userId) || null;
+}
+
+// Valida que un aviso webhook provenga de un canal real de este usuario.
+// Google envía X-Goog-Channel-ID y X-Goog-Resource-ID; los comparamos contra el
+// canal guardado para ignorar notificaciones falsas/duplicadas.
+export function gcalChannelValid(userId, channelId, resourceId) {
+  const cur = gcalGetWatch(userId);
+  if (!cur || !cur.channel_id) return false;
+  if (channelId && cur.channel_id !== channelId) return false;
+  if (resourceId && cur.resource_id && resourceId !== cur.resource_id) return false;
+  return true;
+}
+
+export function gcalSaveWatch(userId, { channel_id, resource_id, expires_at }) {
+  db.prepare(`
+    INSERT INTO gcal_watch (user_id, channel_id, resource_id, expires_at)
+    VALUES (?, ?, ?, ?)
+    ON CONFLICT(user_id) DO UPDATE SET
+      channel_id = excluded.channel_id,
+      resource_id = excluded.resource_id,
+      expires_at = excluded.expires_at
+  `).run(userId, channel_id, resource_id || '', expires_at);
+}
+
+export function gcalClearWatch(userId) {
+  db.prepare('DELETE FROM gcal_watch WHERE user_id = ?').run(userId);
+}
+
+// Detiene el canal de push actual del usuario (si existe).
+export async function gcalStopWatch(userId) {
+  const tok = gcalGetTokens(userId);
+  const cur = gcalGetWatch(userId);
+  if (!tok || !cur || !cur.channel_id) return;
+  try {
+    const token = await gcalValidToken(userId);
+    await fetch('https://www.googleapis.com/calendar/v3/channels/stop', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: cur.channel_id, resourceId: cur.resource_id || '' }),
+    });
+  } catch { /* el canal puede haber expirado en Google */ }
+  gcalClearWatch(userId);
+}
+
+// Crea (o renueva) el canal que avisa al servidor cuando el calendario cambia.
+// Reutiliza el canal actual mientras le quede más de 5 minutos de vida; si no,
+// detiene el anterior y crea uno nuevo.
+const WATCH_TTL_MS = 6 * 60 * 60 * 1000; // ttlSeconds 21600 (6h)
+
+export async function gcalEnsureWatch(userId) {
+  const tok = gcalGetTokens(userId);
+  if (!tok?.refresh_token) throw new Error('Google Calendar no conectado');
+
+  const cur = gcalGetWatch(userId);
+  if (cur && cur.channel_id && cur.expires_at > Date.now() + 5 * 60 * 1000) {
+    return cur.channel_id;
+  }
+  if (cur) {
+    try { await gcalStopWatch(userId); } catch { /* sigue */ }
+  }
+
+  const token = await gcalValidToken(userId);
+  const channelId = `chqn_${userId}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+  const res = await fetch(
+    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(tok.cal_id)}/events/watch`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: channelId,
+        type: 'web_hook',
+        address: gcalWebhookUrl(),
+        token: `gcal_${userId}`,
+        params: { ttlSeconds: '21600' },
+      }),
+    }
+  );
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Google watch ${res.status}: ${text.slice(0, 200)}`);
+  }
+  const body = await res.json();
+  gcalSaveWatch(userId, {
+    channel_id: body.id || channelId,
+    resource_id: body.resourceId || '',
+    expires_at: Number(body.expiration) || (Date.now() + WATCH_TTL_MS),
+  });
+  return body.id || channelId;
 }

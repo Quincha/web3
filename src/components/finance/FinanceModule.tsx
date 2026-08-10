@@ -3,6 +3,8 @@ import './Finance.css';
 import { FinanceDashboard } from './dashboard/FinanceDashboard';
 import { CashFlowView } from './cashflow/CashFlowView';
 import { DebtsBalanceView } from './debts/DebtsBalanceView';
+import { AccountsView } from './accounts/AccountsView';
+import { BudgetsView } from './budgets/BudgetsView';
 import { ReceiptsGallery } from './receipts/ReceiptsGallery';
 
 type FinanceTab = 'dashboard' | 'flujo' | 'deudas' | 'cuentas' | 'presupuestos' | 'comprobantes';
@@ -27,6 +29,10 @@ export const FinanceModule: React.FC = () => {
         return <CashFlowView />;
       case 'deudas':
         return <DebtsBalanceView />;
+      case 'cuentas':
+        return <AccountsView />;
+      case 'presupuestos':
+        return <BudgetsView />;
       case 'comprobantes':
         return <ReceiptsGallery />;
       default:

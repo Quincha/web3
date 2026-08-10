@@ -2,10 +2,10 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { WidgetRegistry } from './WidgetRegistry';
 import { Clock, Plus, Calendar as CalendarIcon, ArrowRight, Video} from 'lucide-react';
 import { useHealth } from '../context/HealthContext';
-import { useTasks } from '../context/TasksContext';
 import { usePomodoro } from '../context/PomodoroContext';
 import { useBujo } from '../context/BujoContext';
 import { Api } from '../services/ApiClient';
+import { subscribeGcalPush } from '../services/gcalPush';
 
 export interface CalendarEvent {
   id: string;
@@ -26,7 +26,6 @@ function localDateStr(d: Date): string {
 export const CalendarWidget: React.FC = () => {
   // Real calendar data
   const { appointments, profiles } = useHealth();
-  const { tasks, projects } = useTasks();
   const { completedSessions } = usePomodoro();
   const { entries, addEntry } = useBujo();
 
@@ -41,6 +40,17 @@ export const CalendarWidget: React.FC = () => {
     }
   }, []);
   useEffect(() => { loadGoogleEvents(); }, [loadGoogleEvents]);
+  // Recarga automática cuando Google Calendar cambia el evento desde otro
+  // dispositivo (webhook -> SSE del servidor).
+  useEffect(() => {
+    const unsubscribe = subscribeGcalPush(loadGoogleEvents);
+    const onFocus = () => loadGoogleEvents();
+    window.addEventListener('focus', onFocus);
+    return () => {
+      unsubscribe();
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [loadGoogleEvents]);
 
   // From today until +6 days (week window)
   const scopeDays = useMemo(() => {
@@ -75,31 +85,21 @@ export const CalendarWidget: React.FC = () => {
     });
 
     // Tasks due within scope
-    tasks.forEach(task => {
-      if (!task.dueDate || task.status === 'cancelled') return;
-      if (!scopeDays.some(s => s.date === task.dueDate)) return;
-      const proj = projects.find(p => p.id === task.project_id);
-      list.push({
-        id: `w_task_${task.id}`,
-        time: '',
-        title: `📋 ${task.title}`,
-        tag: 'PROYECTO',
-        duration: task.priority ? `Prioridad ${task.priority}` : 'Todo el día',
-        color: proj?.color || '#3B82F6',
-        date: task.dueDate,
-      });
-    });
+    // (las tareas no se muestran en el widget del calendario por decisión del usuario)
 
     // Bujo events within scope
     entries.forEach(entry => {
       if (!scopeDays.some(s => s.date === entry.date)) return;
-      if (entry.type !== 'event' && entry.type !== 'task' && entry.type !== 'scheduled') return;
+      // Solo eventos programados (reuniones/bloques). Se excluyen espejos de
+      // tareas (linkedTaskId) y entradas de tipo "task".
       if (entry.gcalEventId) return;
+      if (entry.linkedTaskId) return;
+      if (entry.type !== 'event' && entry.type !== 'scheduled') return;
       list.push({
         id: `w_bujo_${entry.id}`,
         time: entry.time || '',
         title: `📅 ${entry.content}`,
-        tag: entry.type === 'event' ? 'REUNIÓN' : 'PROYECTO',
+        tag: 'REUNIÓN',
         duration: entry.duration || 'Calendario',
         color: '#FFA726',
         date: entry.date,
@@ -150,7 +150,7 @@ export const CalendarWidget: React.FC = () => {
       if (at !== bt) return at < bt ? -1 : 1;
       return a.time === '' ? -1 : b.time === '' ? 1 : 0;
     });
-  }, [appointments, profiles, tasks, projects, completedSessions, entries, googleEvents, scopeDays]);
+  }, [appointments, profiles, completedSessions, entries, googleEvents, scopeDays]);
 
   const todayLocal = localDateStr(new Date());
 

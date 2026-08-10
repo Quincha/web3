@@ -7,11 +7,13 @@ import {
   countUsers, createUser, getUserByUsername, verifyPassword,
   createSession, destroySession, getUserByToken,
   getConfig, saveConfig, putStore, getAllStore,
+  getStoreSince, pruneStore, updatePassword, pruneExpiredSessions,
 } from './db.js';
 import {
   gcalConfigured, buildAuthUrl, exchangeCodeForTokens,
   gcalSaveTokens, gcalGetTokens, gcalClearTokens,
   gcalListEvents, gcalCreateEvent, gcalUpdateEvent, gcalDeleteEvent, gcalClearEvents,
+  gcalEnsureWatch, gcalStopWatch, gcalChannelValid,
 } from './gcal.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -36,6 +38,46 @@ function requireAuth(req, res, next) {
 }
 
 // --------------------------------------------------------------------------
+// Rate limiting (en memoria, sin dependencias) — protege login/install de
+// fuerza bruta y limita avisos del webhook.
+// --------------------------------------------------------------------------
+const rateBucketDefaults = new Map(); // key -> { count, resetAt }
+export const rateBuckets = rateBucketDefaults;
+
+function clientIp(req) {
+  const xff = req.headers['x-forwarded-for'];
+  if (xff) return String(xff).split(',')[0].trim();
+  return req.socket?.remoteAddress || 'unknown';
+}
+
+function rateLimit(key, max, windowMs) {
+  const now = Date.now();
+  const hit = rateBuckets.get(key);
+  if (!hit || hit.resetAt <= now) {
+    rateBuckets.set(key, { count: 1, resetAt: now + windowMs });
+    return { allowed: true, remaining: max - 1 };
+  }
+  hit.count += 1;
+  return { allowed: hit.count <= max, remaining: Math.max(0, max - hit.count) };
+}
+
+function rateLimitGuard(max, windowMs) {
+  return (req, res, next) => {
+    const ip = clientIp(req);
+    const verdict = rateLimit(`${ip}:${req.path}`, max, windowMs);
+    if (!verdict.allowed) {
+      res.setHeader('Retry-After', String(Math.ceil(windowMs / 1000)));
+      return res.status(429).json({ error: 'Demasiados intentos. Espera un momento e inténtalo de nuevo.' });
+    }
+    next();
+  };
+}
+
+// Limpia de vez en cuando las entradas de rate limit y nonces vencidos.
+const WEBHOOK_RATE_MAX = 60;
+const WEBHOOK_RATE_WINDOW_MS = 60 * 1000;
+
+// --------------------------------------------------------------------------
 // Health
 // --------------------------------------------------------------------------
 const startTime = Date.now();
@@ -52,7 +94,7 @@ app.get('/api/health', (_req, res) => {
 // --------------------------------------------------------------------------
 // Installation — create first admin. Only allowed when no users exist.
 // --------------------------------------------------------------------------
-app.post('/api/install', (req, res) => {
+app.post('/api/install', rateLimitGuard(5, 10 * 60 * 1000), (req, res) => {
   if (countUsers() !== 0) {
     return res.status(409).json({ error: 'Sistema ya instalado' });
   }
@@ -81,7 +123,7 @@ app.post('/api/install', (req, res) => {
 // --------------------------------------------------------------------------
 // Auth
 // --------------------------------------------------------------------------
-app.post('/api/login', (req, res) => {
+app.post('/api/login', rateLimitGuard(5, 10 * 60 * 1000), (req, res) => {
   const { username, password } = req.body || {};
   if (!username || !password) {
     return res.status(400).json({ error: 'Usuario y contraseña son obligatorios' });
@@ -108,6 +150,27 @@ app.get('/api/me', requireAuth, (req, res) => {
 });
 
 // --------------------------------------------------------------------------
+// Cambio de contraseña (sesión activa requerida)
+// --------------------------------------------------------------------------
+app.post('/api/password', requireAuth, (req, res) => {
+  const { current, next } = req.body || {};
+  if (typeof current !== 'string' || typeof next !== 'string') {
+    return res.status(400).json({ error: 'Contraseña actual y nueva son obligatorias' });
+  }
+  if (!verifyPassword(current, req.user.password_hash)) {
+    return res.status(403).json({ error: 'Contraseña actual incorrecta' });
+  }
+  if (next.length < 8) {
+    return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 8 caracteres' });
+  }
+  if (next === current) {
+    return res.status(400).json({ error: 'La nueva contraseña debe ser distinta a la actual' });
+  }
+  updatePassword(req.user.username, next);
+  res.json({ ok: true });
+});
+
+// --------------------------------------------------------------------------
 // Config per user
 // --------------------------------------------------------------------------
 app.get('/api/config', requireAuth, (req, res) => {
@@ -125,24 +188,36 @@ app.put('/api/config', requireAuth, (req, res) => {
 // --------------------------------------------------------------------------
 // Generic key/value store sync (per user)
 // --------------------------------------------------------------------------
+const SYNC_EVENT_TTL_MS = 24 * 60 * 60 * 1000; // cola de sync_event:* con más de un día, se purga
+
 app.post('/api/sync', requireAuth, (req, res) => {
   const entries = (req.body && (req.body.entries ?? req.body)) || [];
   if (!Array.isArray(entries)) {
     return res.status(400).json({ error: 'Se esperaba un array de entradas' });
   }
+  const changed = [];
   for (const entry of entries) {
     if (!entry || typeof entry.key !== 'string') continue;
     const data = entry.data !== undefined ? JSON.stringify(entry.data) : 'null';
     const ts = Number(entry.updatedAt) || Date.now();
     putStore(req.user.id, entry.key, data, ts);
+    changed.push({ key: entry.key, data: entry.data !== undefined ? entry.data : null, updatedAt: ts });
   }
-  const result = getAllStore(req.user.id).map((r) => ({ key: r.key, data: JSON.parse(r.data) }));
-  res.json({ ok: true, db: result });
+  // Limpia los eventos de la cola de sync más viejos que un día (no crecen ilimitados).
+  pruneStore(req.user.id, 'sync_event:', Date.now() - SYNC_EVENT_TTL_MS);
+  res.json({ ok: true, db: changed });
 });
 
-app.get('/api/sync', requireAuth, (_req, res) => {
-  const result = getAllStore(_req.user.id).map((r) => ({ key: r.key, data: JSON.parse(r.data) }));
-  res.json({ ok: true, db: result });
+app.get('/api/sync', requireAuth, (req, res) => {
+  const since = Number(req.query.since);
+  const rows = Number.isFinite(since) && since > 0
+    ? getStoreSince(req.user.id, since)
+    : getAllStore(req.user.id);
+  res.json({
+    ok: true,
+    db: rows.map((r) => ({ key: r.key, data: JSON.parse(r.data), updatedAt: r.updated_at })),
+    since: Number.isFinite(since) && since > 0 ? since : null,
+  });
 });
 
 // --------------------------------------------------------------------------
@@ -170,23 +245,24 @@ app.get('/api/gcal/auth', requireAuth, (_req, res) => {
   }
   // state vincula el callback con el userId (sin exponer el token de sesión)
   const state = crypto.randomBytes(24).toString('hex');
-  oauthStates.set(state, _req.user.id);
+  oauthStates.set(state, { userId: _req.user.id, createdAt: Date.now() });
   res.json({ url: buildAuthUrl(state) });
 });
 
 app.get('/api/gcal/callback', async (req, res) => {
   const { code, state, error } = req.query;
   if (error) return res.redirect('/?gcal=error');
-  const userId = oauthStates.get(String(state));
+  const codeStr = String(code || '');
+  const entry = oauthStates.get(String(state));
   oauthStates.delete(String(state));
-  if (!userId) return res.status(400).send('Sesión de Google Calendar expirada. Vuelve a Ajustes y conecta de nuevo.');
+  if (!entry || !entry.userId) return res.status(400).send('Sesión de Google Calendar expirada. Vuelve a Ajustes y conecta de nuevo.');
 
-  if (!code) return res.status(400).send('Falta el código de autorización');
+  if (!codeStr) return res.status(400).send('Falta el código de autorización');
 
   try {
-    const tokens = await exchangeCodeForTokens(String(code));
+    const tokens = await exchangeCodeForTokens(codeStr);
     const expiresAt = Date.now() + Number(tokens.expires_in || 3600) * 1000;
-    gcalSaveTokens(userId, {
+    gcalSaveTokens(entry.userId, {
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
       expires_at: expiresAt,
@@ -201,10 +277,128 @@ app.get('/api/gcal/callback', async (req, res) => {
   }
 });
 
-app.post('/api/gcal/disconnect', requireAuth, (_req, res) => {
-  gcalClearTokens(_req.user.id);
+app.post('/api/gcal/disconnect', requireAuth, async (req, res) => {
+  try { await gcalStopWatch(req.user.id); } catch { /* sin canal */ }
+  gcalClearTokens(req.user.id);
   res.json({ ok: true });
 });
+
+// --------------------------------------------------------------------------
+// Push notifications de Google Calendar (Watch webhook -> SSE)
+// --------------------------------------------------------------------------
+
+// Employee streams: userId -> Set<Response>
+const gcalClients = new Map();
+
+function gcalNotify(userId, payload) {
+  const set = gcalClients.get(userId);
+  if (!set) return;
+  const data = `data: ${JSON.stringify(payload)}\n\n`;
+  for (const res of Array.from(set)) {
+    try { res.write(data); } catch { set.delete(res); }
+  }
+}
+
+// Nonces de un solo uso para el SSE: como EventSource no puede enviar el header
+// Authorization, el navegador pide primero un ticket corto con su sesión y luego
+// abre el stream con ese nonce (no expone el token de sesión en la URL/logs).
+const sseNonces = new Map(); // nonce -> { token, expiresAt }
+const NONCE_TTL_MS = 30 * 1000;
+
+app.post('/api/gcal/streamticket', requireAuth, (_req, res) => {
+  const nonce = crypto.randomBytes(24).toString('hex');
+  sseNonces.set(nonce, { token: _req.token, expiresAt: Date.now() + NONCE_TTL_MS });
+  res.json({ nonce });
+});
+
+app.get('/api/gcal/stream', (req, res) => {
+  const nonce = String(req.query.nonce || '');
+  const entry = sseNonces.get(nonce);
+  sseNonces.delete(nonce); // de un solo uso
+  if (!entry || entry.expiresAt < Date.now()) {
+    return res.status(401).json({ error: 'No autorizado' });
+  }
+  const user = getUserByToken(entry.token);
+  if (!user) return res.status(401).json({ error: 'No autorizado' });
+
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    Connection: 'keep-alive',
+    'X-Accel-Buffering': 'no',
+  });
+  res.flushHeaders?.();
+
+  let set = gcalClients.get(user.id);
+  if (!set) { set = new Set(); gcalClients.set(user.id, set); }
+  set.add(res);
+  res.write(`retry: 15000\n\n`);
+  res.write(`data: ${JSON.stringify({ type: 'hello' })}\n\n`);
+
+  // Mantener vivo el canal de push mientras alguien mira la app.
+  gcalEnsureWatch(user.id).catch((err) => console.error('[gcal] ensureWatch:', err.message));
+
+  const heartbeat = setInterval(() => {
+    try { res.write(`: ping\n\n`); } catch { cleanup(); }
+  }, 25000);
+
+  function cleanup() {
+    clearInterval(heartbeat);
+    const s = gcalClients.get(user.id);
+    if (s) {
+      s.delete(res);
+      if (s.size === 0) gcalClients.delete(user.id);
+    }
+  }
+  res.on('close', cleanup);
+  res.on('error', cleanup);
+});
+
+// Recibe los avisos de Google Calendar. Siempre responde 200 rápido y luego
+// avisa a los navegadores conectados (SSE) SOLO si el canal coincide con el que
+// creamos para ese usuario (cualquier otro aviso se ignora, no hay refrescos
+// falsos ni spameables). Validamos el source con X-Goog-Channel-ID/Resource-ID.
+app.post('/api/gcal/webhook', rateLimitGuard(WEBHOOK_RATE_MAX, WEBHOOK_RATE_WINDOW_MS), (req, res) => {
+  const channelToken = String(req.headers['x-goog-channel-token'] || '');
+  const state = String(req.headers['x-goog-resource-state'] || '');
+  const channelId = String(req.headers['x-goog-channel-id'] || '');
+  const resourceId = String(req.headers['x-goog-resource-id'] || '');
+  res.status(200).end();
+
+  const m = /^gcal_(\d+)$/.exec(channelToken);
+  if (!m) return;
+  const userId = Number(m[1]);
+  // Si el canal no es el nuestro (o viene sin el channel-id correcto), ignorar.
+  if (!gcalChannelValid(userId, channelId, resourceId)) return;
+  if (state === 'sync') return; // solo inicial, no es un cambio real
+  console.log(`[webhook] valid refresh userId=${userId}`);
+  gcalNotify(userId, { type: 'refresh' });
+});
+
+// Renueva los canales de push de los usuarios con la app abierta (el TTL del
+// canal es de ~6h; lo renovamos cada 10 min para nunca perder notificaciones).
+setInterval(() => {
+  for (const userId of Array.from(gcalClients.keys())) {
+    gcalEnsureWatch(userId).catch((err) => console.error('[gcal] renew:', err.message));
+  }
+}, 10 * 60 * 1000);
+
+// Limpieza periódica: sesiones expiradas, rate limits viejos, nonces y estados
+// OAuth vencidos (evita que el mapa en memoria crezca sin límite).
+setInterval(() => {
+  const now = Date.now();
+  pruneExpiredSessions();
+  for (const [key, hit] of rateBuckets) {
+    if (hit.resetAt <= now) rateBuckets.delete(key);
+  }
+  for (const [nonce, entry] of sseNonces) {
+    if (entry.expiresAt < now) sseNonces.delete(nonce);
+  }
+  for (const [key, entry] of oauthStates) {
+    if (now - entry.createdAt > 15 * 60 * 1000) oauthStates.delete(key);
+  }
+}, 5 * 60 * 1000);
+pruneExpiredSessions();
 
 // Importar eventos de Google (para unirlos al calendario local)
 app.get('/api/gcal/events', requireAuth, async (req, res) => {
@@ -219,6 +413,8 @@ app.get('/api/gcal/events', requireAuth, async (req, res) => {
 
   try {
     const items = await gcalListEvents(req.user.id, min, max);
+    // Activa (o renueva) el canal de push para recibir cambios en tiempo real.
+    gcalEnsureWatch(req.user.id).catch((err) => console.error('[gcal] ensureWatch:', err.message));
     res.json({ ok: true, connected: true, items });
   } catch (err) {
     if (err.status === 401) {

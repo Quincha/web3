@@ -43,7 +43,7 @@ function localDateToStr(d: Date): string {
 export const BujoModule: React.FC = () => {
   const { entries, addEntry, deleteEntry, toggleEntryType, toggleFavorite, updateEntry } = useBujo();
   const { completedSessions } = usePomodoro();
-  const { addTask, completeTask } = useTasks();
+  const { addTask, completeTask, migrateTask } = useTasks();
 
   const [inputValue, setInputValue] = useState('');
   const [selectedType, setSelectedType] = useState<BujoEntryType>('task');
@@ -81,6 +81,19 @@ export const BujoModule: React.FC = () => {
   const [hasMigrated, setHasMigrated] = useState(false);
   useEffect(() => {
     if (hasMigrated) return;
+    // Limpieza: eliminar entradas duplicadas (misma tarea y misma fecha).
+    const seen = new Set<string>();
+    const dupIds = entries
+      .filter(e => e.linkedTaskId && e.date)
+      .filter(e => {
+        const key = `${e.linkedTaskId}|${e.date}`;
+        if (seen.has(key)) return true;
+        seen.add(key);
+        return false;
+      })
+      .map(e => e.id);
+    if (dupIds.length > 0) dupIds.forEach(id => deleteEntry(id));
+
     const unsynced = entries.filter(e => 
       (e.type === 'task' || e.type === 'completed') && 
       !e.linkedTaskId &&
@@ -106,7 +119,7 @@ export const BujoModule: React.FC = () => {
       });
     }
     setHasMigrated(true);
-  }, [entries, addTask, updateEntry, hasMigrated, todayISO]);
+  }, [entries, addTask, updateEntry, deleteEntry, hasMigrated, todayISO]);
 
   // Filter logic
   const getFilteredEntries = (): BujoEntry[] => {
@@ -524,6 +537,16 @@ export const BujoModule: React.FC = () => {
                                   setMenuOpenId(null);
                                   if (type === 'completed' && entry.linkedTaskId) {
                                     completeTask(entry.linkedTaskId);
+                                  }
+                                  if (type === 'migrated' && entry.linkedTaskId) {
+                                    const newDate = migrateTask(entry.linkedTaskId, entry.date);
+                                    if (newDate) {
+                                      updateEntry(entry.id, { date: newDate });
+                                      // Elimina duplicados: otras entradas vinculadas a la misma tarea
+                                      entries
+                                        .filter(e => e.linkedTaskId === entry.linkedTaskId && e.id !== entry.id)
+                                        .forEach(d => deleteEntry(d.id));
+                                    }
                                   }
                                 }}
                               >

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, User, Shield, LayoutDashboard, Settings, Moon, Sun, Sparkles, Check, CalendarDays, Link2, Unlink, Loader2 } from 'lucide-react';
+import { ArrowLeft, User, Shield, LayoutDashboard, Settings, Moon, Sun, Sparkles, Check, CalendarDays, Link2, Unlink, Loader2, KeyRound } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
 import { useTheme } from '../../context/ThemeContext';
 import type { Theme } from '../../context/ThemeContext';
@@ -16,6 +16,29 @@ export const AjustesModule: React.FC = () => {
   const [nameDraft, setNameDraft] = useState(userConfig.userName);
   const [saved, setSaved] = useState(false);
   const [pendingRole, setPendingRole] = useState<Role | null>(null);
+
+  // Seguridad (cambio de contraseña)
+  const [pwCurrent, setPwCurrent] = useState('');
+  const [pwNext, setPwNext] = useState('');
+  const [pwBusy, setPwBusy] = useState(false);
+  const [pwMsg, setPwMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  const changePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pwCurrent || !pwNext) return;
+    setPwBusy(true);
+    setPwMsg(null);
+    try {
+      await Api.changePassword(pwCurrent, pwNext);
+      setPwMsg({ ok: true, text: 'Contraseña actualizada ✓' });
+      setPwCurrent('');
+      setPwNext('');
+    } catch (err) {
+      setPwMsg({ ok: false, text: err instanceof Error ? err.message : 'No se pudo cambiar la contraseña' });
+    } finally {
+      setPwBusy(false);
+    }
+  };
 
   // Google Calendar
   const [gcalStatus, setGcalStatus] = useState<{ configured: boolean; connected: boolean; calName: string | null } | null>(null);
@@ -134,6 +157,51 @@ export const AjustesModule: React.FC = () => {
           </button>
         </form>
         <p style={{ margin: '10px 0 0', fontSize: '12px', color: 'var(--text-subtle)' }}>Tu rol actual: <strong style={{ color: '#38BDF8' }}>{roles.find(r => r.id === userConfig.userRole)?.label}</strong></p>
+      </section>
+
+      {/* Seguridad */}
+      <section style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '14px', padding: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+          <KeyRound size={16} color="#F87171" />
+          <h3 style={{ margin: 0, fontSize: '0.95rem', color: 'white' }}>Seguridad</h3>
+        </div>
+        <form onSubmit={changePassword} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '10px', alignItems: 'end', flexWrap: 'wrap' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-subtle)', marginBottom: '6px' }}>Contraseña actual</label>
+            <input
+              type="password"
+              value={pwCurrent}
+              onChange={e => setPwCurrent(e.target.value)}
+              autoComplete="current-password"
+              style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '10px 12px', color: 'white', fontSize: '14px' }}
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-subtle)', marginBottom: '6px' }}>Nueva contraseña (mín. 8)</label>
+            <input
+              type="password"
+              value={pwNext}
+              onChange={e => setPwNext(e.target.value)}
+              autoComplete="new-password"
+              style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '10px 12px', color: 'white', fontSize: '14px' }}
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={pwBusy}
+            style={{
+              background: '#F87171', color: 'white', borderRadius: '10px', padding: '10px 16px',
+              border: 'none', cursor: pwBusy ? 'default' : 'pointer', fontSize: '13px', fontWeight: 700,
+              display: 'flex', alignItems: 'center', gap: '6px', opacity: pwBusy ? 0.6 : 1
+            }}
+          >
+            {pwBusy ? <Loader2 size={14} className="sync-spinner" /> : <KeyRound size={14} />}
+            {pwBusy ? 'Guardando...' : 'Cambiar'}
+          </button>
+        </form>
+        {pwMsg && (
+          <p style={{ margin: '12px 0 0', fontSize: '12px', color: pwMsg.ok ? '#16F0B5' : '#F87171' }}>{pwMsg.text}</p>
+        )}
       </section>
 
       {/* Apariencia */}

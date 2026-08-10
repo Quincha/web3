@@ -106,6 +106,10 @@ export const Api = {
     return me;
   },
 
+  async changePassword(current: string, next: string): Promise<void> {
+    await request('/password', { method: 'POST', body: JSON.stringify({ current, next }) });
+  },
+
   async logout(): Promise<void> {
     try {
       await request('/logout', { method: 'POST' });
@@ -148,6 +152,11 @@ export const Api = {
 
   async gcalDisconnect(): Promise<void> {
     await request('/gcal/disconnect', { method: 'POST' });
+  },
+
+  /** Ticket de un solo uso para abrir el stream SSE sin exponer el token en la URL. */
+  async gcalStreamTicket(): Promise<{ nonce: string }> {
+    return request<{ nonce: string }>('/gcal/streamticket', { method: 'POST' });
   },
 
   async gcalEvents(days = 60): Promise<{ connected: boolean; items: unknown[]; error?: string }> {
