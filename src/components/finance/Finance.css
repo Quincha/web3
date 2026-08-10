@@ -141,10 +141,136 @@
   color: var(--accent-red);
 }
 
-/* Base layouts for views */
 .finance-view-container {
   display: flex;
   flex-direction: column;
   gap: 24px;
   height: 100%;
 }
+
+/* ── Finance Lists & Tables ──────────────────── */
+.finance-list-header {
+  display: grid;
+  padding: 16px;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.finance-list-row {
+  display: grid;
+  padding: 16px;
+  border-bottom: 1px solid var(--border-light);
+  align-items: center;
+  transition: background 0.2s ease, transform 0.2s ease;
+  background: var(--bg-card);
+}
+
+.finance-list-row:hover {
+  background: var(--bg-card-hover);
+}
+
+/* ── Badges ──────────────────── */
+.finance-badge {
+  justify-self: start;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.finance-badge.success {
+  background: rgba(0, 208, 132, 0.1);
+  color: var(--accent-green);
+}
+.finance-badge.warning {
+  background: rgba(234, 179, 8, 0.1);
+  color: #eab308;
+}
+.finance-badge.danger {
+  background: rgba(248, 113, 113, 0.1);
+  color: var(--accent-red);
+}
+.finance-badge.neutral {
+  background: var(--border-primary);
+  color: var(--text-secondary);
+}
+
+/* ── Modals & Overlays ──────────────────── */
+.finance-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 8, 11, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.finance-modal-card {
+  position: relative;
+  width: 420px;
+  maxWidth: calc(100vw - 32px);
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.finance-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.finance-modal-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.finance-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.finance-close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.finance-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.finance-form-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+

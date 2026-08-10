@@ -94,15 +94,13 @@ export const CashFlowView: React.FC = () => {
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
           <button
             className="primary-btn"
-            style={{ background: 'var(--accent-green)', color: 'var(--bg-primary)' }}
             onClick={() => openSidebar('ingreso')}
           >
             <ArrowUpRight size={16} />
             Ingreso
           </button>
           <button
-            className="primary-btn"
-            style={{ background: 'var(--accent-red)', color: '#fff' }}
+            className="primary-btn danger-btn"
             onClick={() => openSidebar('gasto')}
           >
             <ArrowDownRight size={16} />
@@ -117,29 +115,15 @@ export const CashFlowView: React.FC = () => {
 
       {/* Filters & Search */}
       <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          background: 'var(--bg-secondary)',
-          border: '1px solid var(--border-light)',
-          borderRadius: '8px',
-          padding: '8px 12px',
-          flex: 1
-        }}>
-          <Search size={16} color="var(--text-secondary)" style={{ marginRight: '8px' }} />
+        <div style={{ display: 'flex', alignItems: 'center', position: 'relative', flex: 1 }}>
+          <Search size={16} color="var(--text-secondary)" style={{ position: 'absolute', left: '12px' }} />
           <input
             type="text"
+            className="premium-input"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Buscar por descripción, categoría o monto..."
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--text-primary)',
-              width: '100%',
-              outline: 'none',
-              fontSize: '14px'
-            }}
+            style={{ paddingLeft: '36px' }}
           />
         </div>
         <button
@@ -160,19 +144,12 @@ export const CashFlowView: React.FC = () => {
           border: '1px solid var(--border-light)',
           borderRadius: '8px'
         }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
-            <label style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Estado</label>
+          <div className="finance-form-group" style={{ flex: 1 }}>
+            <label className="finance-form-label">Estado</label>
             <select
+              className="premium-select"
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value)}
-              style={{
-                background: 'var(--bg-primary)',
-                border: '1px solid var(--border-light)',
-                borderRadius: '8px',
-                padding: '8px 12px',
-                color: 'var(--text-primary)',
-                outline: 'none'
-              }}
             >
               <option value="todos">Todos</option>
               <option value="Pagada">Pagada</option>
@@ -183,20 +160,13 @@ export const CashFlowView: React.FC = () => {
               <option value="Anulada">Anulada</option>
             </select>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
-            <label style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Mes</label>
+          <div className="finance-form-group" style={{ flex: 1 }}>
+            <label className="finance-form-label">Mes</label>
             <input
               type="month"
+              className="premium-input"
               value={monthFilter === 'todos' ? currentMonth : monthFilter}
               onChange={e => setMonthFilter(e.target.value || 'todos')}
-              style={{
-                background: 'var(--bg-primary)',
-                border: '1px solid var(--border-light)',
-                borderRadius: '8px',
-                padding: '8px 12px',
-                color: 'var(--text-primary)',
-                outline: 'none'
-              }}
             />
           </div>
         </div>
@@ -211,16 +181,7 @@ export const CashFlowView: React.FC = () => {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {/* Header */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '110px 2fr 1.2fr 120px 120px 90px',
-              padding: '16px',
-              borderBottom: '1px solid var(--border-light)',
-              color: 'var(--text-secondary)',
-              fontSize: '12px',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em'
-            }}>
+            <div className="finance-list-header" style={{ gridTemplateColumns: '110px 2fr 1.2fr 120px 120px 90px' }}>
               <span>Fecha</span>
               <span>Descripción</span>
               <span>Categoría</span>
@@ -233,17 +194,7 @@ export const CashFlowView: React.FC = () => {
             {filteredMovimientos.map(mov => {
               const cat = financeCategoryLabel(mov.categoryId);
               return (
-                <div key={mov.id} style={{
-                  display: 'grid',
-                  gridTemplateColumns: '110px 2fr 1.2fr 120px 120px 90px',
-                  padding: '16px',
-                  borderBottom: '1px solid var(--border-light)',
-                  alignItems: 'center',
-                  transition: 'background 0.2s ease'
-                }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-secondary)'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                >
+                <div key={mov.id} className="finance-list-row" style={{ gridTemplateColumns: '110px 2fr 1.2fr 120px 120px 90px' }}>
                   <span style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
                     {new Date(mov.date).toLocaleDateString()}
                   </span>
@@ -263,17 +214,7 @@ export const CashFlowView: React.FC = () => {
                   </span>
 
                   {/* Status Badge */}
-                  <span style={{
-                    justifySelf: 'start',
-                    padding: '4px 8px',
-                    borderRadius: '12px',
-                    fontSize: '12px',
-                    fontWeight: 500,
-                    background: mov.status === 'Pagada' ? 'rgba(52, 211, 153, 0.1)' :
-                      mov.status === 'Pendiente' ? 'rgba(234, 179, 8, 0.1)' : 'var(--border-primary)',
-                    color: mov.status === 'Pagada' ? 'var(--accent-green)' :
-                      mov.status === 'Pendiente' ? '#eab308' : 'var(--text-secondary)'
-                  }}>
+                  <span className={`finance-badge ${mov.status === 'Pagada' ? 'success' : mov.status === 'Pendiente' ? 'warning' : 'neutral'}`}>
                     {mov.status}
                   </span>
 

@@ -203,7 +203,7 @@ export const FinanceDashboard: React.FC = () => {
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px' }}>
         <Card padding="lg" style={{ minHeight: '300px' }}>
           <h3 style={{ margin: '0 0 16px', fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>Flujo de Caja (últimos 6 meses)</h3>
-          <svg width="100%" height={chartH} viewBox={`0 0 100 ${chartH}`} preserveAspectRatio="none" style={{ display: 'block' }}>
+          <svg width="100%" height={chartH} viewBox={`0 0 ${months.length * 100} ${chartH}`} style={{ display: 'block' }}>
             {months.map((m, i) => {
               const bw = 70;
               const x = i * 100 + 15;
@@ -213,7 +213,7 @@ export const FinanceDashboard: React.FC = () => {
                 <g key={m.label}>
                   <rect x={x} y={chartH - 20 - hG} width={bw / 2 - 4} height={hG} rx={4} fill="#16F0B5" />
                   <rect x={x + bw / 2} y={chartH - 20 - hB} width={bw / 2 - 4} height={hB} rx={4} fill="#FF5F73" />
-                  <text x={x + bw / 2} y={chartH - 4} textAnchor="middle" fontSize="14" fill="#94A3B8">{m.label}</text>
+                  <text x={x + bw / 2 - 2} y={chartH - 4} textAnchor="middle" fontSize="14" fill="#94A3B8">{m.label}</text>
                 </g>
               );
             })}

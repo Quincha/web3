@@ -69,12 +69,18 @@ export const StatisticsModule: React.FC = () => {
     const key = localDay(new Date(s.timestamp));
     focusByDay.set(key, (focusByDay.get(key) || 0) + (s.durationMinutes || 0));
   });
-  const week: { label: string; minutes: number }[] = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    week.push({ label: DAY_LABELS[d.getDay()], minutes: focusByDay.get(localDay(d)) || 0 });
+  // Semana calendario (lunes → domingo) para "Enfoque de la semana"
+  const weekTodayISO = localDay(new Date());
+  const weekAnchor = new Date();
+  weekAnchor.setDate(weekAnchor.getDate() - ((weekAnchor.getDay() + 6) % 7)); // lunes
+  const week: { label: string; minutes: number; isToday: boolean }[] = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekAnchor);
+    d.setDate(weekAnchor.getDate() + i);
+    const iso = localDay(d);
+    week.push({ label: DAY_LABELS[d.getDay()], minutes: focusByDay.get(iso) || 0, isToday: iso === weekTodayISO });
   }
+  const weekWorkMinutes = week.reduce((s, w) => s + w.minutes, 0);
   const weekMax = Math.max(...week.map(w => w.minutes), 1);
   const totalSessions = completedSessions.length;
   const totalWorkMinutes = completedSessions.filter(s => s.type === 'work').reduce((s, x) => s + (x.durationMinutes || 0), 0);
@@ -243,7 +249,7 @@ export const StatisticsModule: React.FC = () => {
         <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '14px', padding: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <h3 style={{ margin: 0, fontSize: '0.95rem', color: 'white' }}>Enfoque de la semana (Pomodoro)</h3>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-subtle)' }}>{fmtHours(totalWorkMinutes * 60)} esta semana</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-subtle)' }}>{fmtHours(weekWorkMinutes * 60)} esta semana</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: '10px', height: '180px' }}>
             {week.map((w, i) => (
@@ -255,7 +261,7 @@ export const StatisticsModule: React.FC = () => {
                   style={{
                     width: '100%', maxWidth: '40px', borderRadius: '6px 6px 0 0',
                     height: `${Math.max(6, (w.minutes / weekMax) * 130)}px`,
-                    background: i === 6 ? 'var(--accent-green)' : 'rgba(56,189,248,0.5)',
+                    background: w.isToday ? 'var(--accent-green)' : 'rgba(56,189,248,0.5)',
                     transition: 'height 0.3s ease'
                   }}
                 />

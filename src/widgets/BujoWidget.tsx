@@ -184,7 +184,7 @@ export const BujoWidget: React.FC = () => {
                 )}
 
                 {/* Time */}
-                <div style={{ width: '36px', paddingTop: '2px', flexShrink: 0 }}>
+                <div style={{ width: '55px', paddingTop: '2px', flexShrink: 0, textAlign: 'right', whiteSpace: 'nowrap' }}>
                   <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px', fontWeight: 500 }}>
                     {timeStr}
                   </span>

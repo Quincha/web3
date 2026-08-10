@@ -119,16 +119,7 @@ export const DebtsBalanceView: React.FC = () => {
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{
-              padding: '2px 8px',
-              borderRadius: '12px',
-              fontSize: '11px',
-              fontWeight: 600,
-              background: deuda.status === 'Atrasada' ? 'rgba(248, 113, 113, 0.1)' :
-                deuda.status === 'Pagada' ? 'rgba(52, 211, 153, 0.1)' : 'var(--border-primary)',
-              color: deuda.status === 'Atrasada' ? 'var(--accent-red)' :
-                deuda.status === 'Pagada' ? 'var(--accent-green)' : 'var(--text-secondary)'
-            }}>
+            <span className={`finance-badge ${deuda.status === 'Atrasada' ? 'danger' : deuda.status === 'Pagada' ? 'success' : 'neutral'}`}>
               {deuda.status}
             </span>
             <button
@@ -182,7 +173,7 @@ export const DebtsBalanceView: React.FC = () => {
             <TrendingUp size={20} color="var(--accent-green)" />
             <h2 style={{ fontSize: '18px', fontWeight: 600, margin: 0 }}>Por Cobrar</h2>
           </div>
-          <button className="secondary-btn" style={{ padding: '6px 12px', fontSize: '13px' }} onClick={() => openModal('Por Cobrar')}>
+          <button className="secondary-btn" onClick={() => openModal('Por Cobrar')}>
             <Plus size={14} /> Nueva Deuda
           </button>
         </div>
@@ -205,7 +196,7 @@ export const DebtsBalanceView: React.FC = () => {
             <TrendingDown size={20} color="var(--accent-red)" />
             <h2 style={{ fontSize: '18px', fontWeight: 600, margin: 0 }}>Por Pagar</h2>
           </div>
-          <button className="secondary-btn" style={{ padding: '6px 12px', fontSize: '13px' }} onClick={() => openModal('Por Pagar')}>
+          <button className="secondary-btn" onClick={() => openModal('Por Pagar')}>
             <Plus size={14} /> Nueva Deuda
           </button>
         </div>
@@ -223,107 +214,63 @@ export const DebtsBalanceView: React.FC = () => {
 
       {/* Modal Nueva Deuda */}
       {modal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="finance-modal-overlay">
           <div
             onClick={() => setModal(null)}
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
           />
           <form
             onSubmit={submitNewDebt}
-            style={{
-              position: 'relative',
-              width: '420px',
-              maxWidth: 'calc(100vw - 32px)',
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-light)',
-              borderRadius: '16px',
-              padding: '24px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '16px',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.5)'
-            }}
+            className="finance-modal-card"
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 600 }}>
+            <div className="finance-modal-header">
+              <h3 className="finance-modal-title">
                 Nueva Deuda — {modal.type}
               </h3>
-              <button type="button" onClick={() => setModal(null)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px' }}>
+              <button type="button" onClick={() => setModal(null)} className="finance-close-btn">
                 <X size={18} />
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <label style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Entidad</label>
+            <div className="finance-form-group">
+              <label className="finance-form-label">Entidad</label>
               <input
+                className="premium-input"
                 value={form.entityName}
                 onChange={e => { setForm(f => ({ ...f, entityName: e.target.value })); setFormError(''); }}
                 placeholder={modal.type === 'Por Cobrar' ? 'Ej: Cliente Acme' : 'Ej: Proveedor Hostinger'}
-                style={{
-                  background: 'var(--bg-primary)',
-                  border: '1px solid var(--border-light)',
-                  borderRadius: '10px',
-                  padding: '10px 12px',
-                  color: 'var(--text-primary)',
-                  outline: 'none',
-                  fontSize: '14px'
-                }}
               />
             </div>
 
             <div style={{ display: 'flex', gap: '12px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
-                <label style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Monto</label>
+              <div className="finance-form-group" style={{ flex: 1 }}>
+                <label className="finance-form-label">Monto</label>
                 <input
                   type="number"
+                  className="premium-input"
                   value={form.amount}
                   min="0"
                   onChange={e => { setForm(f => ({ ...f, amount: e.target.value })); setFormError(''); }}
                   placeholder="0"
-                  style={{
-                    background: 'var(--bg-primary)',
-                    border: '1px solid var(--border-light)',
-                    borderRadius: '10px',
-                    padding: '12px',
-                    color: 'var(--text-primary)',
-                    outline: 'none',
-                    fontSize: '14px'
-                  }}
                 />
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
-                <label style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Vence</label>
+              <div className="finance-form-group" style={{ flex: 1 }}>
+                <label className="finance-form-label">Vence</label>
                 <input
                   type="date"
+                  className="premium-input"
                   value={form.dueDate}
                   onChange={e => setForm(f => ({ ...f, dueDate: e.target.value }))}
-                  style={{
-                    background: 'var(--bg-primary)',
-                    border: '1px solid var(--border-light)',
-                    borderRadius: '10px',
-                    padding: '12px',
-                    color: 'var(--text-primary)',
-                    outline: 'none',
-                    fontSize: '14px'
-                  }}
                 />
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <label style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Prioridad</label>
+            <div className="finance-form-group">
+              <label className="finance-form-label">Prioridad</label>
               <select
+                className="premium-select"
                 value={form.priority}
                 onChange={e => setForm(f => ({ ...f, priority: e.target.value as 'Alta' | 'Media' | 'Baja' }))}
-                style={{
-                  background: 'var(--bg-primary)',
-                  border: '1px solid var(--border-light)',
-                  borderRadius: '10px',
-                  padding: '12px',
-                  color: 'var(--text-primary)',
-                  outline: 'none',
-                  fontSize: '14px'
-                }}
               >
                 <option value="Alta">Alta</option>
                 <option value="Media">Media</option>

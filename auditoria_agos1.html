@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Auditoría Quincha Systems · Agos 1</title>
+<style>
+  :root {
+    --bg: #0b0f19;
+    --card: #101624;
+    --card2: #161d31;
+    --border: rgba(255,255,255,0.08);
+    --text: #e6edf5;
+    --muted: #8a94a8;
+    --green: #22e0a6;
+    --amber: #fbbf24;
+    --red: #f87171;
+    --blue: #60a5fa;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 40px 24px 80px; }
+  header.hero {
+    border: 1px solid var(--border); border-radius: 18px;
+    background: linear-gradient(145deg, #111b2e 0%, #0d1626 100%);
+    padding: 32px 28px; margin-bottom: 28px;
+  }
+  header.hero h1 { margin: 0 0 6px; font-size: 1.6rem; }
+  header.hero .meta { color: var(--muted); font-size: .85rem; }
+  h2 {
+    font-size: 1.1rem; margin: 36px 0 14px;
+    display: flex; align-items: center; gap: 8px;
+    padding-bottom: 8px; border-bottom: 1px solid var(--border);
+  }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+  .kpi {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px; 
+  }
+  .kpi .v { font-size: 1.7rem; font-weight: 800; }
+  .kpi .l { font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .ok  { color: var(--green); }
+  .warn{ color: var(--amber); }
+  .bad { color: var(--red); }
+  table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; }
+  .pill { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: .7rem; font-weight: 700; }
+  .p-green { background: rgba(34,224,160,.12); color: var(--green); }
+  .p-amber { background: rgba(251,191,36,.12); color: var(--amber); }
+  .p-red   { background: rgba(248,113,113,.14); color: var(--red); }
+  .p-blue  { background: rgba(96,165,250,.14); color: var(--blue); }
+  ul.check { list-style: none; padding: 0; }
+  ul.check li { padding: 6px 0 6px 26px; position: relative; font-size: .9rem; }
+  ul.check li::before { content: "✓"; position: absolute; left: 4px; color: var(--green); font-weight: 800; }
+  ul.check li.no::before { content: "✗"; color: var(--red); }
+  .muted { color: var(--muted); }
+  .code { font-family: Consolas, monospace; font-size: .8rem; background: rgba(255,255,255,.04); padding: 1px 6px; border-radius: 5px; }
+  .tag { font-family: Consolas, monospace; font-size: .72rem; background: rgba(255,255,255,.05); border: 1px solid var(--border); border-radius: 6px; padding: 1px 6px; }
+  .footer { margin-top: 40px; color: var(--muted); font-size: .75rem; text-align: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>🛡️ Auditoría del Proyecto — Quincha</h1>
+  <div class="meta">Fecha: 2026-08-09 · Rama: <span class="tag">main</span> · Commit: <span class="tag">bc3a8a1</span> · Repo sincronizado con origin</div>
+</header>
+
+<h2>📊 Resumen general</h2>
+<div class="cards">
+  <div class="kpi"><div class="v">108</div><div class="l">Archivos TS/TSX/CSS</div></div>
+  <div class="kpi"><div class="v">17.968</div><div class="l">Líneas de código TS/TSX</div></div>
+  <div class="kpi"><div class="v">30</div><div class="l">Módulos dashboard</div></div>
+  <div class="kpi"><div class="v">13</div><div class="l">Widgets</div></div>
+  <div class="kpi"><div class="v">15</div><div class="l">Contextos</div></div>
+  <div class="kpi"><div class="v">32</div><div class="l">Commits</div></div>
+  <div class="kpi"><div class="v bad">0</div><div class="l">Errores de lint</div></div>
+  <div class="kpi"><div class="v warn">29</div><div class="l">Warnings de lint</div></div>
+  <div class="kpi"><div class="v warn">2</div><div class="l">Vulnerabilidades npm</div></div>
+  <div class="kpi"><div class="v bad">0</div><div class="l">Pruebas automatizadas</div></div>
+</div>
+
+<h2>✅ Estado de salud</h2>
+<ul class="check">
+  <li>Compilación TypeScript + Vite: <span class="pill p-green">OK</span> build sin errores.</li>
+  <li>Servidor local arranca y responde en <span class="code">:3000</span> (health + login verificados).</li>
+  <li>Despliegue en <span class="code">https://quincha.cl</span> con código actualizado (frontend + server).</li>
+  <li>Autenticación con backend propio y sesiones (scrypt + tokens aleatorios).</li>
+  <li>Secretos: las credenciales de Google se leen de variables de entorno (<span class="code">proc.env</span>), no hay secretos commiteados. Archivo <span class="code">scripts/quincha-creds.env</span> ignorado por git.</li>
+  <li class="no">Cero pruebas automatizadas (sin <span class="code">*.test.ts(x)</span>).</li>
+  <li class="no">2 vulnerabilidades reportadas por <span class="code">npm audit</span>.</li>
+</ul>
+
+<h2>🔧 Vulnerabilidades npm</h2>
+<table>
+  <tr><th>Severidad</th><th>Paquete</th><th>Problema</th><th>Acción</th></tr>
+  <tr>
+    <td><span class="pill p-red">high</span></td>
+    <td>nanoid</td>
+    <td class="muted">Generadores custom pueden loop indefinidamente con size 0 (GHSA-2v37-7h3g-55p8)</td>
+    <td><span class="code">npm audit fix</span></td>
+  </tr>
+  <tr>
+    <td><span class="pill p-amber">moderate</span></td>
+    <td>postcss &lt;=8.5.22</td>
+    <td class="muted">sourceMappingURL controlado lee archivos .map (GHSA-fxqj-rqcc-2cmp)</td>
+    <td><span class="code">npm audit fix</span></td>
+  </tr>
+</table>
+
+<h2>⚠️ Warnings de lint (29)</h2>
+<p class="muted">Ninguno es un error de compilación; son de estilo y convención de React.</p>
+<table>
+  <tr><th>Tipo</th><th>Ubicación</th><th>Detalle</th></tr>
+  <tr><td><span class="pill p-blue">react</span></td><td>12 Contextos</td><td>Fast refresh: exportar junto con componentes (solo estético)</td></tr>
+  <tr><td><span class="pill p-blue">react-hooks</span></td><td>PomodoroContext</td><td>Dependencias faltantes/innecesarias en useEffect/useCallback</td></tr>
+  <tr><td><span class="pill p-blue">eslint</span></td><td>Card.tsx</td><td>Variable <span class="code">hoverShadow</span> sin usar</td></tr>
+  <tr><td><span class="pill p-blue">eslint</span></td><td>BujoContext:145</td><td>Escape innecesario <span class="code">\[</span></td></tr>
+</table>
+
+<h2>📐 Complejidad por archivo (top 15)</h2>
+<p class="muted">Archivos > 500 líneas son candidatos a refactorizar.</p>
+<table>
+  <tr><th>Líneas</th><th>Archivo</th><th>Riesgo</th></tr>
+  <tr><td>910</td><td>BujoModule.tsx</td><td><span class="pill p-amber">alto</span></td></tr>
+  <tr><td>899</td><td>CalendarModule.tsx</td><td><span class="pill p-amber">alto</span></td></tr>
+  <tr><td>734</td><td>PomodoroWidget.tsx</td><td><span class="pill p-amber">medio</span></td></tr>
+  <tr><td>549</td><td>HealthModule.tsx</td><td><span class="pill p-amber">medio</span></td></tr>
+  <tr><td>537</td><td>CalendarWidget.tsx</td><td><span class="pill p-amber">medio</span></td></tr>
+  <tr><td>524</td><td>DashboardHero.tsx</td><td><span class="pill p-amber">medio</span></td></tr>
+  <tr><td>430</td><td>BandContext.tsx</td><td><span class="pill p-amber">medio</span></td></tr>
+  <tr><td>415</td><td>BandModule.tsx</td><td><span class="pill p-blue">ok</span></td></tr>
+  <tr><td>415</td><td>BandImport.tsx</td><td><span class="pill p-blue">ok</span></td></tr>
+  <tr><td>408</td><td>TasksModule.tsx</td><td><span class="pill p-blue">ok</span></td></tr>
+  <tr><td>395</td><td>TasksWidget.tsx</td><td><span class="pill p-blue">ok</span></td></tr>
+  <tr><td>377</td><td>BandHistory.tsx</td><td><span class="pill p-blue">ok</span></td></tr>
+  <tr><td>372</td><td>BujoContext.tsx</td><td><span class="pill p-blue">ok</span></td></tr>
+  <tr><td>365</td><td>HealthContext.tsx</td><td><span class="pill p-blue">ok</span></td></tr>
+  <tr><td>358</td><td>TasksContext.tsx</td><td><span class="pill p-blue">ok</span></td></tr>
+</table>
+
+<h2>📦 Performance del bundle</h2>
+<table>
+  <tr><th>Ítem</th><th>Valor</th></tr>
+  <tr><td>Archivos en <span class="code">dist/assets</span></td><td>35</td></tr>
+  <tr><td>Peso total assets</td><td>≈ 0.77 MB</td></tr>
+  <tr><td>Chunk principal (index)</td><td>439 kB (130.89 kB gzip) — ya con code-splitting por módulo</td></tr>
+</table>
+
+<h2>🧹 Pendientes sugeridos (siguiente paso)</h2>
+<ul class="check">
+  <li class="no"><span class="code">npm audit fix</span> para cerrar las 2 vulnerabilidades.</li>
+  <li class="no">Refactorizar los 4 archivos > 500 líneas (BujoModule, CalendarModule, PomodoroWidget, HealthModule).</li>
+  <li class="no">Agregar pruebas mínimas de los contextos críticos (Auth, Bujo, Tasks, Finanzas).</li>
+  <li class="no">Resolver warnings de <span class="code">react-hooks/exhaustive-deps</span> en PomodoroContext.</li>
+  <li class="no">Eliminar el <span class="code">no-useless-escape</span> en BujoContext y el <span class="code">hoverShadow</span> en Card.tsx.</li>
+  <li>🔒 Buenas prácticas confirmadas: secretos por entorno, DB local ignoqueada, sesión segura.</li>
+</ul>
+
+<h2>📜 Últimos commits</h2>
+<table>
+  <tr><th>Commit</th><th>Descripción</th></tr>
+  <tr><td class="tag">bc3a8a1</td><td>Sincronización con Google Calendar (crear/mover/borrar con hora y zona), hora configurable en diario, botón borrar tareas</td></tr>
+  <tr><td class="tag">c47587a</td><td>Limpieza mock data, conector remoto automatizado</td></tr>
+  <tr><td class="tag">20a8349</td><td>Eliminación de scripts temporales</td></tr>
+  <tr><td class="tag">4185759</td><td>Limpieza código muerto y ts-expect-error pendientes</td></tr>
+  <tr><td class="tag">3453b77</td><td>Autenticación con backend propio y sesiones seguras</td></tr>
+</table>
+
+<div class="footer">Auditoría generada automáticamente · Quincha Systems · agos 1</div>
+</div>
+</body>
+</html>

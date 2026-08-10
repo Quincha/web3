@@ -82,7 +82,7 @@ export const BudgetsView: React.FC = () => {
             Define límites de gasto por categoría y compara con lo gastado.
           </p>
         </div>
-        <button className="primary-btn" style={{ background: 'var(--accent-green)', color: 'var(--bg-primary)' }} onClick={openModal}>
+        <button className="primary-btn" onClick={openModal}>
           <Target size={16} /> Nuevo Presupuesto
         </button>
       </div>
@@ -153,45 +153,25 @@ export const BudgetsView: React.FC = () => {
       )}
 
       {modalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div onClick={() => setModalOpen(false)} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }} />
+        <div className="finance-modal-overlay">
+          <div onClick={() => setModalOpen(false)} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
           <form
             onSubmit={submit}
-            style={{
-              position: 'relative',
-              width: '420px',
-              maxWidth: 'calc(100vw - 32px)',
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-light)',
-              borderRadius: '16px',
-              padding: '24px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '16px',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.5)'
-            }}
+            className="finance-modal-card"
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 600 }}>Nuevo Presupuesto</h3>
-              <button type="button" onClick={() => setModalOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px' }}>
+            <div className="finance-modal-header">
+              <h3 className="finance-modal-title">Nuevo Presupuesto</h3>
+              <button type="button" onClick={() => setModalOpen(false)} className="finance-close-btn">
                 <X size={18} />
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <label style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Categoría</label>
+            <div className="finance-form-group">
+              <label className="finance-form-label">Categoría</label>
               <select
+                className="premium-select"
                 value={form.categoryId}
                 onChange={e => { setForm(f => ({ ...f, categoryId: e.target.value })); setFormError(''); }}
-                style={{
-                  background: 'var(--bg-primary)',
-                  border: '1px solid var(--border-light)',
-                  borderRadius: '10px',
-                  padding: '10px 12px',
-                  color: 'var(--text-primary)',
-                  outline: 'none',
-                  fontSize: '14px'
-                }}
               >
                 <option value="" disabled>Seleccionar...</option>
                 {FINANCE_CATEGORIES.filter(c => !usedCategories.includes(c.id)).map(c => (
@@ -201,39 +181,23 @@ export const BudgetsView: React.FC = () => {
             </div>
 
             <div style={{ display: 'flex', gap: '12px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
-                <label style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Límite</label>
+              <div className="finance-form-group" style={{ flex: 1 }}>
+                <label className="finance-form-label">Límite</label>
                 <input
                   type="number"
+                  className="premium-input"
                   value={form.amountLimit}
                   min="0"
                   onChange={e => { setForm(f => ({ ...f, amountLimit: e.target.value })); setFormError(''); }}
                   placeholder="0"
-                  style={{
-                    background: 'var(--bg-primary)',
-                    border: '1px solid var(--border-light)',
-                    borderRadius: '10px',
-                    padding: '12px',
-                    color: 'var(--text-primary)',
-                    outline: 'none',
-                    fontSize: '14px'
-                  }}
                 />
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
-                <label style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Período</label>
+              <div className="finance-form-group" style={{ flex: 1 }}>
+                <label className="finance-form-label">Período</label>
                 <select
+                  className="premium-select"
                   value={form.period}
                   onChange={e => setForm(f => ({ ...f, period: e.target.value as 'Mensual' | 'Anual' }))}
-                  style={{
-                    background: 'var(--bg-primary)',
-                    border: '1px solid var(--border-light)',
-                    borderRadius: '10px',
-                    padding: '12px',
-                    color: 'var(--text-primary)',
-                    outline: 'none',
-                    fontSize: '14px'
-                  }}
                 >
                   <option value="Mensual">Mensual</option>
                   <option value="Anual">Anual</option>
@@ -247,7 +211,7 @@ export const BudgetsView: React.FC = () => {
               </div>
             )}
 
-            <button type="submit" className="primary-btn" style={{ background: 'var(--accent-green)', color: 'var(--bg-primary)', width: '100%' }}>
+            <button type="submit" className="primary-btn" style={{ width: '100%' }}>
               <DollarSign size={16} /> Guardar Presupuesto
             </button>
           </form>

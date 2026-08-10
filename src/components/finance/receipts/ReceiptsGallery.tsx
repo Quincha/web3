@@ -35,7 +35,7 @@ export const ReceiptsGallery: React.FC = () => {
             Los gastos registrados en el flujo de caja aparecen aquí como comprobantes.
           </p>
         </div>
-        <button className="primary-btn" style={{ background: 'var(--accent-green)', color: 'var(--bg-primary)' }} onClick={() => setIsSidebarOpen(true)}>
+        <button className="primary-btn" onClick={() => setIsSidebarOpen(true)}>
           <Upload size={16} /> Registrar Comprobante
         </button>
       </div>
@@ -61,10 +61,7 @@ export const ReceiptsGallery: React.FC = () => {
           {gastos.map(receipt => {
             const cat = financeCategoryLabel(receipt.categoryId);
             return (
-              <Card key={receipt.id} padding="none" style={{ overflow: 'hidden', position: 'relative', transition: 'transform 0.2s ease' }}
-                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'}
-                onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-              >
+              <Card key={receipt.id} padding="none" style={{ overflow: 'hidden', position: 'relative' }} className="premium-card-hover">
                 {/* Thumbnail */}
                 <div style={{
                   width: '100%',

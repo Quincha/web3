@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { FileText,  Plus, Link2,  Upload,  Trash2 } from 'lucide-react';
+import { FileText,  Plus, Link2,  Upload,  Trash2, BookOpen, Search } from 'lucide-react';
+import { Card } from '../ui/Card';
+import { LibraryView } from '../documents/LibraryView';
 import { useHealth } from '../../context/HealthContext';
 import { useTasks } from '../../context/TasksContext';
 
@@ -21,6 +23,10 @@ interface DocumentRecord {
 export const DocumentsModule: React.FC = () => {
   const { profiles } = useHealth();
   const { projects } = useTasks();
+
+  const [activeTab, setActiveTab] = useState<'todos' | 'documentos' | 'libros'>('todos');
+  const [search, setSearch] = useState('');
+  const [formatFilter, setFormatFilter] = useState<'Todos' | 'PDF' | 'EPUB'>('Todos');
 
   const [documents, setDocuments] = useState<DocumentRecord[]>([
     {
@@ -105,13 +111,77 @@ export const DocumentsModule: React.FC = () => {
       {/* Header */}
       <div className="module-title-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h2>Documentos & Archivos</h2>
-          <p className="module-subtitle">Almacenamiento S3 con vinculación polimórfica</p>
+          <h2 style={{ fontSize: '24px', fontWeight: 700, margin: '0 0 4px 0' }}>Documentos y Archivos</h2>
+          <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '14px' }}>Gestiona tus archivos y libros digitales</p>
         </div>
-        <button className="action-green-btn" onClick={() => setShowAddForm(!showAddForm)}>
-          <Plus size={14} /> Subir Documento
+        <button className="primary-btn" style={{ background: 'var(--accent-green)', color: 'var(--bg-primary)' }} onClick={() => setShowAddForm(!showAddForm)}>
+          <Plus size={16} /> Subir documento
         </button>
       </div>
+
+      {/* Tabs Segmented Control */}
+      <div style={{ display: 'flex', paddingBottom: '16px' }}>
+        <div style={{ display: 'flex', background: 'var(--bg-secondary)', borderRadius: '12px', padding: '4px' }}>
+          {(['todos', 'documentos', 'libros'] as const).map(t => (
+            <button
+              key={t}
+              onClick={() => setActiveTab(t)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 24px', borderRadius: '8px',
+                border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '14px', transition: 'all 0.2s',
+                background: activeTab === t ? 'var(--bg-card)' : 'transparent',
+                color: activeTab === t ? (t === 'libros' ? 'var(--accent-green)' : 'var(--text-primary)') : 'var(--text-secondary)',
+                boxShadow: activeTab === t ? '0 2px 8px rgba(0,0,0,0.2)' : 'none',
+                position: 'relative'
+              }}
+            >
+              {t === 'documentos' && <FileText size={16} />}
+              {t === 'libros' && <BookOpen size={16} />}
+              <span style={{ textTransform: 'capitalize' }}>{t}</span>
+              {activeTab === t && (
+                <div style={{ position: 'absolute', bottom: -4, left: '20%', right: '20%', height: 2, background: t === 'libros' ? 'var(--accent-green)' : 'var(--text-primary)', borderRadius: 2 }} />
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Global Search & Filters */}
+      <div style={{ display: 'flex', gap: '12px', paddingBottom: '16px', borderBottom: '1px solid var(--border-light)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', position: 'relative', flex: 1, maxWidth: '600px' }}>
+          <Search size={16} color="var(--text-secondary)" style={{ position: 'absolute', left: '12px' }} />
+          <input
+            type="text"
+            className="premium-input"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Buscar en todos los documentos y libros..."
+            style={{ paddingLeft: '36px', background: 'var(--bg-card)' }}
+          />
+        </div>
+        <select 
+          className="premium-select" 
+          style={{ width: '150px', background: 'var(--bg-card)' }}
+          value={formatFilter}
+          onChange={e => setFormatFilter(e.target.value as any)}
+        >
+          <option value="Todos">Todos los formatos</option>
+          <option value="PDF">Solo PDF</option>
+          <option value="EPUB">Solo EPUB</option>
+        </select>
+        <select 
+          className="premium-select" 
+          style={{ width: '150px', background: 'var(--bg-card)' }}
+        >
+          <option value="recent">Más recientes</option>
+          <option value="alpha">A-Z</option>
+        </select>
+      </div>
+
+      {(activeTab === 'todos' || activeTab === 'documentos') && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+
 
       {showAddForm && (
         <div className="add-task-form-card" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '20px' }}>
@@ -179,33 +249,65 @@ export const DocumentsModule: React.FC = () => {
         </div>
       )}
 
+      {/* Docs Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700 }}>Todos tus documentos</h3>
+          <span style={{ background: 'var(--bg-secondary)', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 600 }}>
+            {documents.length} archivos
+          </span>
+        </div>
+        {activeTab === 'todos' && (
+          <button onClick={() => setActiveTab('documentos')} style={{ background: 'none', border: 'none', color: 'var(--accent-green)', fontWeight: 600, fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            Ver todos →
+          </button>
+        )}
+      </div>
+
       {/* Docs Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
-        {documents.map(doc => (
-          <div
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', 
+        gap: '16px'
+      }}>
+        {documents
+          .filter(doc => doc.name.toLowerCase().includes(search.toLowerCase()))
+          .filter(doc => formatFilter === 'Todos' || doc.name.toLowerCase().includes(formatFilter.toLowerCase()))
+          .slice(0, activeTab === 'todos' ? 4 : undefined)
+          .map(doc => (
+          <Card
             key={doc.id}
+            padding="md"
+            className="premium-card-hover"
             style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              borderRadius: '10px',
-              padding: '16px',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
               gap: '12px',
-              transition: 'all 0.15s ease'
+              minWidth: activeTab === 'todos' ? '300px' : 'auto',
+              flexShrink: 0
             }}
           >
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-              <div style={{ padding: '8px', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)', borderRadius: '6px', color: '#3B82F6' }}>
-                <FileText size={20} />
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+              <div style={{ 
+                padding: '12px', 
+                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.15))', 
+                border: '1px solid rgba(139, 92, 246, 0.2)', 
+                borderRadius: '12px', 
+                color: '#8b5cf6',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.05)'
+              }}>
+                <FileText size={24} />
               </div>
-              <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-                <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 600 }} title={doc.name}>
+              <div style={{ overflow: 'hidden', flex: 1 }}>
+                <h4 style={{ margin: '0 0 4px', fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={doc.name}>
                   {doc.name}
                 </h4>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-subtle)' }}>
-                  {doc.fileSize} · {doc.uploadedAt}
+                <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>
+                  {doc.fileSize} • {doc.uploadedAt}
                 </span>
               </div>
             </div>
@@ -213,42 +315,54 @@ export const DocumentsModule: React.FC = () => {
             {doc.linkedTo.type !== 'none' && (
               <div
                 style={{
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '4px',
-                  fontSize: '0.75rem',
-                  color: doc.linkedTo.type === 'health_profile' ? '#EF4444' : '#10B981',
-                  background: doc.linkedTo.type === 'health_profile' ? 'rgba(239,68,68,0.06)' : 'rgba(16,185,129,0.06)',
-                  padding: '4px 8px',
-                  borderRadius: '4px',
+                  gap: '6px',
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  color: doc.linkedTo.type === 'health_profile' ? 'var(--accent-red)' : 'var(--accent-green)',
+                  background: doc.linkedTo.type === 'health_profile' ? 'rgba(248, 113, 113, 0.1)' : 'rgba(52, 211, 153, 0.1)',
+                  padding: '6px 10px',
+                  borderRadius: '6px',
                   alignSelf: 'flex-start'
                 }}
               >
-                <Link2 size={12} />
-                <span>Vinculado: <strong>{doc.linkedTo.label}</strong></span>
+                <Link2 size={14} />
+                <span>{doc.linkedTo.label}</span>
               </div>
             )}
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-color)', paddingTop: '10px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-light)', paddingTop: '12px', marginTop: '4px' }}>
               <a
                 href={doc.storageUrl}
                 target="_blank"
                 rel="noreferrer"
-                style={{ fontSize: '0.78rem', color: 'var(--accent-green)', textDecoration: 'none', fontWeight: 600 }}
+                style={{ fontSize: '13px', color: 'var(--accent-primary)', textDecoration: 'none', fontWeight: 600, transition: 'color 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--accent-primary)'}
               >
-                Abrir en S3 →
+                Abrir archivo →
               </a>
               <button
                 onClick={() => handleDelete(doc.id)}
-                style={{ background: 'transparent', border: 'none', color: 'var(--text-subtle)', cursor: 'pointer' }}
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', padding: '4px', borderRadius: '6px', transition: 'color 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.color = 'var(--accent-red)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-tertiary)'}
                 title="Eliminar"
               >
-                <Trash2 size={13} />
+                <Trash2 size={16} />
               </button>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
+
+      </div>
+      )}
+
+      {(activeTab === 'todos' || activeTab === 'libros') && (
+        <LibraryView previewMode={activeTab === 'todos'} onSeeAll={() => setActiveTab('libros')} searchTerm={search} formatFilter={formatFilter} />
+      )}
 
     </div>
   );
