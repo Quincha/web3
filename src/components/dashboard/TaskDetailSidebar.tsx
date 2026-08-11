@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  X, Clock, Play, 
-  CheckCircle2, Circle, Plus, ListTodo, FileText, Paperclip, Activity, RotateCcw, StopCircle
+  X, Play, Settings,
+  CheckCircle2, Circle, Plus, ListTodo, FileText, Paperclip, Activity, RotateCcw, StopCircle, ExternalLink, Maximize2, MoreVertical
 } from 'lucide-react';
 import { useTasks } from '../../context/TasksContext';
 import { useClients } from '../../context/ClientsContext';
@@ -18,8 +18,6 @@ const PRIORITY_OPTIONS: { value: Priority; label: string; color: string }[] = [
   { value: 'medium', label: 'Media', color: '#3B82F6' },
   { value: 'low', label: 'Baja', color: '#8994A3' }
 ];
-
-const CATEGORY_OPTIONS = ['Desarrollo', 'Diseño', 'Personal', 'Investigación', 'Finanzas', 'Hardware'];
 
 export const TaskDetailSidebar: React.FC<TaskDetailSidebarProps> = ({ taskId, onClose }) => {
   const { tasks, updateTask, getActiveProjects, incrementTaskPomodoro } = useTasks();
@@ -227,18 +225,22 @@ export const TaskDetailSidebar: React.FC<TaskDetailSidebarProps> = ({ taskId, on
                 fontSize: '20px', fontWeight: 600, outline: 'none', width: '90%'
               }}
             />
-            <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#8994A3', cursor: 'pointer' }}>
-              <X size={24} />
-            </button>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button style={{ background: 'transparent', border: 'none', color: '#8994A3', cursor: 'pointer' }}><ExternalLink size={18} /></button>
+              <button style={{ background: 'transparent', border: 'none', color: '#8994A3', cursor: 'pointer' }}><Maximize2 size={18} /></button>
+              <button style={{ background: 'transparent', border: 'none', color: '#8994A3', cursor: 'pointer' }}><MoreVertical size={18} /></button>
+              <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#8994A3', cursor: 'pointer', marginLeft: '8px' }}>
+                <X size={24} />
+              </button>
+            </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <select 
-              value={category} 
-              onChange={e => { setCategory(e.target.value); handleSave(); }}
-              style={{ ...inputStyle, width: 'auto', padding: '4px 8px', fontSize: '12px', borderRadius: '4px' }}
-            >
-              {CATEGORY_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
+            <span style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#3B82F6', padding: '4px 10px', borderRadius: '4px', fontSize: '12px', fontWeight: 500 }}>
+              {category}
+            </span>
+            <button style={{ background: 'transparent', border: 'none', color: '#8994A3', cursor: 'pointer' }}>
+              <Plus size={16} />
+            </button>
           </div>
         </div>
 
@@ -248,57 +250,89 @@ export const TaskDetailSidebar: React.FC<TaskDetailSidebarProps> = ({ taskId, on
           {/* FECHAS */}
           <div>
             <h4 style={sectionTitleStyle}>Fechas</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div>
-                <label style={{ fontSize: '11px', color: '#596575', marginBottom: '4px', display: 'block' }}>Creación</label>
-                <input type="date" value={createdAt} onChange={e => setCreatedAt(e.target.value)} onBlur={handleBlurSave} style={inputStyle} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+              <div style={{ background: '#111820', border: '1px solid #1B2632', padding: '12px', borderRadius: '8px' }}>
+                <span style={{ fontSize: '11px', color: '#596575', display: 'block', marginBottom: '6px' }}>Creación</span>
+                <input type="text" value={createdAt} onChange={e => setCreatedAt(e.target.value)} onBlur={handleBlurSave} style={{ background: 'transparent', border: 'none', color: '#F3F5F7', fontSize: '13px', width: '100%', outline: 'none' }} placeholder="—" />
               </div>
-              <div>
-                <label style={{ fontSize: '11px', color: '#596575', marginBottom: '4px', display: 'block' }}>Inicio</label>
-                <input type="date" value={startedAt} onChange={e => setStartedAt(e.target.value)} onBlur={handleBlurSave} style={inputStyle} />
+              <div style={{ background: '#111820', border: '1px solid #1B2632', padding: '12px', borderRadius: '8px' }}>
+                <span style={{ fontSize: '11px', color: '#596575', display: 'block', marginBottom: '6px' }}>Inicio</span>
+                <input type="text" value={startedAt} onChange={e => setStartedAt(e.target.value)} onBlur={handleBlurSave} style={{ background: 'transparent', border: 'none', color: '#F3F5F7', fontSize: '13px', width: '100%', outline: 'none' }} placeholder="—" />
               </div>
-              <div>
-                <label style={{ fontSize: '11px', color: '#596575', marginBottom: '4px', display: 'block' }}>Límite</label>
-                <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} onBlur={handleBlurSave} style={inputStyle} />
+              <div style={{ background: '#111820', border: '1px solid #1B2632', padding: '12px', borderRadius: '8px' }}>
+                <span style={{ fontSize: '11px', color: '#596575', display: 'block', marginBottom: '6px' }}>Límite</span>
+                <input type="text" value={dueDate} onChange={e => setDueDate(e.target.value)} onBlur={handleBlurSave} style={{ background: 'transparent', border: 'none', color: '#F0445E', fontSize: '13px', width: '100%', outline: 'none' }} placeholder="—" />
               </div>
-              <div>
-                <label style={{ fontSize: '11px', color: '#596575', marginBottom: '4px', display: 'block' }}>Término</label>
-                <input type="date" value={completedAt} onChange={e => setCompletedAt(e.target.value)} onBlur={handleBlurSave} style={inputStyle} />
+              <div style={{ background: '#111820', border: '1px solid #1B2632', padding: '12px', borderRadius: '8px' }}>
+                <span style={{ fontSize: '11px', color: '#596575', display: 'block', marginBottom: '6px' }}>Término</span>
+                <input type="text" value={completedAt} onChange={e => setCompletedAt(e.target.value)} onBlur={handleBlurSave} style={{ background: 'transparent', border: 'none', color: '#8994A3', fontSize: '13px', width: '100%', outline: 'none' }} placeholder="—" />
               </div>
             </div>
           </div>
 
           {/* POMODORO */}
-          <div style={{ background: '#111820', border: '1px solid #1B2632', borderRadius: '12px', padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <h4 style={{ ...sectionTitleStyle, alignSelf: 'flex-start' }}><Clock size={16} /> Pomodoro</h4>
-            <div style={{ fontSize: '48px', fontWeight: 300, color: '#00D89A', fontFamily: 'monospace', marginBottom: '8px' }}>
-              {formatTime(timeLeft)}
-            </div>
-            <div style={{ color: '#8994A3', fontSize: '13px', marginBottom: '24px' }}>Enfoque</div>
-            
-            <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
-              <button 
-                onClick={toggleTimer}
-                style={{ 
-                  background: isTimerRunning ? '#F0445E' : '#00D89A', color: '#05080C', 
-                  border: 'none', borderRadius: '8px', padding: '8px 24px', fontWeight: 600, 
-                  display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' 
-                }}
-              >
-                {isTimerRunning ? <StopCircle size={18} /> : <Play size={18} />}
-                {isTimerRunning ? 'Pausar' : 'Iniciar'}
-              </button>
-              <button 
-                onClick={resetTimer}
-                style={{ background: 'transparent', color: '#F3F5F7', border: '1px solid #1B2632', borderRadius: '8px', padding: '8px 16px', cursor: 'pointer' }}
-              >
-                <RotateCcw size={18} />
-              </button>
-            </div>
-            
-            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', fontSize: '12px', color: '#596575' }}>
-              <span>Ciclos completados: {completedPomodoros}</span>
-              <span>Estimados: {pomodoros}</span>
+          <div>
+            <h4 style={sectionTitleStyle}>Pomodoro</h4>
+            <div style={{ background: '#111820', border: '1px solid #1B2632', borderRadius: '12px', padding: '24px', display: 'flex', flexDirection: 'column' }}>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                {/* Circular Timer */}
+                <div style={{ position: 'relative', width: '160px', height: '160px', borderRadius: '50%', border: '6px solid #1B2632', borderTopColor: '#00D89A', borderRightColor: '#00D89A', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontSize: '13px', color: '#8994A3', marginBottom: '4px' }}>Enfoque</span>
+                  <span style={{ fontSize: '36px', fontWeight: 'bold', color: '#F3F5F7', fontFamily: 'sans-serif' }}>
+                    {formatTime(timeLeft)}
+                  </span>
+                  
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                    <button 
+                      onClick={toggleTimer}
+                      style={{ 
+                        background: '#00D89A', color: '#05080C', 
+                        border: 'none', borderRadius: '50%', width: '36px', height: '36px', 
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' 
+                      }}
+                    >
+                      {isTimerRunning ? <StopCircle size={18} /> : <Play size={18} fill="currentColor" style={{ marginLeft: isTimerRunning ? 0 : '3px' }} />}
+                    </button>
+                    <button 
+                      onClick={resetTimer}
+                      style={{ 
+                        background: 'transparent', color: '#8994A3', border: '1px solid #596575', 
+                        borderRadius: '50%', width: '36px', height: '36px', 
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' 
+                      }}
+                    >
+                      <RotateCcw size={16} />
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Legend */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1, paddingLeft: '32px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', fontSize: '13px' }}>
+                    <div style={{ width: 12, height: 12, background: '#00D89A', borderRadius: 2, marginRight: '12px' }} />
+                    <span style={{ color: '#F3F5F7' }}>Enfoque</span>
+                    <span style={{ marginLeft: 'auto', color: '#8994A3' }}>25 min</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', fontSize: '13px' }}>
+                    <div style={{ width: 12, height: 12, background: '#16C7D9', borderRadius: 2, marginRight: '12px' }} />
+                    <span style={{ color: '#F3F5F7' }}>Descanso corto</span>
+                    <span style={{ marginLeft: 'auto', color: '#8994A3' }}>5 min</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', fontSize: '13px' }}>
+                    <div style={{ width: 12, height: 12, background: '#F0445E', borderRadius: 2, marginRight: '12px' }} />
+                    <span style={{ color: '#F3F5F7' }}>Descanso largo</span>
+                    <span style={{ marginLeft: 'auto', color: '#8994A3' }}>15 min</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px', color: '#F3F5F7' }}>
+                <span>Ciclos completados: {completedPomodoros}</span>
+                <button style={{ background: 'none', border: 'none', color: '#596575', cursor: 'pointer', display: 'flex' }}>
+                  <Settings size={16} />
+                </button>
+              </div>
             </div>
           </div>
 
