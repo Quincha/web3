@@ -44,9 +44,12 @@ export interface Task {
   completedPomodoros: number;
   timeSpentSeconds: number;
   createdAt: string;
+  startedAt: string | null;
   completedAt: string | null;
   syncId: string | null;
   migrationCount?: number;
+  notes?: string;
+  observations?: string;
 }
 
 // ─────────────────────────────────────────────
@@ -58,7 +61,7 @@ interface TasksContextType {
   projects: Project[];
 
   // Tasks CRUD
-  addTask: (task: Omit<Task, 'id' | 'createdAt' | 'completedAt' | 'syncId' | 'subtasks' | 'completedPomodoros' | 'timeSpentSeconds'>, skipBujoEvent?: boolean) => string;
+  addTask: (task: Omit<Task, 'id' | 'createdAt' | 'completedAt' | 'syncId' | 'subtasks' | 'completedPomodoros' | 'timeSpentSeconds' | 'startedAt' | 'notes' | 'observations'>, skipBujoEvent?: boolean) => string;
   updateTask: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string) => void;
   completeTask: (id: string) => void;
@@ -165,7 +168,7 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // ── TASKS ─────────────────────────────────────────
 
-  const addTask = useCallback((task: Omit<Task, 'id' | 'createdAt' | 'completedAt' | 'syncId' | 'subtasks' | 'completedPomodoros' | 'timeSpentSeconds'>, skipBujoEvent?: boolean): string => {
+  const addTask = useCallback((task: Omit<Task, 'id' | 'createdAt' | 'completedAt' | 'syncId' | 'subtasks' | 'completedPomodoros' | 'timeSpentSeconds' | 'startedAt' | 'notes' | 'observations'>, skipBujoEvent?: boolean): string => {
     const id = genId('task');
     let cTitle = task.title.trim();
     if (cTitle.length > 0) {
@@ -180,8 +183,11 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       completedPomodoros: 0,
       timeSpentSeconds: 0,
       createdAt: isoNow(),
+      startedAt: null,
       completedAt: null,
-      syncId: null
+      syncId: null,
+      notes: '',
+      observations: ''
     };
     setTasks(prev => {
       const updated = [newTask, ...prev];
@@ -230,8 +236,19 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const setTaskInProgress = useCallback((id: string) => {
-    updateTask(id, { status: 'in-progress' });
-  }, [updateTask]);
+    setTasks(prev => {
+      const updated = prev.map(t => {
+        if (t.id === id) {
+          const startedAt = t.startedAt ? t.startedAt : isoNow();
+          return { ...t, status: 'in-progress' as TaskStatus, startedAt };
+        }
+        return t;
+      });
+      saveTasks(updated);
+      return updated;
+    });
+    SyncQueueService.enqueue('UPDATE_TASK', { id, status: 'in-progress' });
+  }, []);
 
   const migrateTask = useCallback((id: string, baseDate?: string): string | null => {
     const nowISO = today();

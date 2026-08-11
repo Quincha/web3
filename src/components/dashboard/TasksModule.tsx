@@ -1,315 +1,126 @@
 import React, { useState } from 'react';
 import { 
-  CheckCircle2, Plus, Circle, Trash2, ArrowRight,
-  Briefcase, Tag, Calendar, User, DollarSign,
-  ChevronDown
+  CheckCircle2, Plus, Circle, Search, Filter, ArrowUpDown, 
+  MessageSquare, Calendar, MoreHorizontal
 } from 'lucide-react';
 import { useTasks } from '../../context/TasksContext';
-import { useClients } from '../../context/ClientsContext';
-import { useFinance } from '../../context/FinanceContext';
-import type { Task, Priority, Project } from '../../context/TasksContext';
+import type { Task, Priority, TaskStatus } from '../../context/TasksContext';
 import { TaskDetailSidebar } from './TaskDetailSidebar';
+import './Kanban.css';
 
 // ─────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────
 
-const tokens = { colors: { accent: { primary: '#3B82F6', green: '#10B981', orange: '#F59E0B' } } };
-
-const PRIORITY_CONFIG: Record<Priority, { label: string; color: string; icon: React.ReactNode }> = {
-  urgent: { label: 'Urgente', color: '#EF4444', icon: <div /> },
-  high:   { label: 'Alta',    color: '#F59E0B', icon: <ChevronDown size={11} style={{ transform: 'rotate(180deg)' }} /> },
-  medium: { label: 'Media',   color: '#3B82F6', icon: <ChevronDown size={11} /> },
-  low:    { label: 'Baja',    color: '#6B7280', icon: <ChevronDown size={11} /> },
+const PRIORITY_COLORS: Record<Priority, string> = {
+  urgent: '#F0445E',
+  high: '#F5B83D',
+  medium: '#3B82F6',
+  low: '#8994A3',
 };
 
-function formatDueDate(iso: string | null): { label: string; urgent: boolean } {
-  if (!iso) return { label: 'Sin fecha', urgent: false };
-  const today = new Date().toISOString().split('T')[0];
-  const diff = Math.ceil((new Date(iso + 'T12:00:00').getTime() - new Date(today + 'T12:00:00').getTime()) / 86400000);
-  if (diff < 0) return { label: `Vencida hace ${Math.abs(diff)}d`, urgent: true };
-  if (diff === 0) return { label: 'Hoy', urgent: true };
-  if (diff === 1) return { label: 'Mañana', urgent: false };
-  return { label: `${diff} días`, urgent: false };
+const CATEGORY_COLORS: Record<string, string> = {
+  'Desarrollo': '#16C7D9',
+  'Diseño': '#F5B83D',
+  'Personal': '#D946EF',
+  'Investigación': '#9B6CFF',
+  'Finanzas': '#22C58B',
+  'Hardware': '#3B82F6',
+};
+
+function getCategoryColor(category: string): string {
+  return CATEGORY_COLORS[category] || '#8994A3';
 }
 
-function formatDateTime(iso: string): string {
+function formatShortDate(iso: string | null): string {
   if (!iso) return '';
-  const d = new Date(iso);
-  return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', ' a las');
+  const d = new Date(iso + 'T12:00:00');
+  const today = new Date();
+  const diff = Math.ceil((d.getTime() - today.getTime()) / (1000 * 3600 * 24));
+  
+  if (diff === 0) return 'Hoy';
+  if (diff === 1) return 'Mañana';
+  if (diff === -1) return 'Ayer';
+  
+  return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
 }
 
 // ─────────────────────────────────────────────
-// QUICK ENTRY BAR
+// TASK CARD COMPONENT
 // ─────────────────────────────────────────────
 
-const QuickEntryBar: React.FC = () => {
-  const { addTask } = useTasks();
-  const { getActiveClients } = useClients();
-  const clients = getActiveClients();
-  
-  const [title, setTitle] = useState('');
-  const [defaultClientId, setDefaultClientId] = useState('');
-  const [selectedDate, setSelectedDate] = useState(''); // ISO string YYYY-MM-DD
+interface TaskCardProps {
+  task: Task;
+  onClick: (taskId: string) => void;
+  onDragStart: (e: React.DragEvent, taskId: string) => void;
+  onDragEnd: (e: React.DragEvent) => void;
+  onComplete: (taskId: string) => void;
+}
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && title.trim()) {
-      addTask({
-        title: title.trim(),
-        description: '',
-        project_id: null,
-        client_id: defaultClientId || null,
-        category: 'general',
-        priority: 'medium',
-        status: 'pending',
-        dueDate: selectedDate || null,
-        tags: [],
-        estimatedPomodoros: 1,
-        isBillable: false,
-        price: 0
-      });
-      setTitle('');
-    }
-  };
+const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onDragStart, onDragEnd, onComplete }) => {
+  const completedSubtasks = task.subtasks.filter(s => s.completed).length;
+  const totalSubtasks = task.subtasks.length;
+  const categoryColor = getCategoryColor(task.category);
+  const isCompleted = task.status === 'completed';
 
   return (
-    <div style={{ 
-      background: 'rgba(0,0,0,0.4)', border: `1px solid ${tokens.colors.accent.primary}40`, 
-      borderRadius: '12px', padding: '8px 12px', display: 'flex', gap: '12px', alignItems: 'center',
-      marginBottom: '24px', boxShadow: `0 4px 24px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.05)`
-    }}>
-      <div style={{ color: tokens.colors.accent.primary, display: 'flex', alignItems: 'center' }}>
-        <Plus size={20} />
+    <div 
+      className={`kanban-card ${isCompleted ? 'completed' : ''}`}
+      draggable
+      onDragStart={(e) => onDragStart(e, task.id)}
+      onDragEnd={onDragEnd}
+      onClick={() => onClick(task.id)}
+      style={{
+        borderLeft: `3px solid ${PRIORITY_COLORS[task.priority]}`
+      }}
+    >
+      <div className="kanban-card-header">
+        <button 
+          className="kanban-card-check"
+          onClick={(e) => { e.stopPropagation(); onComplete(task.id); }}
+        >
+          {isCompleted ? <CheckCircle2 size={16} color="#00D89A" /> : <Circle size={16} />}
+        </button>
+        <h4 className={`kanban-card-title ${isCompleted ? 'completed-title' : ''}`}>
+          {task.title}
+        </h4>
       </div>
-      <input 
-        type="text"
-        placeholder="Escribe una tarea y presiona Enter para guardar..."
-        value={title}
-        onChange={e => setTitle(e.target.value)}
-        onKeyDown={handleKeyDown}
-        style={{
-          flex: 1, background: 'transparent', border: 'none', color: 'white', 
-          fontSize: '15px', outline: 'none', padding: '8px 0'
-        }}
-      />
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '12px' }}>
-        <User size={16} color="rgba(255,255,255,0.5)" />
-        <select 
-          value={defaultClientId} 
-          onChange={e => setDefaultClientId(e.target.value)}
-          style={{
-            background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '6px', 
-            color: 'white', padding: '4px 8px', fontSize: '13px', outline: 'none', cursor: 'pointer'
+
+      <div className="kanban-card-badges">
+        <span 
+          className="kanban-badge"
+          style={{ 
+            color: categoryColor, 
+            backgroundColor: `${categoryColor}15`,
+            borderColor: `${categoryColor}30`
           }}
         >
-          <option value="">Sin Cliente</option>
-          {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
-        
-        <div style={{ width: '1px', height: '20px', background: 'rgba(255,255,255,0.1)', margin: '0 4px' }} />
-        
-        <Calendar size={16} color="rgba(255,255,255,0.5)" />
-        <input 
-          type="date" 
-          value={selectedDate}
-          onChange={e => setSelectedDate(e.target.value)}
-          title="Programar fecha"
-          style={{
-            background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '6px', 
-            color: 'white', padding: '2px 8px', fontSize: '13px', outline: 'none', cursor: 'pointer',
-            fontFamily: 'inherit', colorScheme: 'dark'
-          }}
-        />
+          {task.category || 'General'}
+        </span>
       </div>
-    </div>
-  );
-};
 
-// ─────────────────────────────────────────────
-// TASK ROW
-// ─────────────────────────────────────────────
-
-const TaskRow: React.FC<{
-  task: Task;
-  project?: Project;
-  onComplete: (id: string) => void;
-  onUpdate: (id: string, updates: Partial<Task>) => void;
-  onToggleSubtask: (taskId: string, subtaskId: string) => void;
-  onAddSubtask: (taskId: string, content: string) => void;
-  onClick: (taskId: string) => void;
-  onDelete: (id: string) => void;
-  onMigrate: (id: string) => void;
-}> = ({ task, project, onComplete, onUpdate, onClick, onDelete, onMigrate }) => {
-  const { getClientById, getActiveClients } = useClients();
-  const clients = getActiveClients();
-  
-  const [isEditingPrice, setIsEditingPrice] = useState(false);
-  const [inlinePrice, setInlinePrice] = useState(task.price || 0);
-  
-  const pCfg = PRIORITY_CONFIG[task.priority];
-  const due = formatDueDate(task.dueDate);
-  const client = task.client_id ? getClientById(task.client_id) : null;
-
-  return (
-    <div className={`task-row-card ${task.status === 'completed' ? 'task-completed' : ''}`}>
-      <div className="task-row-main">
-        <button className="task-check-btn" onClick={() => onComplete(task.id)}>
-          {task.status === 'completed' ? <CheckCircle2 size={18} color="var(--accent-green)" /> : <Circle size={18} />}
-        </button>
-
-        <div className="task-row-content" onClick={() => onClick(task.id)} style={{ cursor: 'pointer' }}>
-          <div className="task-row-title-bar" style={{ marginBottom: '2px' }}>
-            <span className="task-row-title">{task.title}</span>
-          </div>
-          
-          {/* Subtle timestamps */}
-          <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', display: 'flex', gap: '6px', alignItems: 'center', marginBottom: '8px' }}>
-            <span>Creada: {formatDateTime(task.createdAt)}</span>
-            {task.status === 'completed' && task.completedAt && (
-              <>
-                <span style={{ fontSize: '8px' }}>•</span>
-                <span style={{ color: 'rgba(16,185,129,0.7)' }}>Completada: {formatDateTime(task.completedAt)}</span>
-              </>
-            )}
-            {task.status === 'cancelled' && (
-              <>
-                <span style={{ fontSize: '8px' }}>•</span>
-                <span style={{ color: 'rgba(239,68,68,0.7)' }}>Descartada</span>
-              </>
-            )}
-          </div>
-
-          <div className="task-row-meta">
-
-            {!!task.migrationCount && task.migrationCount > 0 && (
-              <span className="task-meta-pill" style={{ color: '#00E676', background: 'rgba(0,230,118,0.1)' }} title="Veces que fue migrada">
-                <ArrowRight size={12} /> {task.migrationCount} migrada{task.migrationCount > 1 ? 's' : ''}
-              </span>
-            )}
-
-            {task.subtasks.length > 0 && (
-               <span className="task-meta-pill" style={{ color: 'rgba(255,255,255,0.6)', background: 'rgba(255,255,255,0.05)' }}>
-                 {task.subtasks.filter(s => s.completed).length}/{task.subtasks.length} subtareas
-               </span>
-            )}
-
-            {project && (
-              <span className="task-meta-pill" style={{ color: project.color, background: `${project.color}15` }}>
-                <Briefcase size={12} /> {project.name}
-              </span>
-            )}
-            
-            {client ? (
-              <select 
-                value={task.client_id || ''} 
-                onChange={e => onUpdate(task.id, { client_id: e.target.value || null })}
-                onClick={e => e.stopPropagation()}
-                className="task-meta-pill" 
-                style={{ color: client.color, background: `${client.color}15`, border: 'none', appearance: 'none', cursor: 'pointer', paddingRight: '8px' }}
-              >
-                <option value={client.id}>{client.name}</option>
-                {clients.filter(c => c.id !== client.id).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                <option value="">Quitar Cliente</option>
-              </select>
-            ) : (
-              <select 
-                value="" 
-                onChange={e => onUpdate(task.id, { client_id: e.target.value || null })}
-                onClick={e => e.stopPropagation()}
-                className="task-meta-pill" 
-                style={{ color: tokens.colors.accent.orange, background: `${tokens.colors.accent.orange}15`, border: 'none', appearance: 'none', cursor: 'pointer' }}
-              >
-                <option value="" disabled>+ Añadir Cliente</option>
-                {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-            )}
-
-            {task.isBillable ? (
-              isEditingPrice ? (
-                <span className="task-meta-pill" style={{ color: tokens.colors.accent.green, background: `${tokens.colors.accent.green}15` }}>
-                  <DollarSign size={12} /> 
-                  <input 
-                    type="number" 
-                    value={inlinePrice}
-                    autoFocus
-                    onClick={e => e.stopPropagation()}
-                    onChange={e => setInlinePrice(Number(e.target.value))}
-                    onBlur={() => {
-                      setIsEditingPrice(false);
-                      onUpdate(task.id, { price: inlinePrice });
-                    }}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') {
-                        setIsEditingPrice(false);
-                        onUpdate(task.id, { price: inlinePrice });
-                      }
-                    }}
-                    style={{ background: 'transparent', border: 'none', color: 'inherit', width: '60px', outline: 'none', fontWeight: 600, fontSize: '12px' }}
-                  />
-                </span>
-              ) : (
-                <span 
-                  className="task-meta-pill" 
-                  onClick={(e) => { e.stopPropagation(); setIsEditingPrice(true); setInlinePrice(task.price || 0); }}
-                  style={{ color: tokens.colors.accent.green, background: `${tokens.colors.accent.green}15`, fontWeight: 600, cursor: 'pointer' }}
-                >
-                  <DollarSign size={12} /> ${task.price?.toLocaleString()}
-                </span>
-              )
-            ) : (
-              <span 
-                className="task-meta-pill" 
-                onClick={(e) => { e.stopPropagation(); onUpdate(task.id, { isBillable: true, price: 0 }); }}
-                style={{ color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.05)', cursor: 'pointer' }}
-                title="Hacer facturable"
-              >
-                <Tag size={12} /> Recordatorio
-              </span>
-            )}
-
-            <span className="task-priority-badge" style={{ color: pCfg.color }}>
-              {pCfg.icon} {pCfg.label}
+      <div className="kanban-card-footer">
+        <div className="kanban-card-meta">
+          {task.dueDate && (
+            <span className="kanban-card-meta-item" style={{ color: task.priority === 'urgent' ? '#F0445E' : 'inherit' }}>
+              <Calendar size={12} /> {formatShortDate(task.dueDate)}
             </span>
-            {task.dueDate && (
-              <span className={`task-due-badge ${due.urgent ? 'due-urgent' : ''}`}>
-                <Calendar size={10} /> {due.label}
-              </span>
-            )}
-          </div>
+          )}
+          {totalSubtasks > 0 && (
+            <span className="kanban-card-meta-item">
+              <CheckCircle2 size={12} /> {completedSubtasks}/{totalSubtasks}
+            </span>
+          )}
+          {(task.notes || task.observations) && (
+            <span className="kanban-card-meta-item">
+              <MessageSquare size={12} />
+            </span>
+          )}
         </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flexShrink: 0 }}>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onMigrate(task.id);
-            }}
-            title="Migrar tarea: mueve al siguiente día hábil y cuenta la migración"
-            className="task-delete-btn"
-            style={{
-              background: 'transparent', border: 'none', cursor: 'pointer',
-              color: 'rgba(0,230,118,0.5)', padding: '8px', borderRadius: '8px',
-              transition: 'all 0.15s ease', display: 'flex', alignItems: 'center'
-            }}
-          >
-            <ArrowRight size={16} />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(task.id);
-            }}
-            title="Borrar tarea"
-            className="task-delete-btn"
-            style={{
-              background: 'transparent', border: 'none', cursor: 'pointer',
-              color: 'rgba(255,255,255,0.3)', padding: '8px', borderRadius: '8px',
-              transition: 'all 0.15s ease', display: 'flex', alignItems: 'center'
-            }}
-          >
-            <Trash2 size={16} />
-          </button>
+        
+        {/* Mock Avatar for Assignee - Would come from user system */}
+        <div className="kanban-avatar">
+          D
         </div>
       </div>
     </div>
@@ -320,115 +131,296 @@ const TaskRow: React.FC<{
 // MAIN MODULE
 // ─────────────────────────────────────────────
 
-type TaskFilter = 'today' | 'all' | 'pendientes' | 'urgent' | 'completed';
-const FILTER_OPTIONS: { id: TaskFilter; label: string }[] = [
-  { id: 'today',      label: 'Hoy' },
-  { id: 'all',        label: 'Todas' },
-  { id: 'pendientes', label: 'Pendientes' },
-  { id: 'urgent',     label: 'Urgentes' },
-  { id: 'completed',  label: 'Completadas' },
-];
-
 export const TasksModule: React.FC = () => {
-  const { tasks, getActiveProjects, updateTask, getTodayTasks, deleteTask, migrateTask } = useTasks();
-  const { removeDeudaByTaskId } = useFinance();
-  const [filter, setFilter] = useState<TaskFilter>('today');
+  const { tasks, addTask, updateTask, completeTask, setTaskInProgress } = useTasks();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const projects = getActiveProjects();
+  
+  // Quick Add State
+  const [quickAddColumn, setQuickAddColumn] = useState<string | null>(null);
+  const [quickAddTitle, setQuickAddTitle] = useState('');
 
-  const getFilteredTasks = (): Task[] => {
-    let base: Task[] = [];
-    if (filter === 'today')     base = getTodayTasks();
-    else if (filter === 'pendientes') base = tasks.filter(t => t.status === 'pending' || t.status === 'in-progress');
-    else if (filter === 'urgent') base = tasks.filter(t => t.priority === 'urgent' && t.status !== 'completed');
-    else if (filter === 'completed') base = tasks.filter(t => t.status === 'completed');
-    else base = tasks.filter(t => t.status !== 'cancelled');
-
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      base = base.filter(t => t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q));
-    }
-
-    return base.sort((a, b) => {
-      // Sort completed tasks by completedAt descending
-      if (filter === 'completed') {
-        const da = a.completedAt ? new Date(a.completedAt).getTime() : 0;
-        const db = b.completedAt ? new Date(b.completedAt).getTime() : 0;
-        return db - da;
-      }
-      return 0;
-    });
+  // ── Drag & Drop Handlers ──
+  const handleDragStart = (e: React.DragEvent, taskId: string) => {
+    e.dataTransfer.setData('taskId', taskId);
+    // Add dragging class for styling on the element itself (optional, browser ghost handles most of it)
+    setTimeout(() => {
+      (e.target as HTMLElement).classList.add('dragging');
+    }, 0);
   };
 
-  const filteredTasks = getFilteredTasks();
+  const handleDragEnd = (e: React.DragEvent) => {
+    (e.target as HTMLElement).classList.remove('dragging');
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault(); // Necessary to allow dropping
+    e.currentTarget.classList.add('drag-over');
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.currentTarget.classList.remove('drag-over');
+  };
+
+  const handleDrop = (e: React.DragEvent, newStatus: TaskStatus) => {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+    const taskId = e.dataTransfer.getData('taskId');
+    
+    if (taskId) {
+      const task = tasks.find(t => t.id === taskId);
+      if (task && task.status !== newStatus) {
+        if (newStatus === 'completed') {
+          completeTask(taskId);
+        } else if (newStatus === 'in-progress') {
+          setTaskInProgress(taskId);
+        } else {
+          // Si vuelve a pendiente
+          updateTask(taskId, { status: 'pending' });
+        }
+      }
+    }
+  };
+
+  // ── Quick Add Handler ──
+  const handleQuickAdd = (e: React.KeyboardEvent<HTMLInputElement>, status: TaskStatus) => {
+    if (e.key === 'Enter' && quickAddTitle.trim()) {
+      const taskId = addTask({
+        title: quickAddTitle.trim(),
+        description: '',
+        project_id: null,
+        client_id: null,
+        category: 'Desarrollo', // Default category
+        priority: 'medium',
+        status: status,
+        dueDate: null,
+        tags: [],
+        estimatedPomodoros: 1,
+        isBillable: false,
+        price: 0
+      });
+      
+      if (status === 'in-progress') setTaskInProgress(taskId);
+      if (status === 'completed') completeTask(taskId);
+      
+      setQuickAddTitle('');
+      setQuickAddColumn(null);
+    } else if (e.key === 'Escape') {
+      setQuickAddTitle('');
+      setQuickAddColumn(null);
+    }
+  };
+
+  const handleToggleComplete = (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (task) {
+      if (task.status === 'completed') {
+        updateTask(taskId, { status: 'pending', completedAt: null });
+      } else {
+        completeTask(taskId);
+      }
+    }
+  };
+
+  // ── Filter Data ──
+  const filteredTasks = tasks.filter(t => {
+    if (t.status === 'cancelled') return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      return t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q) || t.category.toLowerCase().includes(q);
+    }
+    return true;
+  });
+
+  const todoTasks = filteredTasks.filter(t => t.status === 'pending');
+  const inProgressTasks = filteredTasks.filter(t => t.status === 'in-progress');
+  const completedTasks = filteredTasks.filter(t => t.status === 'completed');
 
   return (
-    <div className="tasks-module-container">
-      <QuickEntryBar />
-
-      <div className="tasks-filter-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', overflowX: 'auto', gap: '16px' }}>
-        <div className="tasks-filter-tabs">
-          {FILTER_OPTIONS.map(opt => (
-            <button
-              key={opt.id}
-              className={`filter-tab-btn ${filter === opt.id ? 'active' : ''}`}
-              onClick={() => setFilter(opt.id)}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '4px 12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      
+      {/* ── TOP BAR ── */}
+      <div className="kanban-top-bar">
+        <div style={{ position: 'relative' }}>
+          <Search size={16} color="#8994A3" style={{ position: 'absolute', left: 12, top: 10 }} />
           <input 
-            type="text"
-            placeholder="Buscar tareas..."
+            type="text" 
+            placeholder="Buscar tareas..." 
+            className="kanban-search-input"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '13px', outline: 'none', width: '150px' }}
           />
+        </div>
+        <div className="kanban-top-actions">
+          <button className="kanban-action-btn"><Filter size={16} /> Filtro</button>
+          <button className="kanban-action-btn"><ArrowUpDown size={16} /> Ordenar</button>
+          <button 
+            className="kanban-primary-btn"
+            onClick={() => setSelectedTaskId('new')} // This could open the sidebar for a new task
+          >
+            <Plus size={16} /> Nueva Tarea
+          </button>
         </div>
       </div>
 
-      <div className="tasks-list">
-        {filteredTasks.map(task => {
-            const project = projects.find(p => p.id === task.project_id);
-            return (
-              <TaskRow
-                key={task.id}
-                task={task}
-                project={project}
-                onComplete={(id) => {
-                  const t = tasks.find(x => x.id === id);
-                  if (t?.status === 'completed') {
-                    // Uncomplete
-                    updateTask(id, { status: 'pending', completedAt: null });
-                    removeDeudaByTaskId(id);
-                  } else {
-                    window.dispatchEvent(new CustomEvent('request-task-completion', { detail: { taskId: id } }));
-                  }
-                }}
-                onUpdate={updateTask}
-                onAddSubtask={(taskId, content) => {
-                  const t = tasks.find(x => x.id === taskId);
-                  if (t) updateTask(taskId, { subtasks: [...t.subtasks, { id: 'st_'+Date.now(), content, completed: false, createdAt: new Date().toISOString() }] });
-                }}
-                onToggleSubtask={() => {}}
-                onClick={taskId => setSelectedTaskId(taskId)}
-                onDelete={(id) => {
-                  if (window.confirm('¿Borrar esta tarea?')) {
-                    deleteTask(id);
-                    removeDeudaByTaskId(id);
-                    if (selectedTaskId === id) setSelectedTaskId(null);
-                  }
-                }}
-                onMigrate={(id) => migrateTask(id)}
+      {/* ── KANBAN BOARD ── */}
+      <div className="kanban-wrapper">
+        <div className="kanban-board">
+          
+          {/* COLUMN 1: POR HACER */}
+          <div className="kanban-column">
+          <div className="kanban-column-header">
+            <div className="kanban-column-title">
+              <Circle size={14} fill="currentColor" color="#8994A3" />
+              Por hacer
+              <span className="kanban-column-count">{todoTasks.length}</span>
+            </div>
+            <button className="kanban-action-btn" style={{ padding: '4px 8px', border: 'none' }}><MoreHorizontal size={16} /></button>
+          </div>
+          
+          <div className="kanban-quick-add">
+            {quickAddColumn === 'pending' ? (
+              <input 
+                type="text" 
+                autoFocus
+                className="kanban-quick-add-input"
+                placeholder="Escribe y presiona Enter..."
+                value={quickAddTitle}
+                onChange={e => setQuickAddTitle(e.target.value)}
+                onKeyDown={(e) => handleQuickAdd(e, 'pending')}
+                onBlur={() => { setQuickAddColumn(null); setQuickAddTitle(''); }}
               />
-            );
-        })}
+            ) : (
+              <button className="kanban-quick-add-btn" onClick={() => setQuickAddColumn('pending')}>
+                <Plus size={14} /> Añadir tarea
+              </button>
+            )}
+          </div>
+
+          <div 
+            className="kanban-column-content"
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, 'pending')}
+          >
+            {todoTasks.map(task => (
+              <TaskCard 
+                key={task.id} 
+                task={task} 
+                onClick={setSelectedTaskId} 
+                onDragStart={handleDragStart} 
+                onDragEnd={handleDragEnd}
+                onComplete={handleToggleComplete}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* COLUMN 2: EN PROCESO */}
+        <div className="kanban-column" style={{ borderColor: '#1B2632' }}>
+          <div className="kanban-column-header">
+            <div className="kanban-column-title">
+              <Circle size={14} fill="currentColor" color="#3B82F6" />
+              En proceso
+              <span className="kanban-column-count">{inProgressTasks.length}</span>
+            </div>
+            <button className="kanban-action-btn" style={{ padding: '4px 8px', border: 'none' }}><MoreHorizontal size={16} /></button>
+          </div>
+
+          <div className="kanban-quick-add">
+            {quickAddColumn === 'in-progress' ? (
+              <input 
+                type="text" 
+                autoFocus
+                className="kanban-quick-add-input"
+                placeholder="Escribe y presiona Enter..."
+                value={quickAddTitle}
+                onChange={e => setQuickAddTitle(e.target.value)}
+                onKeyDown={(e) => handleQuickAdd(e, 'in-progress')}
+                onBlur={() => { setQuickAddColumn(null); setQuickAddTitle(''); }}
+              />
+            ) : (
+              <button className="kanban-quick-add-btn" onClick={() => setQuickAddColumn('in-progress')}>
+                <Plus size={14} /> Añadir tarea
+              </button>
+            )}
+          </div>
+
+          <div 
+            className="kanban-column-content"
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, 'in-progress')}
+          >
+            {inProgressTasks.map(task => (
+              <TaskCard 
+                key={task.id} 
+                task={task} 
+                onClick={setSelectedTaskId} 
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                onComplete={handleToggleComplete}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* COLUMN 3: TERMINADA */}
+        <div className="kanban-column">
+          <div className="kanban-column-header">
+            <div className="kanban-column-title">
+              <CheckCircle2 size={14} color="#00D89A" />
+              Terminada
+              <span className="kanban-column-count">{completedTasks.length}</span>
+            </div>
+            <button className="kanban-action-btn" style={{ padding: '4px 8px', border: 'none' }}><MoreHorizontal size={16} /></button>
+          </div>
+
+          <div className="kanban-quick-add">
+            {quickAddColumn === 'completed' ? (
+              <input 
+                type="text" 
+                autoFocus
+                className="kanban-quick-add-input"
+                placeholder="Escribe y presiona Enter..."
+                value={quickAddTitle}
+                onChange={e => setQuickAddTitle(e.target.value)}
+                onKeyDown={(e) => handleQuickAdd(e, 'completed')}
+                onBlur={() => { setQuickAddColumn(null); setQuickAddTitle(''); }}
+              />
+            ) : (
+              <button className="kanban-quick-add-btn" onClick={() => setQuickAddColumn('completed')}>
+                <Plus size={14} /> Añadir tarea
+              </button>
+            )}
+          </div>
+
+          <div 
+            className="kanban-column-content"
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, 'completed')}
+          >
+            {completedTasks.map(task => (
+              <TaskCard 
+                key={task.id} 
+                task={task} 
+                onClick={setSelectedTaskId} 
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                onComplete={handleToggleComplete}
+              />
+            ))}
+          </div>
+        </div>
+
+      </div>
       </div>
 
-      <TaskDetailSidebar taskId={selectedTaskId} onClose={() => setSelectedTaskId(null)} />
+      <TaskDetailSidebar 
+        taskId={selectedTaskId === 'new' ? null : selectedTaskId} 
+        onClose={() => setSelectedTaskId(null)} 
+      />
     </div>
   );
 };

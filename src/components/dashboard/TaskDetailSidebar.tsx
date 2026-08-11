@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { X, Save, Clock, Briefcase, User, Calendar, DollarSign, Tag, Play, CheckCircle2, Circle, Plus, ListTodo } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  X, Clock, Play, 
+  CheckCircle2, Circle, Plus, ListTodo, FileText, Paperclip, Activity, RotateCcw, StopCircle
+} from 'lucide-react';
 import { useTasks } from '../../context/TasksContext';
 import { useClients } from '../../context/ClientsContext';
 import type { Priority } from '../../context/TasksContext';
-import { tokens } from '../../theme/tokens';
 
 interface TaskDetailSidebarProps {
   taskId: string | null;
@@ -11,86 +13,192 @@ interface TaskDetailSidebarProps {
 }
 
 const PRIORITY_OPTIONS: { value: Priority; label: string; color: string }[] = [
-  { value: 'urgent', label: 'Urgente', color: tokens.colors.accent.red },
-  { value: 'high', label: 'Alta', color: tokens.colors.accent.orange },
-  { value: 'medium', label: 'Media', color: tokens.colors.accent.primary },
-  { value: 'low', label: 'Baja', color: tokens.colors.accent.cyan }
+  { value: 'urgent', label: 'Urgente', color: '#F0445E' },
+  { value: 'high', label: 'Alta', color: '#F5B83D' },
+  { value: 'medium', label: 'Media', color: '#3B82F6' },
+  { value: 'low', label: 'Baja', color: '#8994A3' }
 ];
 
+const CATEGORY_OPTIONS = ['Desarrollo', 'Diseño', 'Personal', 'Investigación', 'Finanzas', 'Hardware'];
+
 export const TaskDetailSidebar: React.FC<TaskDetailSidebarProps> = ({ taskId, onClose }) => {
-  const { tasks, updateTask, getActiveProjects } = useTasks();
+  const { tasks, updateTask, getActiveProjects, incrementTaskPomodoro } = useTasks();
   const { getActiveClients } = useClients();
   
   const task = tasks.find(t => t.id === taskId);
   const projects = getActiveProjects();
   const clients = getActiveClients();
 
+  // Basic Details
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [category, setCategory] = useState('General');
   const [projectId, setProjectId] = useState('');
   const [clientId, setClientId] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
+  
+  // Dates
+  const [createdAt, setCreatedAt] = useState('');
+  const [startedAt, setStartedAt] = useState('');
   const [dueDate, setDueDate] = useState('');
+  const [completedAt, setCompletedAt] = useState('');
+  
+  // Pomodoro / Stopwatch
   const [pomodoros, setPomodoros] = useState(0);
-  const [isBillable, setIsBillable] = useState(false);
-  const [price, setPrice] = useState(0);
+  const [completedPomodoros, setCompletedPomodoros] = useState(0);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(25 * 60); // 25 mins
+  const timerRef = useRef<number | null>(null);
+
+  // Subtasks
   const [subtasks, setSubtasks] = useState<{ id: string, content: string, completed: boolean, createdAt: string }[]>([]);
   const [newSubtask, setNewSubtask] = useState('');
-  const [createdAt, setCreatedAt] = useState('');
+  
+  // Notes & Observations
+  const [notes, setNotes] = useState('');
+  const [observations, setObservations] = useState('');
+
+  // Attachments Mock
+  const [attachments] = useState([{ name: 'pomodoro-design.fig', size: '2.4 MB' }]);
 
   useEffect(() => {
     if (task) {
       setTitle(task.title);
-      setDescription(task.description);
+      setCategory(task.category || 'General');
       setProjectId(task.project_id || '');
       setClientId(task.client_id || '');
       setPriority(task.priority);
+      
+      setCreatedAt(task.createdAt ? task.createdAt.split('T')[0] : '');
+      setStartedAt(task.startedAt ? task.startedAt.split('T')[0] : '');
       setDueDate(task.dueDate || '');
+      setCompletedAt(task.completedAt ? task.completedAt.split('T')[0] : '');
+      
       setPomodoros(task.estimatedPomodoros);
-      setIsBillable(task.isBillable || false);
-      setPrice(task.price || 0);
+      setCompletedPomodoros(task.completedPomodoros || 0);
       setSubtasks(task.subtasks || []);
-      setCreatedAt(new Date(task.createdAt).toLocaleDateString());
+      setNotes(task.notes || '');
+      setObservations(task.observations || '');
     }
   }, [task]);
 
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
   if (!taskId || !task) return null;
 
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = () => {
     updateTask(task.id, {
       title,
-      description,
+      category,
       project_id: projectId || null,
       client_id: clientId || null,
       priority,
       dueDate: dueDate || null,
+      startedAt: startedAt ? new Date(startedAt).toISOString() : null,
+      completedAt: completedAt ? new Date(completedAt).toISOString() : null,
       estimatedPomodoros: pomodoros,
-      isBillable,
-      price: isBillable ? price : 0,
-      subtasks
+      subtasks,
+      notes,
+      observations
     });
-    onClose();
+  };
+
+  const handleBlurSave = () => {
+    handleSave();
   };
 
   const handleAddSubtask = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       if (!newSubtask.trim()) return;
-      setSubtasks([...subtasks, { id: 'st_' + Date.now(), content: newSubtask.trim(), completed: false, createdAt: new Date().toISOString() }]);
+      const updated = [...subtasks, { id: 'st_' + Date.now(), content: newSubtask.trim(), completed: false, createdAt: new Date().toISOString() }];
+      setSubtasks(updated);
       setNewSubtask('');
+      updateTask(task.id, { subtasks: updated });
     }
   };
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', 
-    borderRadius: '12px', padding: '12px 16px', color: 'white', fontSize: '14px', 
-    outline: 'none', boxSizing: 'border-box'
+  const toggleSubtask = (id: string) => {
+    const updated = subtasks.map(s => s.id === id ? { ...s, completed: !s.completed } : s);
+    setSubtasks(updated);
+    updateTask(task.id, { subtasks: updated });
   };
 
-  const labelStyle: React.CSSProperties = {
-    fontSize: '13px', color: 'rgba(255,255,255,0.7)', fontWeight: 500, 
-    display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px'
+  const deleteSubtask = (id: string) => {
+    const updated = subtasks.filter(s => s.id !== id);
+    setSubtasks(updated);
+    updateTask(task.id, { subtasks: updated });
+  };
+
+  // Timer logic
+  const toggleTimer = () => {
+    if (isTimerRunning) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      setIsTimerRunning(false);
+    } else {
+      setIsTimerRunning(true);
+      timerRef.current = window.setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            if (timerRef.current) clearInterval(timerRef.current);
+            setIsTimerRunning(false);
+            incrementTaskPomodoro(task.id);
+            setCompletedPomodoros(cp => cp + 1);
+            return 25 * 60; // Reset
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+  };
+
+  const resetTimer = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    setIsTimerRunning(false);
+    setTimeLeft(25 * 60);
+  };
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
+
+  const completedSubtasks = subtasks.filter(s => s.completed).length;
+  const progressPct = subtasks.length > 0 ? (completedSubtasks / subtasks.length) * 100 : 0;
+
+  // Styles
+  const panelStyle: React.CSSProperties = {
+    position: 'fixed', top: 0, right: 0, bottom: 0, width: '480px',
+    background: '#090E14', borderLeft: '1px solid #1B2632', 
+    boxShadow: '-10px 0 30px rgba(0,0,0,0.5)', zIndex: 1000, 
+    display: 'flex', flexDirection: 'column',
+    animation: 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+  };
+
+  const headerStyle: React.CSSProperties = {
+    padding: '24px 24px 16px', borderBottom: '1px solid #1B2632',
+    display: 'flex', flexDirection: 'column', gap: '8px'
+  };
+
+  const contentStyle: React.CSSProperties = {
+    padding: '24px', flex: 1, overflowY: 'auto',
+    display: 'flex', flexDirection: 'column', gap: '32px'
+  };
+
+  const sectionTitleStyle: React.CSSProperties = {
+    fontSize: '14px', color: '#8994A3', fontWeight: 600, 
+    display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px'
+  };
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%', background: '#111820', border: '1px solid #1B2632', 
+    borderRadius: '8px', padding: '10px 12px', color: '#F3F5F7', fontSize: '14px', 
+    outline: 'none', transition: 'border-color 0.2s'
   };
 
   return (
@@ -98,211 +206,252 @@ export const TaskDetailSidebar: React.FC<TaskDetailSidebarProps> = ({ taskId, on
       <div 
         style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+          backgroundColor: 'rgba(5, 8, 12, 0.7)', backdropFilter: 'blur(4px)',
           zIndex: 999, animation: 'fadeIn 0.2s ease'
         }}
         onClick={onClose}
       />
       
-      <div 
-        style={{
-          position: 'fixed', top: 0, right: 0, bottom: 0, width: '440px',
-          background: 'linear-gradient(145deg, rgba(16, 24, 39, 0.98) 0%, rgba(6, 8, 11, 1) 100%)',
-          borderLeft: `1px solid rgba(255,255,255,0.1)`, boxShadow: '-10px 0 30px rgba(0,0,0,0.5)',
-          zIndex: 1000, padding: '24px', display: 'flex', flexDirection: 'column',
-          animation: 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-          overflowY: 'auto'
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-          <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'white', margin: 0 }}>
-            Detalles de Tarea
-          </h2>
-          <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', padding: '4px' }}>
-            <X size={20} />
-          </button>
-        </div>
+      <div style={panelStyle}>
         
-        <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '24px' }}>
-          Creada el: {createdAt}
+        {/* HEADER */}
+        <div style={headerStyle}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <input 
+              type="text" 
+              value={title} 
+              onChange={e => setTitle(e.target.value)}
+              onBlur={handleBlurSave}
+              style={{ 
+                background: 'transparent', border: 'none', color: '#F3F5F7', 
+                fontSize: '20px', fontWeight: 600, outline: 'none', width: '90%'
+              }}
+            />
+            <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#8994A3', cursor: 'pointer' }}>
+              <X size={24} />
+            </button>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <select 
+              value={category} 
+              onChange={e => { setCategory(e.target.value); handleSave(); }}
+              style={{ ...inputStyle, width: 'auto', padding: '4px 8px', fontSize: '12px', borderRadius: '4px' }}
+            >
+              {CATEGORY_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
         </div>
 
-        <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '20px', flex: 1 }}>
+        {/* CONTENT */}
+        <div style={contentStyle} className="kanban-column-content">
           
+          {/* FECHAS */}
           <div>
-            <input 
-              type="text" value={title} onChange={e => setTitle(e.target.value)} required
-              placeholder="Título de la tarea"
-              style={{ ...inputStyle, fontSize: '18px', fontWeight: 600, padding: '16px' }} 
-            />
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-            <div>
-              <label style={labelStyle}><Briefcase size={14} /> Proyecto</label>
-              <select value={projectId} onChange={e => setProjectId(e.target.value)} style={inputStyle}>
-                <option value="">Ninguno</option>
-                {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
-            </div>
-            <div>
-              <label style={labelStyle}><User size={14} /> Cliente</label>
-              <select value={clientId} onChange={e => setClientId(e.target.value)} style={inputStyle}>
-                <option value="">Ninguno</option>
-                {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
+            <h4 style={sectionTitleStyle}>Fechas</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div>
+                <label style={{ fontSize: '11px', color: '#596575', marginBottom: '4px', display: 'block' }}>Creación</label>
+                <input type="date" value={createdAt} onChange={e => setCreatedAt(e.target.value)} onBlur={handleBlurSave} style={inputStyle} />
+              </div>
+              <div>
+                <label style={{ fontSize: '11px', color: '#596575', marginBottom: '4px', display: 'block' }}>Inicio</label>
+                <input type="date" value={startedAt} onChange={e => setStartedAt(e.target.value)} onBlur={handleBlurSave} style={inputStyle} />
+              </div>
+              <div>
+                <label style={{ fontSize: '11px', color: '#596575', marginBottom: '4px', display: 'block' }}>Límite</label>
+                <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} onBlur={handleBlurSave} style={inputStyle} />
+              </div>
+              <div>
+                <label style={{ fontSize: '11px', color: '#596575', marginBottom: '4px', display: 'block' }}>Término</label>
+                <input type="date" value={completedAt} onChange={e => setCompletedAt(e.target.value)} onBlur={handleBlurSave} style={inputStyle} />
+              </div>
             </div>
           </div>
 
-          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isBillable ? '16px' : 0 }}>
-              <label style={{ ...labelStyle, marginBottom: 0, color: 'white' }}>
-                <DollarSign size={16} color={isBillable ? tokens.colors.accent.green : 'rgba(255,255,255,0.5)'} />
-                {isBillable ? 'Con Precio / Facturable' : 'Solo Recordatorio'}
-              </label>
-              <label style={{ position: 'relative', display: 'inline-block', width: '44px', height: '24px' }}>
-                <input 
-                  type="checkbox" 
-                  checked={isBillable} 
-                  onChange={e => setIsBillable(e.target.checked)} 
-                  style={{ opacity: 0, width: 0, height: 0 }} 
-                />
-                <span style={{
-                  position: 'absolute', cursor: 'pointer', top: 0, left: 0, right: 0, bottom: 0,
-                  backgroundColor: isBillable ? tokens.colors.accent.green : 'rgba(255,255,255,0.2)',
-                  transition: '.4s', borderRadius: '34px'
-                }}>
-                  <span style={{
-                    position: 'absolute', content: '""', height: '18px', width: '18px',
-                    left: isBillable ? '22px' : '3px', bottom: '3px', backgroundColor: 'white',
-                    transition: '.4s', borderRadius: '50%'
-                  }}/>
-                </span>
-              </label>
+          {/* POMODORO */}
+          <div style={{ background: '#111820', border: '1px solid #1B2632', borderRadius: '12px', padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <h4 style={{ ...sectionTitleStyle, alignSelf: 'flex-start' }}><Clock size={16} /> Pomodoro</h4>
+            <div style={{ fontSize: '48px', fontWeight: 300, color: '#00D89A', fontFamily: 'monospace', marginBottom: '8px' }}>
+              {formatTime(timeLeft)}
+            </div>
+            <div style={{ color: '#8994A3', fontSize: '13px', marginBottom: '24px' }}>Enfoque</div>
+            
+            <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
+              <button 
+                onClick={toggleTimer}
+                style={{ 
+                  background: isTimerRunning ? '#F0445E' : '#00D89A', color: '#05080C', 
+                  border: 'none', borderRadius: '8px', padding: '8px 24px', fontWeight: 600, 
+                  display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' 
+                }}
+              >
+                {isTimerRunning ? <StopCircle size={18} /> : <Play size={18} />}
+                {isTimerRunning ? 'Pausar' : 'Iniciar'}
+              </button>
+              <button 
+                onClick={resetTimer}
+                style={{ background: 'transparent', color: '#F3F5F7', border: '1px solid #1B2632', borderRadius: '8px', padding: '8px 16px', cursor: 'pointer' }}
+              >
+                <RotateCcw size={18} />
+              </button>
             </div>
             
-            {isBillable && (
-              <div>
-                <label style={labelStyle}>Monto del servicio</label>
-                <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: '16px', top: '12px', color: 'rgba(255,255,255,0.5)' }}>$</span>
-                  <input 
-                    type="number" value={price} onChange={e => setPrice(Number(e.target.value))} min={0}
-                    style={{ ...inputStyle, paddingLeft: '32px', fontSize: '16px', fontWeight: 600, color: tokens.colors.accent.green }} 
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-            <div>
-              <label style={labelStyle}><Calendar size={14} /> Vencimiento</label>
-              <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} style={inputStyle} />
-            </div>
-            <div>
-              <label style={labelStyle}><Clock size={14} /> 🍅 Estimados</label>
-              <input type="number" min={0} max={20} value={pomodoros} onChange={e => setPomodoros(Number(e.target.value))} style={inputStyle} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', fontSize: '12px', color: '#596575' }}>
+              <span>Ciclos completados: {completedPomodoros}</span>
+              <span>Estimados: {pomodoros}</span>
             </div>
           </div>
 
+          {/* CHECKLIST */}
           <div>
-            <label style={labelStyle}><Tag size={14} /> Prioridad</label>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              {PRIORITY_OPTIONS.map(opt => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setPriority(opt.value)}
-                  style={{
-                    flex: 1, padding: '8px', borderRadius: '8px', fontSize: '12px', fontWeight: 600,
-                    background: priority === opt.value ? `${opt.color}20` : 'rgba(255,255,255,0.05)',
-                    color: priority === opt.value ? opt.color : 'rgba(255,255,255,0.4)',
-                    border: `1px solid ${priority === opt.value ? opt.color : 'transparent'}`,
-                    cursor: 'pointer', transition: 'all 0.2s'
-                  }}
-                >
-                  {opt.label}
-                </button>
-              ))}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <h4 style={{ ...sectionTitleStyle, margin: 0 }}><ListTodo size={16} /> Checklist</h4>
+              <span style={{ fontSize: '12px', color: '#8994A3' }}>{completedSubtasks} / {subtasks.length}</span>
             </div>
-          </div>
+            
+            {/* Progress bar */}
+            <div style={{ width: '100%', height: '4px', background: '#1B2632', borderRadius: '2px', marginBottom: '16px', overflow: 'hidden' }}>
+              <div style={{ width: `${progressPct}%`, height: '100%', background: '#00D89A', transition: 'width 0.3s ease' }} />
+            </div>
 
-          <div>
-            <label style={labelStyle}>Descripción / Notas</label>
-            <textarea 
-              value={description} onChange={e => setDescription(e.target.value)} rows={3}
-              style={{ ...inputStyle, resize: 'vertical' }} 
-              placeholder="Agrega notas o detalles adicionales..."
-            />
-          </div>
-
-          <div>
-            <label style={labelStyle}><ListTodo size={14} /> Sub-tareas</label>
-            <div style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {subtasks.map(st => (
-                <div key={st.id} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <button 
-                    type="button"
-                    onClick={() => setSubtasks(subtasks.map(s => s.id === st.id ? { ...s, completed: !s.completed } : s))}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', color: st.completed ? tokens.colors.accent.green : 'rgba(255,255,255,0.5)', padding: 0 }}
-                  >
+                <div key={st.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#111820', padding: '8px 12px', borderRadius: '8px', border: '1px solid #1B2632' }}>
+                  <button onClick={() => toggleSubtask(st.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: st.completed ? '#00D89A' : '#596575', padding: 0 }}>
                     {st.completed ? <CheckCircle2 size={16} /> : <Circle size={16} />}
                   </button>
-                  <span style={{ fontSize: '14px', color: st.completed ? 'rgba(255,255,255,0.4)' : 'white', textDecoration: st.completed ? 'line-through' : 'none', flex: 1 }}>
+                  <span style={{ fontSize: '13px', color: st.completed ? '#596575' : '#F3F5F7', textDecoration: st.completed ? 'line-through' : 'none', flex: 1 }}>
                     {st.content}
                   </span>
-                  <button 
-                    type="button"
-                    onClick={() => setSubtasks(subtasks.filter(s => s.id !== st.id))}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.3)' }}
-                  >
+                  <button onClick={() => deleteSubtask(st.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#596575' }}>
                     <X size={14} />
                   </button>
                 </div>
               ))}
-              
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: subtasks.length > 0 ? '8px' : 0 }}>
-                <Plus size={16} color="rgba(255,255,255,0.4)" />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '4px' }}>
+                <Plus size={16} color="#596575" />
                 <input 
-                  type="text" 
-                  value={newSubtask}
-                  onChange={e => setNewSubtask(e.target.value)}
-                  onKeyDown={handleAddSubtask}
-                  placeholder="Agregar subtarea (Presiona Enter)..."
-                  style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '14px', flex: 1, outline: 'none' }}
+                  type="text" value={newSubtask} onChange={e => setNewSubtask(e.target.value)} onKeyDown={handleAddSubtask}
+                  placeholder="Agregar subtarea..." style={{ background: 'transparent', border: 'none', color: '#F3F5F7', fontSize: '13px', outline: 'none', flex: 1 }}
                 />
               </div>
             </div>
           </div>
 
-          <div style={{ marginTop: 'auto', paddingTop: '24px', display: 'flex', gap: '12px' }}>
-            <button 
-              type="button"
-              onClick={() => {
-                window.dispatchEvent(new CustomEvent('change-view', { detail: 'pomodoro' }));
-              }}
-              style={{
-                flex: 1, background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid rgba(255,255,255,0.1)', 
-                borderRadius: '12px', padding: '16px', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
-                display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px'
-              }}
-            >
-              <Play size={16} /> Empezar
-            </button>
-            <button 
-              type="submit"
-              style={{
-                flex: 1, background: tokens.colors.accent.primary, color: '#000', border: 'none', 
-                borderRadius: '12px', padding: '16px', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
-                display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px',
-                boxShadow: `0 4px 20px ${tokens.colors.accent.primary}40`
-              }}
-            >
-              <Save size={16} /> Guardar Cambios
-            </button>
+          {/* NOTES & OBSERVATIONS */}
+          <div>
+            <h4 style={sectionTitleStyle}><FileText size={16} /> Notas</h4>
+            <textarea 
+              value={notes} onChange={e => setNotes(e.target.value)} onBlur={handleBlurSave}
+              placeholder="El panel debe ser colapsable..."
+              style={{ ...inputStyle, minHeight: '100px', resize: 'vertical' }} 
+            />
           </div>
-        </form>
+          <div>
+            <h4 style={sectionTitleStyle}><FileText size={16} /> Observaciones</h4>
+            <textarea 
+              value={observations} onChange={e => setObservations(e.target.value)} onBlur={handleBlurSave}
+              placeholder="Contexto interno, decisiones..."
+              style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} 
+            />
+          </div>
+
+          {/* ATTACHMENTS */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <h4 style={{ ...sectionTitleStyle, margin: 0 }}><Paperclip size={16} /> Adjuntos</h4>
+              <button style={{ background: 'none', border: 'none', color: '#3B82F6', fontSize: '12px', cursor: 'pointer' }}>+ Añadir adjunto</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {attachments.map((att, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#111820', padding: '12px', borderRadius: '8px', border: '1px solid #1B2632' }}>
+                  <div style={{ background: 'rgba(240, 68, 94, 0.1)', color: '#F0445E', padding: '8px', borderRadius: '8px' }}>
+                    <FileText size={16} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '13px', color: '#F3F5F7' }}>{att.name}</div>
+                    <div style={{ fontSize: '11px', color: '#596575' }}>{att.size}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* METADATA (Client/Project/Priority) */}
+          <div style={{ background: '#111820', borderRadius: '12px', padding: '16px', border: '1px solid #1B2632' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div>
+                <label style={{ fontSize: '12px', color: '#8994A3', marginBottom: '8px', display: 'block' }}>Proyecto</label>
+                <select value={projectId} onChange={e => { setProjectId(e.target.value); handleSave(); }} style={inputStyle}>
+                  <option value="">Ninguno</option>
+                  {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', color: '#8994A3', marginBottom: '8px', display: 'block' }}>Cliente</label>
+                <select value={clientId} onChange={e => { setClientId(e.target.value); handleSave(); }} style={inputStyle}>
+                  <option value="">Ninguno</option>
+                  {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+            </div>
+            
+            <div style={{ marginTop: '16px' }}>
+              <label style={{ fontSize: '12px', color: '#8994A3', marginBottom: '8px', display: 'block' }}>Prioridad</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {PRIORITY_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => { setPriority(opt.value); handleSave(); }}
+                    style={{
+                      flex: 1, padding: '6px', borderRadius: '6px', fontSize: '12px',
+                      background: priority === opt.value ? `${opt.color}20` : 'rgba(255,255,255,0.02)',
+                      color: priority === opt.value ? opt.color : '#596575',
+                      border: `1px solid ${priority === opt.value ? opt.color : '#1B2632'}`,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* ACTIVITY HISTORY MOCK */}
+          <div>
+            <h4 style={sectionTitleStyle}><Activity size={16} /> Actividad</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', position: 'relative', paddingLeft: '8px' }}>
+              <div style={{ borderLeft: '1px dashed #1B2632', position: 'absolute', top: 8, bottom: 8, left: 14 }} />
+              <div style={{ display: 'flex', gap: '12px', position: 'relative', zIndex: 1 }}>
+                <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#3B82F6', border: '3px solid #090E14', marginTop: '4px' }} />
+                <div>
+                  <div style={{ fontSize: '13px', color: '#F3F5F7' }}>Tarea creada</div>
+                  <div style={{ fontSize: '11px', color: '#596575' }}>{createdAt || 'Hoy'}</div>
+                </div>
+              </div>
+              {startedAt && (
+                <div style={{ display: 'flex', gap: '12px', position: 'relative', zIndex: 1 }}>
+                  <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#F5B83D', border: '3px solid #090E14', marginTop: '4px' }} />
+                  <div>
+                    <div style={{ fontSize: '13px', color: '#F3F5F7' }}>Movida a En proceso</div>
+                    <div style={{ fontSize: '11px', color: '#596575' }}>{startedAt}</div>
+                  </div>
+                </div>
+              )}
+              {completedAt && (
+                <div style={{ display: 'flex', gap: '12px', position: 'relative', zIndex: 1 }}>
+                  <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#00D89A', border: '3px solid #090E14', marginTop: '4px' }} />
+                  <div>
+                    <div style={{ fontSize: '13px', color: '#F3F5F7' }}>Tarea terminada</div>
+                    <div style={{ fontSize: '11px', color: '#596575' }}>{completedAt}</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+        </div>
       </div>
     </>
   );
