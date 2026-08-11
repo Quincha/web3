@@ -72,6 +72,7 @@ interface TasksContextType {
   addSubtask: (taskId: string, content: string) => void;
   toggleSubtask: (taskId: string, subtaskId: string) => void;
   deleteSubtask: (taskId: string, subtaskId: string) => void;
+  makeTaskSubtask: (taskId: string, parentTaskId: string) => void;
 
   // Projects CRUD
   addProject: (project: Omit<Project, 'id' | 'createdAt'>) => string;
@@ -320,6 +321,29 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
   }, []);
 
+  // Convierte una tarea en subtarea de otra (drag & drop dentro de una tarjeta).
+  const makeTaskSubtask = useCallback((taskId: string, parentTaskId: string) => {
+    if (taskId === parentTaskId) return;
+    setTasks(prev => {
+      const source = prev.find(t => t.id === taskId);
+      const parent = prev.find(t => t.id === parentTaskId);
+      if (!source || !parent) return prev;
+      const subtask: Subtask = {
+        id: source.id,
+        content: source.title,
+        completed: false,
+        createdAt: isoNow(),
+      };
+      const updated = prev
+        .filter(t => t.id !== taskId)
+        .map(t => t.id === parentTaskId ? { ...t, subtasks: [...t.subtasks, subtask] } : t);
+      saveTasks(updated);
+      return updated;
+    });
+    // El bujo también debe quitar la entrada de la tarea absorbida.
+    window.dispatchEvent(new CustomEvent('task-deleted', { detail: { id: taskId } }));
+  }, []);
+
   // ── PROJECTS ──────────────────────────────────────
 
   const addProject = useCallback((project: Omit<Project, 'id' | 'createdAt'>): string => {
@@ -410,7 +434,7 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     <TasksContext.Provider value={{
       tasks, projects,
       addTask, updateTask, deleteTask, completeTask, setTaskInProgress, migrateTask,
-      addSubtask, toggleSubtask, deleteSubtask,
+      addSubtask, toggleSubtask, deleteSubtask, makeTaskSubtask,
       addProject, updateProject, archiveProject,
       incrementTaskPomodoro, addTimeSpent,
       getTodayTasks, getTasksByProject, getTasksByPriority, getPendingTasks, getActiveProjects

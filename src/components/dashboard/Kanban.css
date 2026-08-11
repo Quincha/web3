@@ -118,6 +118,7 @@
 
 /* Card Styles */
 .kanban-card {
+  position: relative;
   background-color: #111820;
   border: 1px solid #1B2632;
   border-radius: 8px;
@@ -128,6 +129,27 @@
   flex-direction: column;
   gap: 8px;
   min-height: 100px;
+}
+
+/* Al soltar una tarjeta dentro de otra: convertir en subtarea */
+.kanban-card.subtask-drop {
+  border-color: #16C7D9;
+  background-color: #13202A;
+  box-shadow: 0 0 0 2px rgba(22, 199, 217, 0.25);
+}
+
+.kanban-card.subtask-drop::after {
+  content: 'Hacer subtarea';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #16C7D9;
+  color: #05080C;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  z-index: 5;
 }
 
 .kanban-card:hover {

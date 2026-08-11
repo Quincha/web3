@@ -55,9 +55,16 @@ interface TaskCardProps {
   onDragStart: (e: React.DragEvent, taskId: string) => void;
   onDragEnd: (e: React.DragEvent) => void;
   onComplete: (taskId: string) => void;
+  onDropSubtask: (e: React.DragEvent, targetTaskId: string) => void;
+  draggingTaskId: string | null;
+  subtaskTargetId: string | null;
+  onSubtaskTargetChange: (id: string | null) => void;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onDragStart, onDragEnd, onComplete }) => {
+const TaskCard: React.FC<TaskCardProps> = ({
+  task, onClick, onDragStart, onDragEnd, onComplete, onDropSubtask,
+  draggingTaskId, subtaskTargetId, onSubtaskTargetChange
+}) => {
   const completedSubtasks = task.subtasks.filter(s => s.completed).length;
   const totalSubtasks = task.subtasks.length;
   const categoryColor = getCategoryColor(task.category);
@@ -65,11 +72,35 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onDragStart, onDragE
 
   return (
     <div 
-      className={`kanban-card ${isCompleted ? 'completed' : ''}`}
+      className={`kanban-card ${isCompleted ? 'completed' : ''} ${subtaskTargetId === task.id ? 'subtask-drop' : ''}`}
       draggable
       onDragStart={(e) => onDragStart(e, task.id)}
       onDragEnd={onDragEnd}
       onClick={() => onClick(task.id)}
+      onDragEnter={(e) => {
+        if (draggingTaskId && draggingTaskId !== task.id) {
+          e.preventDefault();
+          e.stopPropagation();
+          onSubtaskTargetChange(task.id);
+        }
+      }}
+      onDragOver={(e) => {
+        if (draggingTaskId && draggingTaskId !== task.id) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }}
+      onDragLeave={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+          onSubtaskTargetChange(null);
+        }
+      }}
+      onDrop={(e) => {
+        onSubtaskTargetChange(null);
+        e.preventDefault();
+        e.stopPropagation();
+        onDropSubtask(e, task.id);
+      }}
       style={{
         borderLeft: `3px solid ${PRIORITY_COLORS[task.priority]}`
       }}
@@ -132,7 +163,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onDragStart, onDragE
 // ─────────────────────────────────────────────
 
 export const TasksModule: React.FC = () => {
-  const { tasks, addTask, updateTask, completeTask, setTaskInProgress } = useTasks();
+  const { tasks, addTask, updateTask, completeTask, setTaskInProgress, makeTaskSubtask } = useTasks();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   
@@ -140,9 +171,14 @@ export const TasksModule: React.FC = () => {
   const [quickAddColumn, setQuickAddColumn] = useState<string | null>(null);
   const [quickAddTitle, setQuickAddTitle] = useState('');
 
+  // Drag & Drop State
+  const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
+  const [subtaskTargetId, setSubtaskTargetId] = useState<string | null>(null);
+
   // ── Drag & Drop Handlers ──
   const handleDragStart = (e: React.DragEvent, taskId: string) => {
     e.dataTransfer.setData('taskId', taskId);
+    setDraggingTaskId(taskId);
     // Add dragging class for styling on the element itself (optional, browser ghost handles most of it)
     setTimeout(() => {
       (e.target as HTMLElement).classList.add('dragging');
@@ -151,6 +187,8 @@ export const TasksModule: React.FC = () => {
 
   const handleDragEnd = (e: React.DragEvent) => {
     (e.target as HTMLElement).classList.remove('dragging');
+    setDraggingTaskId(null);
+    setSubtaskTargetId(null);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -180,6 +218,16 @@ export const TasksModule: React.FC = () => {
         }
       }
     }
+  };
+
+  // Convierte la tarjeta arrastrada en subtarea de la tarjeta destino.
+  const handleDropSubtask = (e: React.DragEvent, targetTaskId: string) => {
+    const sourceId = e.dataTransfer.getData('taskId') || draggingTaskId;
+    if (!sourceId || sourceId === targetTaskId) return;
+    const source = tasks.find(t => t.id === sourceId);
+    const target = tasks.find(t => t.id === targetTaskId);
+    if (!source || !target) return;
+    makeTaskSubtask(sourceId, targetTaskId);
   };
 
   // ── Quick Add Handler ──
@@ -311,6 +359,10 @@ export const TasksModule: React.FC = () => {
                 onDragStart={handleDragStart} 
                 onDragEnd={handleDragEnd}
                 onComplete={handleToggleComplete}
+                onDropSubtask={handleDropSubtask}
+                draggingTaskId={draggingTaskId}
+                subtaskTargetId={subtaskTargetId}
+                onSubtaskTargetChange={setSubtaskTargetId}
               />
             ))}
           </div>
@@ -360,6 +412,10 @@ export const TasksModule: React.FC = () => {
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
                 onComplete={handleToggleComplete}
+                onDropSubtask={handleDropSubtask}
+                draggingTaskId={draggingTaskId}
+                subtaskTargetId={subtaskTargetId}
+                onSubtaskTargetChange={setSubtaskTargetId}
               />
             ))}
           </div>
@@ -409,6 +465,10 @@ export const TasksModule: React.FC = () => {
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
                 onComplete={handleToggleComplete}
+                onDropSubtask={handleDropSubtask}
+                draggingTaskId={draggingTaskId}
+                subtaskTargetId={subtaskTargetId}
+                onSubtaskTargetChange={setSubtaskTargetId}
               />
             ))}
           </div>
