@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { ConfigService } from '../services/ConfigService';
+import { DataSyncService } from '../services/DataSyncService';
 import { useTasks } from './TasksContext';
 
 export const SESSION_TYPES = {
@@ -73,11 +74,25 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const saveLogsToCache = (newLogs: PomodoroSessionRecord[]) => {
     localStorage.setItem('quincha_pomodoro_logs_v2', JSON.stringify(newLogs));
+    DataSyncService.markDirty('pomodoro');
     
     // Simulate background API sync
     const config = ConfigService.loadConfig();
     ConfigService.saveConfig(config);
   };
+
+  // Restaura datos bajados del servidor (pull) al cambiar de equipo.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { data?: { logs?: PomodoroSessionRecord[] } } | undefined;
+      const data = detail?.data;
+      if (!data || !Array.isArray(data.logs)) return;
+      setCompletedSessions(data.logs);
+      saveLogsToCache(data.logs);
+    };
+    window.addEventListener('quincha-restore:pomodoro', handler);
+    return () => window.removeEventListener('quincha-restore:pomodoro', handler);
+  }, []);
 
   const flushTimeSpent = useCallback(() => {
     if (activeTaskId && accumulatedSecondsRef.current > 0) {

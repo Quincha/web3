@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
 import { SyncQueueService } from '../services/SyncQueueService';
+import { DataSyncService } from '../services/DataSyncService';
 
 // ─────────────────────────────────────────────
 // TYPES
@@ -188,6 +189,7 @@ function loadHabits(): Habit[] {
 
 function saveHabits(habits: Habit[]): void {
   localStorage.setItem(CACHE_KEY, JSON.stringify(habits));
+  DataSyncService.markDirty('habits');
 }
 
 // ─────────────────────────────────────────────
@@ -198,6 +200,19 @@ const HabitsContext = createContext<HabitsContextType | undefined>(undefined);
 
 export const HabitsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [habits, setHabits] = useState<Habit[]>(() => loadHabits());
+
+  // Restaura datos bajados del servidor (pull) al cambiar de equipo.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { data?: { habits?: Habit[] } } | undefined;
+      const data = detail?.data;
+      if (!data || !Array.isArray(data.habits)) return;
+      setHabits(data.habits);
+      saveHabits(data.habits);
+    };
+    window.addEventListener('quincha-restore:habits', handler);
+    return () => window.removeEventListener('quincha-restore:habits', handler);
+  }, []);
 
   // Compute enriched habits with stats (memoized, recalc only when habits change)
   const habitsWithStats = useMemo<HabitWithStats[]>(() => {

@@ -3,6 +3,7 @@ import { User, Lock, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
 import gsap from 'gsap';
 import { useTransition } from './context/TransitionContext';
 import { Api, ApiError } from './services/ApiClient';
+import { DataSyncService } from './services/DataSyncService';
 import './LoginForm.css';
 
 export default function LoginForm() {
@@ -50,6 +51,8 @@ export default function LoginForm() {
         void res;
       } else {
         await Api.login(username.trim(), password);
+        // Baja los datos del servidor (si los hay) antes de entrar al dashboard.
+        await DataSyncService.reconcile().catch(() => {});
         window.dispatchEvent(new Event('quincha-auth'));
         gsap.to(formRef.current, {
           opacity: 0, y: -20, duration: 0.25, ease: 'power3.in',

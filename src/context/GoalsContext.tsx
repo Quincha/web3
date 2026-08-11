@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { DataSyncService } from '../services/DataSyncService';
 
 export type GoalTimeframe = 'weekly' | 'monthly' | 'quarterly' | 'yearly';
 export type GoalStatus = 'active' | 'completed' | 'abandoned';
@@ -29,6 +30,19 @@ const CACHE_KEY = 'quincha_goals_v2';
 export const GoalsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [goals, setGoals] = useState<Goal[]>([]);
 
+  // Restaura datos bajados del servidor (pull) al cambiar de equipo.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { data?: { goals?: Goal[] } } | undefined;
+      const data = detail?.data;
+      if (!data || !Array.isArray(data.goals)) return;
+      setGoals(data.goals);
+      saveToCache(data.goals);
+    };
+    window.addEventListener('quincha-restore:goals', handler);
+    return () => window.removeEventListener('quincha-restore:goals', handler);
+  }, []);
+
   // Load from cache on mount
   useEffect(() => {
     try {
@@ -43,6 +57,7 @@ export const GoalsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const saveToCache = (newGoals: Goal[]) => {
     localStorage.setItem(CACHE_KEY, JSON.stringify(newGoals));
+    DataSyncService.markDirty('goals');
   };
 
   const addGoal = useCallback((goal: Omit<Goal, 'id' | 'createdAt' | 'status' | 'progress'>) => {

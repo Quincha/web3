@@ -4,6 +4,7 @@ import { useHabits } from './HabitsContext';
 import { useHealth } from './HealthContext';
 import { useFinance } from './FinanceContext';
 import { useInsights } from './InsightsContext';
+import { DataSyncService } from '../services/DataSyncService';
 
 export interface Message {
   id: string;
@@ -66,11 +67,26 @@ export const MessagesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   useEffect(() => {
     localStorage.setItem(MESSAGES_KEY, JSON.stringify(messages));
+    DataSyncService.markDirty('messages');
   }, [messages]);
 
   useEffect(() => {
     localStorage.setItem(READ_NOTIFS_KEY, JSON.stringify(readNotifIds));
+    DataSyncService.markDirty('messages');
   }, [readNotifIds]);
+
+  // Restaura datos bajados del servidor (pull) al cambiar de equipo.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { data?: { messages?: Message[]; readIds?: string[] } } | undefined;
+      const data = detail?.data;
+      if (!data) return;
+      if (Array.isArray(data.messages)) setMessages(data.messages);
+      if (Array.isArray(data.readIds)) setReadNotifIds(data.readIds);
+    };
+    window.addEventListener('quincha-restore:messages', handler);
+    return () => window.removeEventListener('quincha-restore:messages', handler);
+  }, []);
 
   // ── DERIVED NOTIFICATIONS (real data) ──
   const derivedNotifications = useMemo<Notification[]>(() => {

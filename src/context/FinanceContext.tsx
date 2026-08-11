@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { 
   Cuenta, Movimiento, Deuda, FinanceDashboardStats, FinanceInsight 
 } from '../types/finance';
 import { SyncQueueService } from '../services/SyncQueueService';
+import { DataSyncService } from '../services/DataSyncService';
 
 interface FinanceContextType {
   stats: FinanceDashboardStats;
@@ -54,6 +55,7 @@ function loadMovimientosFromCache(): Movimiento[] {
 
 function saveMovimientosToCache(movs: Movimiento[]) {
   localStorage.setItem(CACHE_KEY, JSON.stringify(movs));
+  DataSyncService.markDirty('finance');
 }
 
 function loadDeudasFromCache(): Deuda[] {
@@ -67,6 +69,7 @@ function loadDeudasFromCache(): Deuda[] {
 
 function saveDeudasToCache(deudas: Deuda[]) {
   localStorage.setItem(CACHE_KEY_DEUDAS, JSON.stringify(deudas));
+  DataSyncService.markDirty('finance');
 }
 
 const computeStats = (movs: Movimiento[], deudas: Deuda[]): FinanceDashboardStats => {
@@ -137,6 +140,19 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [movimientos, setMovimientos] = useState<Movimiento[]>(() => loadMovimientosFromCache());
   const [deudas, setDeudas] = useState<Deuda[]>(() => loadDeudasFromCache());
   const [insights, setInsights] = useState<FinanceInsight[]>([]);
+
+  // Restaura datos bajados del servidor (pull) al cambiar de equipo.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { data?: { movimientos?: Movimiento[]; deudas?: Deuda[] } } | undefined;
+      const data = detail?.data;
+      if (!data) return;
+      if (Array.isArray(data.movimientos)) { setMovimientos(data.movimientos); saveMovimientosToCache(data.movimientos); }
+      if (Array.isArray(data.deudas)) { setDeudas(data.deudas); saveDeudasToCache(data.deudas); }
+    };
+    window.addEventListener('quincha-restore:finance', handler);
+    return () => window.removeEventListener('quincha-restore:finance', handler);
+  }, []);
   
   const stats = computeStats(movimientos, deudas);
 

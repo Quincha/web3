@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card } from '../../ui/Card';
 import { useFinance, financeCategoryLabel, FINANCE_CATEGORIES } from '../../../context/FinanceContext';
+import { DataSyncService } from '../../../services/DataSyncService';
 import { Target, X, Trash2, DollarSign } from 'lucide-react';
 
 const BUDGETS_KEY = 'quincha_finance_budgets';
@@ -32,7 +33,20 @@ export const BudgetsView: React.FC = () => {
 
   useEffect(() => {
     localStorage.setItem(BUDGETS_KEY, JSON.stringify(budgets));
+    DataSyncService.markDirty('budgets');
   }, [budgets]);
+
+  // Restaura datos bajados del servidor (pull) al cambiar de equipo.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { data?: { budgets?: Budget[] } } | undefined;
+      const data = detail?.data;
+      if (!data || !Array.isArray(data.budgets)) return;
+      setBudgets(data.budgets);
+    };
+    window.addEventListener('quincha-restore:budgets', handler);
+    return () => window.removeEventListener('quincha-restore:budgets', handler);
+  }, []);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CL', {

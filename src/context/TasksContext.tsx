@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { SyncQueueService } from '../services/SyncQueueService';
+import { DataSyncService } from '../services/DataSyncService';
 
 // ─────────────────────────────────────────────
 // TYPES
@@ -131,10 +132,12 @@ function loadProjects(): Project[] {
 
 function saveTasks(tasks: Task[]): void {
   localStorage.setItem(TASKS_KEY, JSON.stringify(tasks));
+  DataSyncService.markDirty('tasks');
 }
 
 function saveProjects(projects: Project[]): void {
   localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
+  DataSyncService.markDirty('tasks');
 }
 
 // ─────────────────────────────────────────────
@@ -146,6 +149,19 @@ const TasksContext = createContext<TasksContextType | undefined>(undefined);
 export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [tasks, setTasks] = useState<Task[]>(() => loadTasks());
   const [projects, setProjects] = useState<Project[]>(() => loadProjects());
+
+  // Restaura datos bajados del servidor (pull) al cambiar de equipo.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { data?: { tasks?: Task[]; projects?: Project[] } } | undefined;
+      const data = detail?.data;
+      if (!data) return;
+      if (Array.isArray(data.tasks)) { setTasks(data.tasks); saveTasks(data.tasks); }
+      if (Array.isArray(data.projects)) { setProjects(data.projects); saveProjects(data.projects); }
+    };
+    window.addEventListener('quincha-restore:tasks', handler);
+    return () => window.removeEventListener('quincha-restore:tasks', handler);
+  }, []);
 
   // ── TASKS ─────────────────────────────────────────
 

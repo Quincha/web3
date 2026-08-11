@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { DataSyncService } from '../services/DataSyncService';
 
 // ─────────────────────────────────────────────
 // TYPES — metricas medibles por Xiaomi Mi Band 5
@@ -266,6 +267,7 @@ function loadFromStorage<T>(key: string): T | null {
 
 function saveToStorage<T>(key: string, value: T): void {
   try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* ignore */ }
+  DataSyncService.markDirty('band');
 }
 
 function loadDays(): BandDayData[] {
@@ -298,6 +300,21 @@ export const BandProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [connected, setConnected] = useState<boolean>(true);
   const [lastSync, setLastSync] = useState<string | null>(null);
   const [battery] = useState<number>(rnd(62, 100));
+
+  // Restaura datos bajados del servidor (pull) al cambiar de equipo.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { data?: { days?: BandDayData[]; alarms?: BandAlarm[]; settings?: BandSettings; source?: BandDataSource } } | undefined;
+      const data = detail?.data;
+      if (!data) return;
+      if (Array.isArray(data.days)) { setDays(data.days); saveToStorage(DAYS_KEY, data.days); }
+      if (Array.isArray(data.alarms)) { setAlarms(data.alarms); saveToStorage(ALARMS_KEY, data.alarms); }
+      if (data.settings && typeof data.settings === 'object') { setSettings({ ...DEFAULT_SETTINGS, ...data.settings }); saveToStorage(SETTINGS_KEY, data.settings); }
+      if (data.source === 'imported' || data.source === 'simulated') { setDataSource(data.source); saveToStorage(SOURCE_KEY, data.source); }
+    };
+    window.addEventListener('quincha-restore:band', handler);
+    return () => window.removeEventListener('quincha-restore:band', handler);
+  }, []);
 
   const upsertDay = useCallback((dateISO: string, factory: (day: BandDayData) => BandDayData): BandDayData[] => {
     const existing = days.find(d => d.date === dateISO);

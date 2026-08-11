@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { SyncQueueService } from '../services/SyncQueueService';
+import { DataSyncService } from '../services/DataSyncService';
 
 // ─────────────────────────────────────────────
 // TYPES
@@ -49,6 +50,7 @@ function loadClients(): Client[] {
 
 function saveClients(clients: Client[]): void {
   localStorage.setItem(CLIENTS_KEY, JSON.stringify(clients));
+  DataSyncService.markDirty('clients');
 }
 
 // ─────────────────────────────────────────────
@@ -59,6 +61,19 @@ const ClientsContext = createContext<ClientsContextType | undefined>(undefined);
 
 export const ClientsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [clients, setClients] = useState<Client[]>(() => loadClients());
+
+  // Restaura datos bajados del servidor (pull) al cambiar de equipo.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { data?: { clients?: Client[] } } | undefined;
+      const data = detail?.data;
+      if (!data || !Array.isArray(data.clients)) return;
+      setClients(data.clients);
+      saveClients(data.clients);
+    };
+    window.addEventListener('quincha-restore:clients', handler);
+    return () => window.removeEventListener('quincha-restore:clients', handler);
+  }, []);
 
   const addClient = useCallback((clientData: Omit<Client, 'id' | 'createdAt' | 'archived'>) => {
     const id = genId('cli');

@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useCallback} from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { DataSyncService } from '../services/DataSyncService';
 
 export interface ShoppingProduct {
   id: string;
@@ -36,10 +37,24 @@ function loadFromCache(): ShoppingProduct[] {
 
 function saveToCache(products: ShoppingProduct[]) {
   localStorage.setItem(CACHE_KEY, JSON.stringify(products));
+  DataSyncService.markDirty('shopping');
 }
 
 export const ShoppingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [products, setProducts] = useState<ShoppingProduct[]>(() => loadFromCache());
+
+  // Restaura datos bajados del servidor (pull) al cambiar de equipo.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { data?: { products?: ShoppingProduct[] } } | undefined;
+      const data = detail?.data;
+      if (!data || !Array.isArray(data.products)) return;
+      setProducts(data.products);
+      saveToCache(data.products);
+    };
+    window.addEventListener('quincha-restore:shopping', handler);
+    return () => window.removeEventListener('quincha-restore:shopping', handler);
+  }, []);
 
   const addProduct = useCallback((url: string, name: string, imageUrl: string, priceBase: number, storeName: string) => {
     const newProduct: ShoppingProduct = {

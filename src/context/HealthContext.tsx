@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { DataSyncService } from '../services/DataSyncService';
 
 // ─────────────────────────────────────────────
 // TYPES
@@ -131,6 +132,7 @@ function loadFromCache(): HealthCacheData {
 
 function saveToCache(data: HealthCacheData) {
   localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+  DataSyncService.markDirty('health');
 }
 
 function genId(prefix: string): string {
@@ -172,6 +174,32 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Active profile resets to 'me' on app load (security: no persistence)
   const [activeProfileId, setActiveProfileId] = useState<string>('profile_me');
+
+  // Restaura datos bajados del servidor (pull) al cambiar de equipo.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { data?: HealthCacheData } | undefined;
+      const data = detail?.data;
+      if (!data || typeof data !== 'object') return;
+      const profiles = Array.isArray(data.profiles) ? data.profiles : null;
+      const medications = Array.isArray(data.medications) ? data.medications : null;
+      const appointments = Array.isArray(data.appointments) ? data.appointments : null;
+      const clinicalRecords = Array.isArray(data.clinicalRecords) ? data.clinicalRecords : null;
+      if (!profiles && !medications && !appointments && !clinicalRecords) return;
+      if (profiles) setProfiles(defaultProfileIfEmpty(profiles));
+      if (medications) setMedications(medications);
+      if (appointments) setAppointments(appointments);
+      if (clinicalRecords) setClinicalRecords(clinicalRecords);
+      saveToCache({
+        profiles: profiles ?? [],
+        medications: medications ?? [],
+        appointments: appointments ?? [],
+        clinicalRecords: clinicalRecords ?? [],
+      });
+    };
+    window.addEventListener('quincha-restore:health', handler);
+    return () => window.removeEventListener('quincha-restore:health', handler);
+  }, []);
 
   // Helper: persist all state
   const persist = useCallback((

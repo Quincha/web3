@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { DataSyncService } from '../services/DataSyncService';
 
 export type BujoEntryType = 'task' | 'completed' | 'migrated' | 'scheduled' | 'note' | 'event' | 'cancelled';
 
@@ -67,6 +68,7 @@ function loadFromCache(): BujoEntry[] {
 
 function saveToCache(entries: BujoEntry[]) {
   localStorage.setItem(CACHE_KEY, JSON.stringify(entries));
+  DataSyncService.markDirty('bujo');
 }
 
 function loadMoodsFromCache(): Record<string, number> {
@@ -80,6 +82,7 @@ function loadMoodsFromCache(): Record<string, number> {
 
 function saveMoodsToCache(moods: Record<string, number>) {
   localStorage.setItem(MOOD_CACHE_KEY, JSON.stringify(moods));
+  DataSyncService.markDirty('bujo');
 }
 
 function loadCheckInsFromCache(): Record<string, BujoCheckIn> {
@@ -93,6 +96,7 @@ function loadCheckInsFromCache(): Record<string, BujoCheckIn> {
 
 function saveCheckInsToCache(checkIns: Record<string, BujoCheckIn>) {
   localStorage.setItem(CHECKIN_CACHE_KEY, JSON.stringify(checkIns));
+  DataSyncService.markDirty('bujo');
 }
 
 function todayISO(): string {
@@ -103,6 +107,20 @@ export const BujoProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [entries, setEntries] = useState<BujoEntry[]>(() => loadFromCache());
   const [dailyMoods, setDailyMoods] = useState<Record<string, number>>(() => loadMoodsFromCache());
   const [checkIns, setCheckIns] = useState<Record<string, BujoCheckIn>>(() => loadCheckInsFromCache());
+
+  // Restaura datos bajados del servidor (pull) al cambiar de equipo.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { data?: { entries?: BujoEntry[]; moods?: Record<string, number>; checkins?: Record<string, BujoCheckIn> } } | undefined;
+      const data = detail?.data;
+      if (!data) return;
+      if (Array.isArray(data.entries)) { setEntries(data.entries); saveToCache(data.entries); }
+      if (data.moods && typeof data.moods === 'object') { setDailyMoods(data.moods); saveMoodsToCache(data.moods); }
+      if (data.checkins && typeof data.checkins === 'object') { setCheckIns(data.checkins); saveCheckInsToCache(data.checkins); }
+    };
+    window.addEventListener('quincha-restore:bujo', handler);
+    return () => window.removeEventListener('quincha-restore:bujo', handler);
+  }, []);
 
   const getCheckIn = useCallback((date: string): BujoCheckIn | null => {
     return checkIns[date] || null;

@@ -23,6 +23,7 @@ import { ShoppingProvider } from './context/ShoppingContext';
 import { MessagesProvider } from './context/MessagesContext';
 import { GlobalTaskCompletionModal } from './components/dashboard/GlobalTaskCompletionModal';
 import { Api } from './services/ApiClient';
+import { DataSyncService } from './services/DataSyncService';
 
 function MainAppContent() {
   const { currentView } = useTransition();
@@ -118,7 +119,9 @@ function SessionRestore() {
 
     if (Api.isAuthenticated()) {
       Api.me()
-        .then(() => {
+        .then(async () => {
+          // Baja los datos del servidor (pull) antes de mostrar el dashboard.
+          await DataSyncService.reconcile().catch(() => {});
           window.dispatchEvent(new Event('quincha-auth'));
           navigateTo('dashboard');
         })
