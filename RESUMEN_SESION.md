@@ -1,46 +1,55 @@
-# Resumen de sesión — web3
+# Resumen de sesión — web3 (Quincha Systems)
 
-Última actualización: sesión del 10-08-2026.
+Última actualización: 12-08-2026. Para retomar desde otro equipo, leer este archivo + `DEPLOY.md`.
 
-## Contexto del proyecto
+## Estado actual (resumen ejecutivo)
 
-- App React 19 + TypeScript + Vite en `D:\Programacion\web3`.
-- Estructura: `src/components/dashboard/*` (módulos), `src/widgets/*` (widgets del dashboard), `src/context/*` (estado global), `server/` (backend Node).
-- Verificación: `npx tsc -b` y `npx oxlint src/...` (sin errores tras el cambio).
-- Inicio de sesión: el usuario preguntó "¿Qué hicimos?" → revisión de dónde quedó el proyecto.
+- App React 19 + TS + Vite en `D:\Programacion\web3`; backend Node en `server/`. Producción: https://quincha.cl (Raspberry Pi remota).
+- **La DB local NO es producción.** Los datos reales viven solo en el server remoto (`/home/serverpi/quincha-systems/server/data/quincha.db`). Para tocar datos: SSH vía `scripts/quincha-connect.ps1`.
+- Verificación estándar: `npx tsc -b` y `npx oxlint src/...`. Deploy: `powershell -ExecutionPolicy Bypass -File scripts\quincha-connect.ps1 deploy`.
 
-## Tarea en curso
+## Módulo Diseños / Bordados (código nuevo, DESPLEGADO)
 
-**Auditoría de semanas que deben empezar en LUNES** en toda la app.
+Feature completa: catálogo de bordados con vista previa fotorrealista estilo Wilcom TrueView.
 
-### Conclusión de la auditoría (está bien en estos lugares)
-- `CalendarWidget.tsx` (~L58 `names`): labels por día, no grid de semana → OK.
-- `HabitsWidget.tsx` (L26-27): `(day+6)%7` lunes-first con `HABIT_LABELS=['L','M','M','J','V','S','D']` → OK.
-- `ProductivityWidget.tsx` (L80-86): eje X `Lun..Dom` → OK.
-- `CalendarModule.tsx`: grid de mes usa `(firstDayIndex+6)%7` con cabecera `Lun..Dom` (L530, L536), semana con `weekStart` lunes (L305-311), vista día/semana con `weekdayNames[(getDay()+6)%7]` (L642) → OK.
-- `BujoModule.tsx` (L141-156 y L779-794): filtro "Esta semana" ajustado a lunes → OK.
-- `BandHistory.tsx` / `BandContext.tsx`: `(getDay()+6)%7`, `DAY_LABELS` lunes-first → OK.
-- `HabitsModule.tsx`: `DAY_LABELS` domingo-indexado + `WEEK_ORDER=[1..6,0]` → OK (consistente).
+### Backend (`server/src/design.js` + endpoints en `index.js`)
+- `design.js` sin dependencias: parsea JEF / DST / PES (fiel a pyembroidery), renderiza PNG, genera ZIP, multipart mínimo. Los 15 tests de `server/test/design-smoke.test.js` pasan (fixtures reales de pyembroidery con coordenadas exactas).
+- Endpoints (todos requieren login):
+  - `POST /api/design/preview` → `dataUrl` PNG. Query: `size`, `mode` (`bordado` | `puntos`). **La UI pide `size=640&mode=bordado`.**
+  - `POST /api/design/save` · `GET /api/designs` · `GET /api/design/:id` · `DELETE /api/design/:id` · `GET /api/design/:id/download`.
+  - Archivos persistidos en `DATA_DIR/designs/<userId>/<id>.<ext>`; metadatos (id, nombre, formato, stitches, colores) en tabla `designs` de `db.js`.
+- Preview borrado (sombra/bordes) **por defecto**: la imagen guardada es el PNG renderizado (con o sin bordes según `mode`). No se guarda el .JEF original como preview.
 
-## Error encontrado y ARREGLADO
+### Render TrueView (última iteración — IMPORTANTE para no romper el 524)
+- Estilo: hilos finos e individuales (radio ≈ `1.8 * escala`, cap 0.7–2.2 px), iluminación difusa suave, sombra/borde apenas oscurecidos (0.72–0.85× base, alpha 45–60), fondo de tela twill con ruido determinista.
+- **Crítico**: el render DEBE ser de una sola pasada por puntada (`drawThread` + `capsuleCoverage`, antialiasing analítico). El supersampling 2× que probé antes provocó **Error 524 de Cloudflare** (timeout del origin ~100s) porque `size=640` con diseños densos tardaba minutos. Fix desplegado: ~300ms para 100k puntadas a 640px.
+- `mode='puntos'` sigue siendo el esquema gris fino 1px sin cambios.
 
-**Tarjeta "Enfoque de la semana (Pomodoro)"** en `src/components/dashboard/StatisticsModule.tsx`.
+### Frontend (`src/components/dashboard/DesignsModule.tsx` + `ApiClient.ts`)
+- Galería con thumbnails (`GALLERY_SIZE=240`, mode `bordado`), vista ampliada (`designGet id, size, mode`), descarga (`designDownload`), borrado (`designDelete`) y guardado del diseño actual (`saveCurrent` → `designSave`).
+- Tipo `SavedDesign` en `ApiClient.ts`. Icono usado: `Palette` (lucide; `Stitch` no existe).
 
-- Problema: la "semana" era una ventana móvil de los últimos 7 días terminando hoy (`for i=6..0` con `setDate(getDate()-i)`), NO la semana calendario. Como el día de la sesión era lunes, el gráfico empezaba en "mar" y terminaba en "lun" (barra verde de hoy al final). El subtítulo "X esta semana" sumaba TODAS las sesiones históricas (`totalWorkMinutes`), no las de la semana.
-- Fix:
-  - `week` ahora se ancla al lunes (`weekAnchor.setDate(... - ((day+6)%7))`) y recorre lunes→domingo; cada item lleva `isToday`.
-  - Barra destacada: `w.isToday` (verde) en vez de `i === 6`.
-  - Total: nuevo `weekWorkMinutes` (solo lunes→domingo) reemplaza `totalWorkMinutes` en el subtítulo.
-  - `totalWorkMinutes` se mantiene igual para los KPIs (alófona/global, es lo correcto ahí).
-- Verificado: `tsc -b` y `oxlint` sin errores.
+## Finanzas — deuda Jose Covili (producción, desplegado)
+
+- Deuda cargada directo a la DB de producción (Por Cobrar, 1.300.000; pagado 107.000; saldo 1.193.000; vence 2026-08-11; prioridad Alta) con 3 abonos: 7.000 + 50.000 + 50.000 (fecha 2026-08-11). Se conservó la deuda existente "Mamá" (Por Pagar 12.500).
+- Backup en store: `backup:finance:pre_josecovili`.
+- Feature nueva: historial de abonos en el tipo `Deuda` (`payments?: Abono[]`), helper `addPago` en `FinanceContext`, y modal de abono + lista de pagos en `DebtsBalanceView` (se eliminó el `window.prompt`).
+
+## Historial de la sesión (referencia)
+
+- Auditoría "semanas empiezan en lunes": OK en CalendarWidget, HabitsWidget, ProductivityWidget, CalendarModule, BujoModule, BandHistory/Context, HabitsModule.
+- Fix en `StatisticsModule.tsx`: la tarjeta "Enfoque de la semana (Pomodoro)" usaba ventana móvil de 7 días; ahora se ancla al lunes y el total usa `weekWorkMinutes` (solo la semana calendario).
+- Carga masiva de tareas previa (11-08): 18 tareas + 6 proyectos, todas con `dueDate=2026-08-11` para migrarlas día a día. Backups `backup:tasks:pre_batch` y `backup:tasks:pre_duedate`.
 
 ## Pendientes / dudas
 
-- El usuario mencionó "dos partes donde comienza la semana con mar". Se interpretó como: (1) gráfico de barras y (2) total "esta semana" de esa misma tarjeta. Ambos arreglados. **Si se refería a otra segunda ubicación, preguntar** (no se encontró otra con el patrón en el grep).
-- No se ha hecho commit de `src/components/dashboard/StatisticsModule.tsx` (pendiente de que el usuario lo pida).
-- Existe el archivo sin seguimiento `auditoria_agos1.html` (no relacionado con este cambio).
+- El usuario estaba validando el render TrueView en el catálogo (quincha.cl). Revisar que los thumbnails y la vista ampliada se vean bien tras el fix del 524.
+- El front no parsea la codificación de carga masiva (eso se hizo con scripts manuales). No está implementado como feature de la app.
+- Sin commits: el repo tiene muchos archivos modificados/sin seguimiento desde la sesión (ver `git status`). El usuario suele no pedir commits; si se pide, commitear en chunks coherentes (diseños, finanzas, fixes).
 
-## Estado del repo
+## Cómo conectar a producción (recordatorio)
 
-- `git status`: modificado `src/components/dashboard/StatisticsModule.tsx`; sin seguimiento `auditoria_agos1.html`.
-- Próximo paso posible: confirmar con el usuario qué otras partes de la app deben empezar en lunes si la tarjeta ya quedó bien.
+1. Túnel: `cloudflared access tcp --hostname ssh.quincha.cl --url localhost:2222` (debe estar abierto).
+2. `powershell -ExecutionPolicy Bypass -File scripts\quincha-connect.ps1 ping` (test) · `status` · `deploy` · `run "comando"`.
+3. Node remoto correcto: `/home/serverpi/.local/node24/bin/node` (el `node` del PATH es v20 sin `node:sqlite`).
+4. Credenciales en `scripts/quincha-creds.env` (no subir al repo; existe `.example`).
