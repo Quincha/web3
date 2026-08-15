@@ -15,6 +15,8 @@
 
 import { getToken } from './ApiClient';
 import { API_BASE } from './config';
+import { storage } from './storage';
+import { httpFetch } from './http';
 
 export type SyncEventType =  | 'CREATE_TASK'        | 'UPDATE_TASK'      | 'COMPLETE_TASK'    | 'DELETE_TASK'
   | 'CREATE_HABIT'       | 'TOGGLE_HABIT'     | 'ARCHIVE_HABIT'
@@ -126,6 +128,13 @@ class SyncQueue {
     return [...this.queue];
   }
 
+  /** Dispara un flush inmediato de la cola si hay pendientes y hay conexión. */
+  syncNow(): void {
+    if (navigator.onLine && this.pendingCount() > 0) {
+      void this.flush();
+    }
+  }
+
   clearSynced(): void {
     this.queue = this.queue.filter(e => !e.synced);
     this.saveQueue();
@@ -197,7 +206,7 @@ class SyncQueue {
       // so the queue doesn't accumulate noise for anonymous local usage.
       return;
     }
-    const res = await fetch(`${API_BASE}/sync`, {
+    const res = await httpFetch(`${API_BASE}/sync`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -214,7 +223,7 @@ class SyncQueue {
 
   private loadQueue(): SyncEvent[] {
     try {
-      const raw = localStorage.getItem(QUEUE_KEY);
+      const raw = storage.getItem(QUEUE_KEY);
       return raw ? JSON.parse(raw) : [];
     } catch {
       return [];
@@ -222,7 +231,7 @@ class SyncQueue {
   }
 
   private saveQueue(): void {
-    localStorage.setItem(QUEUE_KEY, JSON.stringify(this.queue));
+    storage.setItem(QUEUE_KEY, JSON.stringify(this.queue));
   }
 
   private notifyListeners(): void {

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { DataSyncService } from '../services/DataSyncService';
+import { storage } from '../services/storage';
 
 // ─────────────────────────────────────────────
 // TYPES
@@ -119,7 +120,7 @@ interface HealthCacheData {
 
 function loadFromCache(): HealthCacheData {
   try {
-    const raw = localStorage.getItem(CACHE_KEY);
+    const raw = storage.getItem(CACHE_KEY);
     if (raw) return JSON.parse(raw);
   } catch { /* ignore */ }
   return {
@@ -131,7 +132,7 @@ function loadFromCache(): HealthCacheData {
 }
 
 function saveToCache(data: HealthCacheData) {
-  localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+  storage.setItem(CACHE_KEY, JSON.stringify(data));
   DataSyncService.markDirty('health');
 }
 

@@ -5,6 +5,7 @@ import { useHealth } from './HealthContext';
 import { useFinance } from './FinanceContext';
 import { useInsights } from './InsightsContext';
 import { DataSyncService } from '../services/DataSyncService';
+import { storage } from '../services/storage';
 
 export interface Message {
   id: string;
@@ -41,7 +42,7 @@ const READ_NOTIFS_KEY = 'quincha_read_notifications_v2';
 
 function loadMessages(): Message[] {
   try {
-    const raw = localStorage.getItem(MESSAGES_KEY);
+    const raw = storage.getItem(MESSAGES_KEY);
     if (raw) return JSON.parse(raw);
   } catch { /* ignore */ }
   return [];
@@ -49,7 +50,7 @@ function loadMessages(): Message[] {
 
 function loadReadIds(): string[] {
   try {
-    const raw = localStorage.getItem(READ_NOTIFS_KEY);
+    const raw = storage.getItem(READ_NOTIFS_KEY);
     if (raw) return JSON.parse(raw);
   } catch { /* ignore */ }
   return [];
@@ -66,12 +67,12 @@ export const MessagesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const { insights: proactiveInsights } = useInsights();
 
   useEffect(() => {
-    localStorage.setItem(MESSAGES_KEY, JSON.stringify(messages));
+    storage.setItem(MESSAGES_KEY, JSON.stringify(messages));
     DataSyncService.markDirty('messages');
   }, [messages]);
 
   useEffect(() => {
-    localStorage.setItem(READ_NOTIFS_KEY, JSON.stringify(readNotifIds));
+    storage.setItem(READ_NOTIFS_KEY, JSON.stringify(readNotifIds));
     DataSyncService.markDirty('messages');
   }, [readNotifIds]);
 

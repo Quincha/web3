@@ -64,7 +64,6 @@ export const DashboardHero: React.FC = () => {
     position: 'relative',
     overflow: 'hidden',
     borderRadius: '24px',
-    padding: '24px 40px 36px 40px', // Adjusted top padding for header
     background: 'transparent',
     border: `1px solid rgba(255,255,255,0.05)`,
     boxShadow: tokens.shadows.elevation2,
@@ -271,9 +270,9 @@ export const DashboardHero: React.FC = () => {
       </div>
 
       {/* Main Hero Content (Columns Row) */}
-      <div style={{ position: 'relative', zIndex: 3, display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'stretch', flex: 1, gap: '24px' }}>
+      <div className="hero-content-row" style={{ position: 'relative', zIndex: 3 }}>
         {/* ZONA 1: Welcome & AI Focus */}
-        <div style={{ ...columnStyle, flex: '1.2', minWidth: '320px' }}>
+        <div className="hero-zone-welcome" style={columnStyle}>
         <h1 className="outfit" style={{
           fontSize: '40px',
           fontWeight: 700,
@@ -339,7 +338,7 @@ export const DashboardHero: React.FC = () => {
       </div>
 
       {/* ZONA 2: 2x2 Streamlined Grid */}
-      <div style={{ ...columnStyle, flex: '0.8', minWidth: '180px', alignItems: 'center' }}>
+      <div className="hero-zone-stats" style={{ ...columnStyle, alignItems: 'center' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', width: '100%' }}>
           
           <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
@@ -462,10 +461,12 @@ export const DashboardHero: React.FC = () => {
       </div>
 
       {/* ZONA 3: Tiempo y Pronóstico Interactivo */}
-      <WeatherWidget />
+      <div className="hero-weather-zone" style={{ position: 'relative', zIndex: 3 }}>
+        <WeatherWidget />
+      </div>
 
       {/* ZONA 4: Multi-Ring Progress */}
-      <div style={{ ...columnStyle, flex: '1.2', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="hero-progress-ring" style={{ position: 'relative', zIndex: 3 }}>
         <div style={{ position: 'relative', width: '200px', height: '200px' }}>
           
           <svg width="200" height="200" viewBox="0 0 200 200" style={{ transform: 'rotate(-90deg)' }}>

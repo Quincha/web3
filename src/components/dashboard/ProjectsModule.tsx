@@ -31,7 +31,7 @@ export const ProjectsModule: React.FC = () => {
   }, [projects, tasks]);
 
   return (
-    <div className="module-container fade-in" style={{ padding: '32px', height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div className="module-container fade-in" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>

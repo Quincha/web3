@@ -48,6 +48,17 @@ db.exec(`
     updated_at INTEGER NOT NULL,
     PRIMARY KEY (user_id, key)
   );
+
+  CREATE TABLE IF NOT EXISTS designs (
+    id         TEXT PRIMARY KEY,
+    user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name       TEXT NOT NULL,
+    format     TEXT NOT NULL,
+    stitches   INTEGER NOT NULL,
+    color_count INTEGER NOT NULL,
+    colors     TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+  );
 `);
 
 // Migración para bases ya existentes: agrega expires_at a sessions y les da
@@ -65,6 +76,10 @@ export function pruneExpiredSessions() {
 export function countUsers() {
   const row = db.prepare('SELECT COUNT(*) AS n FROM users').get();
   return row.n;
+}
+
+export function getAllUsers() {
+  return db.prepare('SELECT id, username, role, name, created_at FROM users ORDER BY id').all();
 }
 
 export function createUser(username, password, role, name) {
@@ -153,4 +168,49 @@ export function getStoreSince(userId, sinceTs) {
 // Elimina claves viejas que empiecen con `prefix` (p. ej. la cola de sync).
 export function pruneStore(userId, prefix, beforeTs) {
   db.prepare('DELETE FROM store WHERE user_id = ? AND key LIKE ? AND updated_at < ?').run(userId, `${prefix}%`, beforeTs);
+}
+
+// --- Diseños de bordado guardados por el usuario ----------------------------
+// Metadatos en SQLite; el archivo binario del diseño vive en disco
+// (server/data/designs/<userId>/<id>.<ext>).
+
+export function insertDesign(userId, design) {
+  db.prepare(`
+    INSERT INTO designs (id, user_id, name, format, stitches, color_count, colors, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    design.id, userId, design.name, design.format, design.stitches,
+    design.colorCount, JSON.stringify(design.colors), design.createdAt
+  );
+}
+
+export function getDesign(userId, designId) {
+  const row = db.prepare('SELECT * FROM designs WHERE id = ? AND user_id = ?').get(designId, userId);
+  if (!row) return null;
+  return {
+    id: row.id,
+    name: row.name,
+    format: row.format,
+    stitches: row.stitches,
+    colorCount: row.color_count,
+    colors: JSON.parse(row.colors),
+    createdAt: row.created_at,
+  };
+}
+
+export function listDesigns(userId) {
+  const rows = db.prepare('SELECT * FROM designs WHERE user_id = ? ORDER BY created_at DESC').all(userId);
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    format: row.format,
+    stitches: row.stitches,
+    colorCount: row.color_count,
+    colors: JSON.parse(row.colors),
+    createdAt: row.created_at,
+  }));
+}
+
+export function deleteDesign(userId, designId) {
+  return db.prepare('DELETE FROM designs WHERE id = ? AND user_id = ?').run(designId, userId).changes > 0;
 }

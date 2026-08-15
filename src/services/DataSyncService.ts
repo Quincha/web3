@@ -18,6 +18,8 @@
 
 import { Api, getProfile, getToken } from './ApiClient';
 import { API_BASE } from './config';
+import { storage } from './storage';
+import { httpFetch, isTauriRuntime } from './http';
 
 export interface SyncSlot {
   slot: string;
@@ -133,7 +135,7 @@ const MODULE_DEFS: SyncModuleDef[] = [
 
 function readJSON(key: string): unknown {
   try {
-    const raw = localStorage.getItem(key);
+    const raw = storage.getItem(key);
     return raw ? JSON.parse(raw) : undefined;
   } catch {
     return undefined;
@@ -142,7 +144,7 @@ function readJSON(key: string): unknown {
 
 function writeJSON(key: string, value: unknown): void {
   try {
-    localStorage.setItem(key, JSON.stringify(value));
+    storage.setItem(key, JSON.stringify(value));
   } catch {
     /* cuota llena o modo privado: se ignora */
   }
@@ -328,7 +330,7 @@ class DataSync {
 
   private readMeta(module: string): number {
     try {
-      const raw = localStorage.getItem(this.metaKey(module));
+      const raw = storage.getItem(this.metaKey(module));
       if (!raw) return 0;
       const parsed = JSON.parse(raw) as { u?: string; ts?: number };
       if (parsed && parsed.u === this.username() && typeof parsed.ts === 'number') {
@@ -358,12 +360,15 @@ class DataSync {
       items.push({ key: def.serverKey, data: { updatedAt: ts, data: def.read() }, updatedAt: ts });
     }
     if (items.length === 0) return;
-    fetch(`${API_BASE}/sync`, {
+    const init: RequestInit = {
       method: 'POST',
-      keepalive: true,
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
       body: JSON.stringify({ entries: items }),
-    }).catch(() => {});
+    };
+    if (!isTauriRuntime()) {
+      (init as RequestInit & { keepalive: boolean }).keepalive = true;
+    }
+    httpFetch(`${API_BASE}/sync`, init).catch(() => {});
   }
 }
 

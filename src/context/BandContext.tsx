@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { DataSyncService } from '../services/DataSyncService';
+import { storage } from '../services/storage';
 
 // ─────────────────────────────────────────────
 // TYPES — metricas medibles por Xiaomi Mi Band 5
@@ -259,14 +260,14 @@ const SOURCE_KEY = 'quincha_band_source_v2';
 
 function loadFromStorage<T>(key: string): T | null {
   try {
-    const raw = localStorage.getItem(key);
+    const raw = storage.getItem(key);
     if (raw) return JSON.parse(raw) as T;
   } catch { /* ignore */ }
   return null;
 }
 
 function saveToStorage<T>(key: string, value: T): void {
-  try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* ignore */ }
+  try { storage.setItem(key, JSON.stringify(value)); } catch { /* ignore */ }
   DataSyncService.markDirty('band');
 }
 

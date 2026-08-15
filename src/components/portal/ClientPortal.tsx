@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {    Send, CheckCircle2,  Laptop, Star } from 'lucide-react';
 import './ClientPortal.css';
 import { OfficialLogo } from '../ui/OfficialLogo';
+import { storage } from '../../services/storage';
 
 interface ClientRequest {
   id: string;
@@ -69,10 +70,10 @@ export const ClientPortal: React.FC = () => {
     };
 
     // Store in localStorage cache
-    const existing = localStorage.getItem('quincha_client_requests_v2');
+    const existing = storage.getItem('quincha_client_requests_v2');
     const list = existing ? JSON.parse(existing) : [];
     list.push(newRequest);
-    localStorage.setItem('quincha_client_requests_v2', JSON.stringify(list));
+    storage.setItem('quincha_client_requests_v2', JSON.stringify(list));
 
     setSubmittedId(reqId);
     setName('');
@@ -83,7 +84,7 @@ export const ClientPortal: React.FC = () => {
 
   const handleTrackSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    const existing = localStorage.getItem('quincha_client_requests_v2');
+    const existing = storage.getItem('quincha_client_requests_v2');
     const list: ClientRequest[] = existing ? JSON.parse(existing) : [];
     const found = list.find(r => r.id.toUpperCase() === searchId.trim().toUpperCase());
     

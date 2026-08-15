@@ -30,3 +30,7 @@ server/node_modules
 *.sln
 *.sw?
 __pycache__/
+
+# Tauri (desktop app) build artifacts
+src-tauri/target
+src-tauri/gen/schemas

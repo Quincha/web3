@@ -73,11 +73,7 @@ export const DashboardLayout: React.FC = () => {
           </div>
 
           {/* Classic 3x2 Grid */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: '24px'
-          }}>
+          <div className="dashboard-main-grid">
             {/* Row 1 */}
             <div className="gsap-stagger-item">
               <PomodoroWidget />

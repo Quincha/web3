@@ -186,7 +186,7 @@ export const BandHistory: React.FC<{ days: BandDayData[]; settings: BandSettings
   const maxBar = Math.max(...buckets.map(b => b.value), 1);
 
   return (
-    <div className="module-container fade-in" style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div className="module-container fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       {/* Cabecera */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>

@@ -1,5 +1,6 @@
 import { API_BASE } from './config';
 import { Api, getToken } from './ApiClient';
+import { isTauriRuntime } from './http';
 
 type Listener = () => void;
 
@@ -19,6 +20,9 @@ function notify() {
 async function openStream() {
   const token = getToken();
   if (!token || es) return;
+  // EventSource no funciona dentro del webview de Tauri (SSE no soportado por
+  // el plugin HTTP nativo); en desktop se usa polling de gcalEvents en su lugar.
+  if (isTauriRuntime()) return;
   try {
     // EventSource no admite headers, así que pedimos un nonce de un solo uso con
     // la sesión y abrimos el stream con ese nonce (el token nunca va en la URL).

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { SyncQueueService } from '../services/SyncQueueService';
 import { DataSyncService } from '../services/DataSyncService';
+import { storage } from '../services/storage';
 
 // ─────────────────────────────────────────────
 // TYPES
@@ -43,13 +44,13 @@ function genId(prefix: string): string {
 
 function loadClients(): Client[] {
   try {
-    const raw = localStorage.getItem(CLIENTS_KEY);
+    const raw = storage.getItem(CLIENTS_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch { return []; }
 }
 
 function saveClients(clients: Client[]): void {
-  localStorage.setItem(CLIENTS_KEY, JSON.stringify(clients));
+  storage.setItem(CLIENTS_KEY, JSON.stringify(clients));
   DataSyncService.markDirty('clients');
 }
 

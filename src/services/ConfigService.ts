@@ -1,5 +1,6 @@
 import type { Role } from './PermissionService';
 import { Api, getProfile } from './ApiClient';
+import { storage } from './storage';
 
 export interface WidgetConfig {
   id: string;
@@ -49,7 +50,7 @@ export class ConfigService {
    * Load configurations: Check cache, fallback to defaults, and asynchronously trigger backend fetch
    */
   static loadConfig(): UserConfig {
-    const cached = localStorage.getItem(CACHE_KEY);
+    const cached = storage.getItem(CACHE_KEY);
     if (cached) {
       try {
         return JSON.parse(cached);
@@ -69,7 +70,7 @@ export class ConfigService {
    * Swapping to a real API driver in the future only requires updating the syncWithBackend function.
    */
   static saveConfig(config: UserConfig): Promise<UserConfig> {
-    localStorage.setItem(CACHE_KEY, JSON.stringify(config));
+    storage.setItem(CACHE_KEY, JSON.stringify(config));
     return this.scheduleBackendSync(config);
   }
 

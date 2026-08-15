@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
 import { SyncQueueService } from '../services/SyncQueueService';
 import { DataSyncService } from '../services/DataSyncService';
+import { storage } from '../services/storage';
 
 // ─────────────────────────────────────────────
 // TYPES
@@ -182,13 +183,13 @@ function genId(prefix: string): string {
 
 function loadHabits(): Habit[] {
   try {
-    const raw = localStorage.getItem(CACHE_KEY);
+    const raw = storage.getItem(CACHE_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch { return []; }
 }
 
 function saveHabits(habits: Habit[]): void {
-  localStorage.setItem(CACHE_KEY, JSON.stringify(habits));
+  storage.setItem(CACHE_KEY, JSON.stringify(habits));
   DataSyncService.markDirty('habits');
 }
 

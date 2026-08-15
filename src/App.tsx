@@ -1,6 +1,5 @@
 import { useRef, useEffect } from 'react';
-import GridBackground from './GridBackground';
-import AnimatedLogo from './AnimatedLogo';
+import GridBackground from './GridBackground';import AnimatedLogo from './AnimatedLogo';
 import LoginForm from './LoginForm';
 import Footer from './Footer';
 import { ThemeProvider } from './context/ThemeContext';
@@ -22,8 +21,9 @@ import { ClientsProvider } from './context/ClientsContext';
 import { ShoppingProvider } from './context/ShoppingContext';
 import { MessagesProvider } from './context/MessagesContext';
 import { GlobalTaskCompletionModal } from './components/dashboard/GlobalTaskCompletionModal';
-import { Api } from './services/ApiClient';
+import { Api, ApiError } from './services/ApiClient';
 import { DataSyncService } from './services/DataSyncService';
+import { startBackgroundSync } from './services/backgroundSync';
 
 function MainAppContent() {
   const { currentView } = useTransition();
@@ -63,6 +63,10 @@ function MainAppContent() {
 function App() {
   const urlParams = new URLSearchParams(window.location.search);
   const isClientPortal = urlParams.get('mode') === 'client';
+
+  useEffect(() => {
+    startBackgroundSync();
+  }, []);
 
   if (isClientPortal) {
     return (
@@ -125,7 +129,16 @@ function SessionRestore() {
           window.dispatchEvent(new Event('quincha-auth'));
           navigateTo('dashboard');
         })
-        .catch(() => { /* invalid token: stay on login */ });
+        .catch((err) => {
+          // Sin conexión: entra con la sesión y el perfil cacheados (offline-first).
+          // La sincronización se hará en segundo plano al recuperar la red.
+          const offline = !(err instanceof ApiError) || err.status === 0;
+          if (offline && Api.getProfile()) {
+            window.dispatchEvent(new Event('quincha-auth'));
+            navigateTo('dashboard');
+          }
+          // Token inválido (401): se queda en login.
+        });
     }
   }, [currentView, navigateTo]);
 

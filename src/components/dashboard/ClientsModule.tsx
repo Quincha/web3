@@ -42,7 +42,7 @@ export const ClientsModule: React.FC = () => {
   const selectedClient = clients.find(c => c.id === selectedClientId);
 
   return (
-    <div className="module-container fade-in" style={{ padding: '32px', height: '100%', display: 'flex', gap: '32px' }}>
+    <div className="module-container fade-in" style={{ height: '100%', display: 'flex', gap: '32px', flexWrap: 'wrap' }}>
       
       {/* Columna Izquierda: Lista de Clientes */}
       <div style={{ flex: '1', display: 'flex', flexDirection: 'column', maxWidth: selectedClientId ? '400px' : '100%', transition: 'max-width 0.3s ease' }}>

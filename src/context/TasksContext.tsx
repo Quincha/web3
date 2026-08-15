@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { SyncQueueService } from '../services/SyncQueueService';
 import { DataSyncService } from '../services/DataSyncService';
+import { storage } from '../services/storage';
 
 // ─────────────────────────────────────────────
 // TYPES
@@ -122,25 +123,25 @@ const PROJECTS_KEY = 'quincha_projects_v2';
 
 function loadTasks(): Task[] {
   try {
-    const raw = localStorage.getItem(TASKS_KEY);
+    const raw = storage.getItem(TASKS_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch { return []; }
 }
 
 function loadProjects(): Project[] {
   try {
-    const raw = localStorage.getItem(PROJECTS_KEY);
+    const raw = storage.getItem(PROJECTS_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch { return []; }
 }
 
 function saveTasks(tasks: Task[]): void {
-  localStorage.setItem(TASKS_KEY, JSON.stringify(tasks));
+  storage.setItem(TASKS_KEY, JSON.stringify(tasks));
   DataSyncService.markDirty('tasks');
 }
 
 function saveProjects(projects: Project[]): void {
-  localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
+  storage.setItem(PROJECTS_KEY, JSON.stringify(projects));
   DataSyncService.markDirty('tasks');
 }
 

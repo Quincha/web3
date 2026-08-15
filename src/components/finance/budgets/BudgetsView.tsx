@@ -3,6 +3,7 @@ import { Card } from '../../ui/Card';
 import { useFinance, financeCategoryLabel, FINANCE_CATEGORIES } from '../../../context/FinanceContext';
 import { DataSyncService } from '../../../services/DataSyncService';
 import { Target, X, Trash2, DollarSign } from 'lucide-react';
+import { storage } from '../../../services/storage';
 
 const BUDGETS_KEY = 'quincha_finance_budgets';
 
@@ -15,7 +16,7 @@ export interface Budget {
 
 function loadBudgets(): Budget[] {
   try {
-    const raw = localStorage.getItem(BUDGETS_KEY);
+    const raw = storage.getItem(BUDGETS_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch { return []; }
 }
@@ -32,7 +33,7 @@ export const BudgetsView: React.FC = () => {
   const year = String(now.getFullYear());
 
   useEffect(() => {
-    localStorage.setItem(BUDGETS_KEY, JSON.stringify(budgets));
+    storage.setItem(BUDGETS_KEY, JSON.stringify(budgets));
     DataSyncService.markDirty('budgets');
   }, [budgets]);
 

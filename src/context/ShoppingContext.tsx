@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { DataSyncService } from '../services/DataSyncService';
+import { storage } from '../services/storage';
 
 export interface ShoppingProduct {
   id: string;
@@ -28,7 +29,7 @@ const CACHE_KEY = 'quincha_shopping_products_v2';
 
 function loadFromCache(): ShoppingProduct[] {
   try {
-    const raw = localStorage.getItem(CACHE_KEY);
+    const raw = storage.getItem(CACHE_KEY);
     if (raw) return JSON.parse(raw);
   } catch {}
   
@@ -36,7 +37,7 @@ function loadFromCache(): ShoppingProduct[] {
 }
 
 function saveToCache(products: ShoppingProduct[]) {
-  localStorage.setItem(CACHE_KEY, JSON.stringify(products));
+  storage.setItem(CACHE_KEY, JSON.stringify(products));
   DataSyncService.markDirty('shopping');
 }
 

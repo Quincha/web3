@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { DataSyncService } from '../services/DataSyncService';
+import { storage } from '../services/storage';
 
 export type GoalTimeframe = 'weekly' | 'monthly' | 'quarterly' | 'yearly';
 export type GoalStatus = 'active' | 'completed' | 'abandoned';
@@ -46,7 +47,7 @@ export const GoalsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Load from cache on mount
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(CACHE_KEY);
+      const raw = storage.getItem(CACHE_KEY);
       if (raw) {
         setGoals(JSON.parse(raw));
       }
@@ -56,7 +57,7 @@ export const GoalsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const saveToCache = (newGoals: Goal[]) => {
-    localStorage.setItem(CACHE_KEY, JSON.stringify(newGoals));
+    storage.setItem(CACHE_KEY, JSON.stringify(newGoals));
     DataSyncService.markDirty('goals');
   };
 

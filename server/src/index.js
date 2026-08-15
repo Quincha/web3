@@ -4,10 +4,12 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import {
-  countUsers, createUser, getUserByUsername, verifyPassword,
+  countUsers, createUser, getAllUsers, getUserByUsername, verifyPassword,
   createSession, destroySession, getUserByToken,
   getConfig, saveConfig, putStore, getAllStore,
   getStoreSince, pruneStore, updatePassword, pruneExpiredSessions,
+  insertDesign, getDesign, listDesigns, deleteDesign,
+  DATA_DIR,
 } from './db.js';
 import {
   gcalConfigured, buildAuthUrl, exchangeCodeForTokens,
@@ -15,13 +17,29 @@ import {
   gcalListEvents, gcalCreateEvent, gcalUpdateEvent, gcalDeleteEvent, gcalClearEvents,
   gcalEnsureWatch, gcalStopWatch, gcalChannelValid,
 } from './gcal.js';
+import { parseDesign, preview, parseMultipart } from './design.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DIST_DIR = path.join(__dirname, '..', '..', 'dist');
 
-const app = express();
-app.disable('x-powered-by');
-app.use(express.json({ limit: '10mb' }));
+ const app = express();
+ app.disable('x-powered-by');
+ app.use(express.json({ limit: '10mb' }));
+
+ // --------------------------------------------------------------------------
+ // Headers de seguridad
+ // --------------------------------------------------------------------------
+ app.use((_req, res, next) => {
+   res.setHeader('X-Content-Type-Options', 'nosniff');
+   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+   res.setHeader(
+     'Content-Security-Policy',
+     "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://images.unsplash.com https://s3.amazonaws.com; font-src 'self' data:; connect-src 'self' https://api.open-meteo.com https://s3.amazonaws.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'"
+   );
+   next();
+ });
 
 // --------------------------------------------------------------------------
 // Auth middleware
@@ -168,6 +186,50 @@ app.post('/api/password', requireAuth, (req, res) => {
   }
   updatePassword(req.user.username, next);
   res.json({ ok: true });
+});
+
+// --------------------------------------------------------------------------
+// Usuarios (solo super-admin): listar y crear
+// --------------------------------------------------------------------------
+function requireSuperAdmin(req, res, next) {
+  if (req.user?.role !== 'super-admin') {
+    return res.status(403).json({ error: 'Se requiere rol super-admin' });
+  }
+  next();
+}
+
+const VALID_ROLES = new Set(['super-admin', 'admin', 'supervisor', 'user', 'guest']);
+
+app.get('/api/users', requireAuth, requireSuperAdmin, (_req, res) => {
+  res.json({ ok: true, users: getAllUsers() });
+});
+
+app.post('/api/users', requireAuth, requireSuperAdmin, (req, res) => {
+  const { username, password, role = 'user', name = '' } = req.body || {};
+  const user = String(username || '').trim();
+  const pass = String(password || '');
+
+  if (!user || !pass) {
+    return res.status(400).json({ error: 'Usuario y contraseña son obligatorios' });
+  }
+  if (user.length < 3) return res.status(400).json({ error: 'El usuario debe tener al menos 3 caracteres' });
+  if (pass.length < 8) return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres' });
+  if (!VALID_ROLES.has(role)) return res.status(400).json({ error: 'Rol inválido' });
+
+  try {
+    createUser(user, pass, role, String(name || '').trim());
+    const created = getUserByUsername(user);
+    res.status(201).json({
+      ok: true,
+      user: { id: created.id, username: created.username, role: created.role, name: created.name },
+    });
+  } catch (err) {
+    if (String(err.message).includes('UNIQUE')) {
+      return res.status(409).json({ error: 'El usuario ya existe' });
+    }
+    console.error('[users] create:', err);
+    res.status(500).json({ error: 'Error al crear el usuario' });
+  }
 });
 
 // --------------------------------------------------------------------------
@@ -505,6 +567,139 @@ app.delete('/api/gcal/event/:eventId', requireAuth, async (req, res) => {
     console.error('[gcal] delete:', err);
     res.status(500).json({ error: err.message });
   }
+});
+
+// --------------------------------------------------------------------------
+// Diseños de bordado: metadatos y vista previa (JEF / DST / PES)
+// --------------------------------------------------------------------------
+
+// Máximo de bytes que aceptamos para un diseño de bordado.
+const DESIGN_MAX_BYTES = 8 * 1024 * 1024;
+
+// El server no usa librería de uploads: para range de archivos leemos el body
+// binario crudo con un límite propio y luego lo parseamos como multipart.
+function bufferedUpload(req, res, next) {
+  const chunks = [];
+  let size = 0;
+  let tooBig = false;
+  req.on('data', (chunk) => {
+    size += chunk.length;
+    if (size > DESIGN_MAX_BYTES) { tooBig = true; req.destroy(); return; }
+    chunks.push(chunk);
+  });
+  req.on('end', () => {
+    if (tooBig) { req.tooBig = true; return next(); }
+    const buf = Buffer.concat(chunks);
+    req.upload = parseMultipart(buf, req.headers['content-type']);
+    next();
+  });
+  req.on('error', () => { if (!res.headersSent) res.status(400).json({ error: 'Cuerpo inválido' }); });
+  req.setTimeout(30000, () => req.destroy());
+}
+
+function uploadPayload(req, res) {
+  if (req.tooBig) return res.status(413).json({ error: 'Archivo demasiado grande' });
+  if (!req.upload) return res.status(400).json({ error: 'No se subió ningún archivo' });
+  return null;
+}
+
+app.post('/api/design/meta', requireAuth, bufferedUpload, (req, res) => {
+  const bad = uploadPayload(req, res);
+  if (bad) return bad;
+  try {
+    const meta = parseDesign(req.upload.buf, req.upload.name);
+    res.json({ ok: true, name: req.upload.name, ...meta });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post('/api/design/preview', requireAuth, bufferedUpload, (req, res) => {
+  const bad = uploadPayload(req, res);
+  if (bad) return bad;
+  const size = Math.min(Number(req.query.size) || 512, 1024);
+  const mode = req.query.mode === 'bordado' ? 'bordado' : 'puntos';
+  try {
+    const img = preview(req.upload.buf, req.upload.name, size, mode);
+    res.json({ ok: true, ...img });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// --------------------------------------------------------------------------
+// Diseños guardados: guardar / listar / ver / eliminar (persistencia en disco)
+// --------------------------------------------------------------------------
+
+const DESIGN_FILES_DIR = path.join(DATA_DIR, 'designs');
+
+function designFilePath(userId, design) {
+  const ext = String(design.format || '').toLowerCase() || 'jef';
+  return path.join(DESIGN_FILES_DIR, String(userId), `${design.id}.${ext}`);
+}
+
+app.post('/api/design/save', requireAuth, bufferedUpload, (req, res) => {
+  const bad = uploadPayload(req, res);
+  if (bad) return bad;
+  try {
+    const meta = parseDesign(req.upload.buf, req.upload.name);
+    const id = crypto.randomUUID();
+    const design = {
+      id,
+      name: req.upload.name,
+      format: meta.format,
+      stitches: meta.stitches,
+      colorCount: meta.colorCount,
+      colors: meta.colors,
+      createdAt: Date.now(),
+    };
+    const dir = path.join(DESIGN_FILES_DIR, String(req.user.id));
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(designFilePath(req.user.id, design), req.upload.buf);
+    insertDesign(req.user.id, design);
+    const pv = preview(req.upload.buf, req.upload.name, 480, 'bordado');
+    res.json({ ok: true, design, preview: pv });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.get('/api/designs', requireAuth, (req, res) => {
+  res.json({ ok: true, designs: listDesigns(req.user.id) });
+});
+
+app.get('/api/design/:id', requireAuth, (req, res) => {
+  const design = getDesign(req.user.id, req.params.id);
+  if (!design) return res.status(404).json({ error: 'Diseño no encontrado' });
+  const file = designFilePath(req.user.id, design);
+  if (!fs.existsSync(file)) return res.status(404).json({ error: 'Archivo del diseño no encontrado' });
+  const size = Math.min(Number(req.query.size) || 512, 1024);
+  const mode = req.query.mode === 'bordado' ? 'bordado' : 'puntos';
+  try {
+    const buf = fs.readFileSync(file);
+    const pv = preview(buf, design.name, size, mode);
+    res.json({ ok: true, design, ...pv });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete('/api/design/:id', requireAuth, (req, res) => {
+  const design = getDesign(req.user.id, req.params.id);
+  if (!design) return res.status(404).json({ error: 'Diseño no encontrado' });
+  const file = designFilePath(req.user.id, design);
+  if (fs.existsSync(file)) fs.unlinkSync(file);
+  deleteDesign(req.user.id, req.params.id);
+  res.json({ ok: true });
+});
+
+// Descarga el archivo original del diseño (.jef/.dst/.pes).
+app.get('/api/design/:id/download', requireAuth, (req, res) => {
+  const design = getDesign(req.user.id, req.params.id);
+  if (!design) return res.status(404).json({ error: 'Diseño no encontrado' });
+  const file = designFilePath(req.user.id, design);
+  if (!fs.existsSync(file)) return res.status(404).json({ error: 'Archivo del diseño no encontrado' });
+  res.download(file, design.name);
 });
 
 // --------------------------------------------------------------------------

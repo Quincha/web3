@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { DataSyncService } from '../services/DataSyncService';
+import { storage } from '../services/storage';
 
 export type BujoEntryType = 'task' | 'completed' | 'migrated' | 'scheduled' | 'note' | 'event' | 'cancelled';
 
@@ -59,7 +60,7 @@ const CHECKIN_CACHE_KEY = 'quincha_bujo_checkins_v2';
 
 function loadFromCache(): BujoEntry[] {
   try {
-    const raw = localStorage.getItem(CACHE_KEY);
+    const raw = storage.getItem(CACHE_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -67,13 +68,13 @@ function loadFromCache(): BujoEntry[] {
 }
 
 function saveToCache(entries: BujoEntry[]) {
-  localStorage.setItem(CACHE_KEY, JSON.stringify(entries));
+  storage.setItem(CACHE_KEY, JSON.stringify(entries));
   DataSyncService.markDirty('bujo');
 }
 
 function loadMoodsFromCache(): Record<string, number> {
   try {
-    const raw = localStorage.getItem(MOOD_CACHE_KEY);
+    const raw = storage.getItem(MOOD_CACHE_KEY);
     return raw ? JSON.parse(raw) : {};
   } catch {
     return {};
@@ -81,13 +82,13 @@ function loadMoodsFromCache(): Record<string, number> {
 }
 
 function saveMoodsToCache(moods: Record<string, number>) {
-  localStorage.setItem(MOOD_CACHE_KEY, JSON.stringify(moods));
+  storage.setItem(MOOD_CACHE_KEY, JSON.stringify(moods));
   DataSyncService.markDirty('bujo');
 }
 
 function loadCheckInsFromCache(): Record<string, BujoCheckIn> {
   try {
-    const raw = localStorage.getItem(CHECKIN_CACHE_KEY);
+    const raw = storage.getItem(CHECKIN_CACHE_KEY);
     return raw ? JSON.parse(raw) : {};
   } catch {
     return {};
@@ -95,7 +96,7 @@ function loadCheckInsFromCache(): Record<string, BujoCheckIn> {
 }
 
 function saveCheckInsToCache(checkIns: Record<string, BujoCheckIn>) {
-  localStorage.setItem(CHECKIN_CACHE_KEY, JSON.stringify(checkIns));
+  storage.setItem(CHECKIN_CACHE_KEY, JSON.stringify(checkIns));
   DataSyncService.markDirty('bujo');
 }
 

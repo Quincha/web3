@@ -4,6 +4,7 @@ import type {
 } from '../types/finance';
 import { SyncQueueService } from '../services/SyncQueueService';
 import { DataSyncService } from '../services/DataSyncService';
+import { storage } from '../services/storage';
 
 interface FinanceContextType {
   stats: FinanceDashboardStats;
@@ -46,7 +47,7 @@ const CACHE_KEY_DEUDAS = 'quincha_finance_deudas_v2';
 
 function loadMovimientosFromCache(): Movimiento[] {
   try {
-    const raw = localStorage.getItem(CACHE_KEY);
+    const raw = storage.getItem(CACHE_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -54,13 +55,13 @@ function loadMovimientosFromCache(): Movimiento[] {
 }
 
 function saveMovimientosToCache(movs: Movimiento[]) {
-  localStorage.setItem(CACHE_KEY, JSON.stringify(movs));
+  storage.setItem(CACHE_KEY, JSON.stringify(movs));
   DataSyncService.markDirty('finance');
 }
 
 function loadDeudasFromCache(): Deuda[] {
   try {
-    const raw = localStorage.getItem(CACHE_KEY_DEUDAS);
+    const raw = storage.getItem(CACHE_KEY_DEUDAS);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -68,7 +69,7 @@ function loadDeudasFromCache(): Deuda[] {
 }
 
 function saveDeudasToCache(deudas: Deuda[]) {
-  localStorage.setItem(CACHE_KEY_DEUDAS, JSON.stringify(deudas));
+  storage.setItem(CACHE_KEY_DEUDAS, JSON.stringify(deudas));
   DataSyncService.markDirty('finance');
 }
 

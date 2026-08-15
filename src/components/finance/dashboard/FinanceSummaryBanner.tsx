@@ -16,21 +16,9 @@ export const FinanceSummaryBanner: React.FC = () => {
   };
 
   return (
-    <div className="premium-card-hover" style={{
-      background: 'linear-gradient(90deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 27, 75, 0.85) 100%)',
-      backdropFilter: 'blur(16px)',
-      WebkitBackdropFilter: 'blur(16px)',
-      border: '1px solid rgba(56, 189, 248, 0.2)',
-      borderRadius: '20px',
-      padding: '24px 32px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: '32px',
-      boxShadow: '0 8px 32px rgba(0,0,0,0.4)'
-    }}>
+    <div className="finance-summary-banner-card">
       {/* Left side: Icon & Text */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '20px', minWidth: '300px' }}>
+      <div className="finance-summary-banner-header">
         <div style={{
           width: '56px',
           height: '56px',
@@ -40,7 +28,8 @@ export const FinanceSummaryBanner: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          border: `1px solid rgba(56, 189, 248, 0.3)`
+          border: `1px solid rgba(56, 189, 248, 0.3)`,
+          flexShrink: 0
         }}>
           <Wallet size={24} />
         </div>
@@ -51,7 +40,7 @@ export const FinanceSummaryBanner: React.FC = () => {
       </div>
 
       {/* Center: Quick Stats */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '48px', flex: 1, paddingLeft: '24px' }}>
+      <div className="finance-summary-banner-stats">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.6)', fontSize: '12px' }}>
             <Wallet size={14} /> Saldo disponible
@@ -97,7 +86,7 @@ export const FinanceSummaryBanner: React.FC = () => {
       </div>
 
       {/* Right side: Action */}
-      <div style={{ flexShrink: 0 }}>
+      <div className="finance-summary-banner-action">
         <Button
           variant="primary"
           onClick={goToFinance}
@@ -110,7 +99,8 @@ export const FinanceSummaryBanner: React.FC = () => {
             padding: '12px 24px',
             boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)',
             transition: 'all 0.3s ease',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            whiteSpace: 'nowrap'
           }}
         >
           Ir a Finanzas →

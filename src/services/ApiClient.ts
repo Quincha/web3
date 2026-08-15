@@ -1,4 +1,6 @@
 import { API_BASE } from './config';
+import { storage } from './storage';
+import { httpFetch } from './http';
 
 const TOKEN_KEY = 'q_token';
 const PROFILE_KEY = 'q_profile';
@@ -10,17 +12,17 @@ export interface AuthUser {
 }
 
 function getToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
+  return storage.getItem(TOKEN_KEY);
 }
 
 function setToken(token: string | null) {
-  if (token) localStorage.setItem(TOKEN_KEY, token);
-  else localStorage.removeItem(TOKEN_KEY);
+  if (token) storage.setItem(TOKEN_KEY, token);
+  else storage.removeItem(TOKEN_KEY);
 }
 
 function getProfile(): AuthUser | null {
   try {
-    const raw = localStorage.getItem(PROFILE_KEY);
+    const raw = storage.getItem(PROFILE_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
@@ -28,8 +30,8 @@ function getProfile(): AuthUser | null {
 }
 
 function setProfile(profile: AuthUser | null) {
-  if (profile) localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
-  else localStorage.removeItem(PROFILE_KEY);
+  if (profile) storage.setItem(PROFILE_KEY, JSON.stringify(profile));
+  else storage.removeItem(PROFILE_KEY);
 }
 
 export class ApiError extends Error {
@@ -52,7 +54,7 @@ async function request<T>(path: string, options: RequestInit = {}, withAuth = tr
 
   let res: Response;
   try {
-    res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+    res = await httpFetch(`${API_BASE}${path}`, { ...options, headers });
   } catch {
     throw new ApiError(0, 'Error de conexión: no se pudo conectar con el servidor');
   }

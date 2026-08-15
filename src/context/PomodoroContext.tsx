@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { ConfigService } from '../services/ConfigService';
 import { DataSyncService } from '../services/DataSyncService';
+import { storage } from '../services/storage';
 import { useTasks } from './TasksContext';
 
 export const SESSION_TYPES = {
@@ -62,7 +63,7 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Load initial logs from cache
   useEffect(() => {
-    const cachedLogs = localStorage.getItem('quincha_pomodoro_logs_v2');
+    const cachedLogs = storage.getItem('quincha_pomodoro_logs_v2');
     if (cachedLogs) {
       try {
         setCompletedSessions(JSON.parse(cachedLogs));
@@ -73,7 +74,7 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   const saveLogsToCache = (newLogs: PomodoroSessionRecord[]) => {
-    localStorage.setItem('quincha_pomodoro_logs_v2', JSON.stringify(newLogs));
+    storage.setItem('quincha_pomodoro_logs_v2', JSON.stringify(newLogs));
     DataSyncService.markDirty('pomodoro');
     
     // Simulate background API sync

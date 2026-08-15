@@ -3718,5 +3718,247 @@
   border-color: rgba(255, 255, 255, 0.15) !important;
 }
 
+/* ============================
+   RESPONSIVE LAYOUT & CONTAINERS
+   ============================ */
+
+/* Main dashboard widget grid: 2 per row by default */
+.dashboard-main-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  width: 100%;
+}
+
+.dashboard-main-grid > * {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Consistent module containers: cap width + center + consistent lateral padding */
+.bujo-module-container,
+.finance-module-container,
+.habits-module-container,
+.tasks-module-container,
+.calendar-module-container,
+.documents-module-container,
+.health-module-container,
+.pomodoro-module-container,
+.goals-module-container,
+.registro-module-container,
+.module-container,
+.dashboard-content-area {
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+  padding-left: 28px;
+  padding-right: 28px;
+}
+
+.dashboard-hero-responsive {
+  padding: 24px 36px 32px 36px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.hero-content-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 24px;
+  width: 100%;
+}
+
+.hero-zone-welcome {
+  flex: 1.3;
+  min-width: 280px;
+  max-width: 100%;
+}
+
+.hero-zone-stats {
+  flex: 0.9;
+  min-width: 180px;
+  max-width: 100%;
+}
+
+.hero-weather-zone {
+  flex: 1.2;
+  min-width: 240px;
+  max-width: 100%;
+}
+
+/* Hero Weekly Progress Ring: Oculto por defecto en pantallas pequeñas, medianas y laptops (< 1680px) */
+.hero-progress-ring {
+  display: none !important;
+}
+
+/* Solo se muestra en pantallas grandes de escritorio (1080p completo o superior: >= 1680px) */
+@media (min-width: 1680px) {
+  .hero-progress-ring {
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+}
+
+/* En pantallas menores a 1680px permitir que el contenido del Hero se ajuste con fluidez */
+@media (max-width: 1679px) {
+  .hero-content-row {
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+}
+
+/* Finance Summary Banner (Dashboard Bottom Container) */
+.finance-summary-banner-card {
+  background: linear-gradient(90deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 27, 75, 0.85) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 20px;
+  padding: 24px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  width: 100%;
+  box-sizing: border-box;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.finance-summary-banner-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(56, 189, 248, 0.35);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+}
+
+.finance-summary-banner-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-width: 260px;
+}
+
+.finance-summary-banner-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  flex: 1;
+  padding-left: 20px;
+}
+
+.finance-summary-banner-action {
+  flex-shrink: 0;
+}
+
+/* Medium screens (<= 1100px) */
+@media (max-width: 1100px) {
+  .finance-summary-banner-card {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 20px;
+    gap: 20px;
+  }
+
+  .finance-summary-banner-header {
+    min-width: unset;
+  }
+
+  .finance-summary-banner-stats {
+    grid-template-columns: repeat(2, 1fr);
+    padding-left: 0;
+    gap: 16px;
+  }
+
+  .finance-summary-banner-action {
+    align-self: flex-start;
+  }
+}
+
+/* Tablet screens (<= 1024px) */
+@media (max-width: 1024px) {
+  .bujo-module-container,
+  .finance-module-container,
+  .habits-module-container,
+  .tasks-module-container,
+  .calendar-module-container,
+  .documents-module-container,
+  .health-module-container,
+  .pomodoro-module-container,
+  .goals-module-container,
+  .registro-module-container,
+  .module-container,
+  .dashboard-content-area {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .dashboard-hero-responsive {
+    padding: 22px 24px 28px 24px;
+  }
+}
+
+/* Small screens (<= 768px) */
+@media (max-width: 768px) {
+  .dashboard-hero-responsive {
+    padding: 20px 16px 24px 16px;
+  }
+
+  .hero-content-row {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .hero-zone-welcome,
+  .hero-zone-stats,
+  .hero-weather-zone {
+    min-width: 100%;
+    width: 100%;
+  }
+}
+
+/* Mobile & extra small screens (<= 640px) */
+@media (max-width: 640px) {
+  .dashboard-main-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .bujo-module-container,
+  .finance-module-container,
+  .habits-module-container,
+  .tasks-module-container,
+  .calendar-module-container,
+  .documents-module-container,
+  .health-module-container,
+  .pomodoro-module-container,
+  .goals-module-container,
+  .registro-module-container,
+  .module-container,
+  .dashboard-content-area {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .dashboard-body-scroller {
+    padding: 16px 12px;
+  }
+
+  .finance-summary-banner-stats {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .finance-summary-banner-card {
+    padding: 16px;
+  }
+}
+
 
 

@@ -1,5 +1,6 @@
 import { getProfile } from './ApiClient';
 import { DataSyncService } from './DataSyncService';
+import { storage } from './storage';
 
 export const AUDIT_STORAGE_KEY = 'quincha_auditorias_v2';
 
@@ -35,7 +36,7 @@ export const TIPO_COLORS: Record<string, string> = {
 
 function readJSON(key: string): unknown {
   try {
-    const raw = localStorage.getItem(key);
+    const raw = storage.getItem(key);
     return raw ? JSON.parse(raw) : undefined;
   } catch {
     return undefined;
@@ -44,7 +45,7 @@ function readJSON(key: string): unknown {
 
 function writeJSON(key: string, value: unknown): void {
   try {
-    localStorage.setItem(key, JSON.stringify(value));
+    storage.setItem(key, JSON.stringify(value));
   } catch {
     /* cuota llena o modo privado: se ignora */
   }

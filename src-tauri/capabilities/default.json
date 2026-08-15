@@ -1,0 +1,18 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Capacidades por defecto de la app Quincha",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "http:default",
+    {
+      "identifier": "http:allow-fetch",
+      "allow": [
+        { "url": "https://quincha.cl/*" },
+        { "url": "http://localhost:3000/*" }
+      ]
+    },
+    "opener:default"
+  ]
+}

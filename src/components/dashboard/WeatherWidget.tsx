@@ -119,7 +119,7 @@ export const WeatherWidget: React.FC = () => {
   }, []);
 
   return (
-    <div style={{ flex: '1', minWidth: '220px', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 3 }}>
+    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div className="premium-card-hover" style={{ 
         background: 'rgba(15, 23, 42, 0.3)', 
         backdropFilter: 'blur(12px)',

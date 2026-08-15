@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Informe WON 🌈 Quincha.cl</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: "Comic Sans MS", "Segoe UI", "Chalkboard SE", cursive, sans-serif;
+    background: linear-gradient(160deg, #ffd166 0%, #ff9e5e 30%, #ff6b9d 65%, #9d5cff 100%);
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+  }
+  .contenedor { max-width: 820px; margin: 0 auto; }
+  .cabecera {
+    background: rgba(255,255,255,0.95);
+    border-radius: 40px;
+    padding: 34px 28px;
+    text-align: center;
+    box-shadow: 0 10px 0 rgba(0,0,0,0.12), 0 20px 40px rgba(0,0,0,0.25);
+    margin-bottom: 30px;
+    border: 6px dashed #ff6b9d;
+  }
+  h1 { font-size: 2.6em; color: #6d28d9; letter-spacing: 1px; }
+  h1 .emoji-grande { font-size: 1.3em; }
+  .subtitulo { margin-top: 10px; font-size: 1.15em; color: #555; }
+  .tarjeta {
+    background: rgba(255,255,255,0.94);
+    border-radius: 30px;
+    padding: 24px 26px;
+    margin-bottom: 22px;
+    box-shadow: 0 6px 0 rgba(0,0,0,0.10), 0 12px 24px rgba(0,0,0,0.18);
+    border: 4px solid #9d5cff;
+  }
+  .tarjeta h2 { font-size: 1.6em; color: #ff4f8b; margin-bottom: 12px; }
+  .verde { border-color: #22c55e; } .verde h2 { color:#16a34a; }
+  .roja  { border-color: #ef4444; } .roja  h2 { color:#dc2626; }
+  .azul  { border-color: #3b82f6; } .azul  h2 { color:#2563eb; }
+  .naranja { border-color: #f97316; } .naranja h2 { color:#ea580c; }
+  p { font-size: 1.15em; line-height: 1.55; color: #333; margin-bottom: 12px; }
+  ul { padding-left: 26px; margin-bottom: 12px; }
+  li { font-size: 1.13em; line-height: 1.6; color: #333; margin-bottom: 8px; }
+  .etiqueta {
+    display: inline-block;
+    background: #eef2ff;
+    color: #4338ca;
+    font-weight: bold;
+    padding: 6px 14px;
+    border-radius: 999px;
+    margin: 4px 4px 0 0;
+    font-size: 0.95em;
+  }
+  .ok { color: #16a34a; font-weight: bold; }
+  .mal { color: #dc2626; font-weight: bold; }
+  .codigo {
+    background: #1e293b;
+    color: #f8fafc;
+    font-family: "Consolas", monospace;
+    font-size: 0.98em;
+    padding: 14px 16px;
+    border-radius: 14px;
+    display: block;
+    overflow-x: auto;
+    margin: 10px 0 14px;
+  }
+  .tabla { width:100%; border-collapse: collapse; margin: 12px 0; }
+  .tabla th, .tabla td { border: 2px solid #ddd; padding: 10px 12px; font-size: 1.05em; text-align:left; }
+  .tabla th { background:#f3e8ff; color:#6d28d9; }
+  .gran-texto { font-size: 1.9em; text-align:center; font-weight:bold; color:#6d28d9; margin: 16px 0; }
+  .pie { text-align:center; color:#fff; font-size: 1.05em; margin-top: 26px; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+  .globo {
+    background: #fef3c7; border: 3px dashed #f59e0b; border-radius: 20px;
+    padding: 16px 20px; margin: 14px 0; font-size: 1.12em; line-height:1.5; color:#92400e;
+  }
+</style>
+</head>
+<body>
+<div class="contenedor">
+
+  <div class="cabecera">
+    <h1>📋 Informe WON 🌈</h1>
+    <div class="subtitulo">Todo sobre <b>quincha.cl</b> y <b>www.quincha.cl</b> explicado súper simple ✨</div>
+    <div class="subtitulo">Hecho con 💜 el día 12 de agosto de 2026</div>
+  </div>
+
+  <div class="tarjeta roja">
+    <h2>⚠️ El problema que vimos</h2>
+    <p>No podías abrir <b>www.quincha.cl</b> 🙈. Daba un error <span class="mal">404 (No Encontrado)</span>, como si la página no existiera.</p>
+    <p>Pero también querías saber por qué "no se abría desde otro computador u otra red" 🤔. ¡Te investigamos TODO!</p>
+  </div>
+
+  <div class="tarjeta verde">
+    <h2>✅ La buena noticia: quincha.cl funciona en todo el mundo</h2>
+    <p class="gran-texto">🌍 23 países probados → TODOS responden 200 OK 🎉</p>
+    <p>Probamos desde <b>EE.UU.</b> (Los Ángeles, Dallas, Miami, Nueva York), <b>Europa</b> (España, Alemania, Suiza, Italia, Rumania), <b>Asia</b> (India, Indonesia, Kazajistán) y <b>Medio Oriente</b> (Irán, Israel). ¡En todas partes carga bien!</p>
+    <p>Tu servidor (una Raspberry Pi 🥧) está <b>encendido y feliz</b>:</p>
+    <ul>
+      <li>🟢 Nginx sirviendo en el puerto 80</li>
+      <li>🟢 La app "Quincha Systems" corriendo en el puerto 5173</li>
+      <li>🟢 El túnel de Cloudflare activo hace casi 2 días</li>
+      <li>🟢 Servicios extras (n8n, chatbots, PM2) funcionando</li>
+    </ul>
+  </div>
+
+  <div class="tarjeta azul">
+    <h2>🔎 Cómo funciona tu sistema (fácil)</h2>
+    <p>El tráfico viaja así:</p>
+    <div class="codigo">[ Tu navegador ] → [ Cloudflare 🌐 ] → [ Túnel ] → [ Nginx :80 ] → [ App :5173 ]</div>
+    <p>El túnel de Cloudflare es como una "agenda" que dice a qué puerto mandar cada nombre. Esa agenda está en el panel de Cloudflare (Networks → Tunnels), NO en tu Raspberry 🍓.</p>
+    <table class="tabla">
+      <tr><th>Nombre (hostname)</th><th>¿A dónde va?</th><th>¿Funciona?</th></tr>
+      <tr><td>quincha.cl</td><td>→ localhost:5173</td><td class="ok">✅ Sí, 200</td></tr>
+      <tr><td>www.quincha.cl</td><td>→ ⚠️ no está en la agenda</td><td class="mal">❌ 404</td></tr>
+      <tr><td>n8n.quincha.cl</td><td>→ localhost:8080</td><td class="ok">✅ Sí</td></tr>
+      <tr><td>ssh.quincha.cl</td><td>→ localhost:22</td><td class="ok">✅ Sí</td></tr>
+      <tr><td>gonzalo.quincha.cl</td><td>→ localhost:3001</td><td class="ok">✅ Sí</td></tr>
+    </table>
+    <p>Cuando no encuentra el nombre en la agenda, Cloudflare responde un <b>404</b> por defecto. Por eso <b>www</b> fallaba 😅.</p>
+  </div>
+
+  <div class="tarjeta naranja">
+    <h2>🛍️ Y la otra web: elsacodelahorro.cl</h2>
+    <p>Esa web vive en <b>Vercel</b> (otro lugar, otro hosting) con IPs <span class="etiqueta">216.198.79.65</span><span class="etiqueta">64.29.17.65</span>.</p>
+    <p>Es <b>100% independiente</b> de tu servidor. No comparte nada con quincha.cl. ¡No hay ningún conflicto entre ellas! 🤝</p>
+    <div class="globo">💡 O sea: la web "El Saco del Ahorro" está en Vercel y anda bien. Tu quincha.cl está en tu Raspberry y anda bien. Solo el "www" de quincha no estaba anotado en la agenda del túnel.</div>
+  </div>
+
+  <div class="tarjeta verde">
+    <h2>🧰 Cómo se arregla (fácil, sin romper nada)</h2>
+    <p>No hay que tocar la Raspberry ni la otra web. Solo hay que <b>anotar "www" en la agenda del túnel</b> en el panel de Cloudflare:</p>
+    <ol style="font-size:1.13em; padding-left:26px; margin-bottom:12px; line-height:1.7;">
+      <li>Entra a <b>Cloudflare Dashboard</b> → <b>Zero Trust</b> (o Networks).</li>
+      <li>Ve a <b>Tunnels</b> → tu túnel → <b>Public Hostname</b>.</li>
+      <li>Agrega: <b>Subdomain = www</b> y <b>Domain = quincha.cl</b>.</li>
+      <li>Servicio: <b>HTTP</b> → URL: <b>localhost:5173</b>.</li>
+      <li>Guarda y espera ~30 segundos. ¡Listo! 🎉</li>
+    </ol>
+    <p>¿Prefieres que www redirija a la raíz? También se puede con una Redirect Rule: <span class="codigo">www.quincha.cl/* → https://quincha.cl/$1 (301)</span></p>
+  </div>
+
+  <div class="tarjeta roja">
+    <h2>🧐 ¿Y por qué "no se abría" desde otra red?</h2>
+    <ul>
+      <li>👉 Si escribías <b>www.quincha.cl</b> (con www) → por eso el 404. Usa <b>https://quincha.cl</b> (sin www).</li>
+      <li>👉 El otro computador podía tener <b>DNS viejo guardado</b> de cuando el hosting estaba en otro lado. Limpia caché: <span class="codigo">ipconfig /flushdns</span> o prueba en incógnito.</li>
+      <li>👉 Para probar sin dudas: abre desde el <b>celular con datos móviles</b> 📱.</li>
+    </ul>
+    <p class="gran-texto">El sitio NO está caído 🌍✨</p>
+  </div>
+
+  <div class="tarjeta azul">
+    <h2>📌 Resumen final</h2>
+    <ul>
+      <li>✅ <b>quincha.cl</b> → anda en todo el mundo.</li>
+      <li>❌ <b>www.quincha.cl</b> → da 404 porque le falta la regla en el túnel de Cloudflare.</li>
+      <li>✅ <b>elsacodelahorro.cl</b> → anda en Vercel, independiente.</li>
+      <li>✅ Tu Raspberry, nginx y la app → todo arriba y sano.</li>
+      <li>🔧 El arreglo es <b>solo en el panel de Cloudflare</b>, agregando www → localhost:5173.</li>
+    </ul>
+    <div class="globo">🎈 ¡Eso es todo! Ahora ya sabes qué pasa y cómo arreglarlo sin tocar nada de lo que ya funciona.</div>
+  </div>
+
+  <div class="pie">Hecho con 💜 y mucho cariño · Informe WON 🌈</div>
+</div>
+</body>
+</html>

@@ -1,3 +1,6 @@
+import { storage } from './storage';
+import { isTauriRuntime } from './http';
+
 export interface DeviceConfig {
   windowWidth: number;
   windowHeight: number;
@@ -23,7 +26,7 @@ const DEFAULT_DEVICE_CONFIG: DeviceConfig = {
     startPomodoro: 'p',
     toggleSidebar: 'b'
   },
-  nativeAppMode: false
+  nativeAppMode: isTauriRuntime()
 };
 
 export class DeviceConfigService {
@@ -33,7 +36,7 @@ export class DeviceConfigService {
    */
   static loadConfig(): DeviceConfig {
     try {
-      const raw = localStorage.getItem(CACHE_KEY);
+      const raw = storage.getItem(CACHE_KEY);
       if (raw) {
         return {
           ...DEFAULT_DEVICE_CONFIG,
@@ -50,6 +53,6 @@ export class DeviceConfigService {
   static saveConfig(config: Partial<DeviceConfig>): void {
     const current = this.loadConfig();
     const updated = { ...current, ...config };
-    localStorage.setItem(CACHE_KEY, JSON.stringify(updated));
+    storage.setItem(CACHE_KEY, JSON.stringify(updated));
   }
 }
