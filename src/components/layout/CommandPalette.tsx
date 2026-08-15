@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Terminal, Flame, Heart, BookOpen, Sun, Moon, Sparkles, CheckSquare, ShoppingBag, DollarSign, Calendar as CalendarIcon, FileText, UserCheck, Briefcase, User, Watch } from 'lucide-react';
+import { Search, Terminal, Flame, Heart, BookOpen, Sun, Moon, Sparkles, CheckSquare, ShoppingBag, DollarSign, Calendar as CalendarIcon, FileText, UserCheck, Briefcase, User, Watch, ScrollText } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useTasks } from '../../context/TasksContext';
 import { useBujo } from '../../context/BujoContext';
@@ -47,6 +47,7 @@ export const CommandPalette: React.FC = () => {
     { id: 'go_shopping', category: 'Módulo', label: 'Lista de Compras', icon: <ShoppingBag size={15} />, action: () => navigateTo('shopping') },
     { id: 'go_projects', category: 'Módulo', label: 'Proyectos Activos', icon: <Briefcase size={15} />, action: () => navigateTo('proyectos') },
     { id: 'go_clients',  category: 'Módulo', label: 'Directorio de Clientes', icon: <UserCheck size={15} />, action: () => navigateTo('clientes') },
+    { id: 'go_registro', category: 'Módulo', label: 'Registro de Auditorías', icon: <ScrollText size={15} />, action: () => navigateTo('registro') },
 
     // ── Acciones / Temas ────────────
     { id: 'theme_dark',  category: 'Sistema', label: 'Activar Modo Oscuro', icon: <Moon size={15} />, action: () => { setTheme('dark'); setIsOpen(false); } },

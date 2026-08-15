@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import gsap from 'gsap';
 
-export type ViewState = 'login' | 'transition' | 'dashboard' | 'pomodoro' | 'bujo' | 'health' | 'tareas' | 'habitos' | 'calendario' | 'documentos' | 'finanzas' | 'shopping' | 'proyectos' | 'actividad' | 'clientes' | 'estadisticas' | 'mensajes' | 'ajustes' | 'band';
+export type ViewState = 'login' | 'transition' | 'dashboard' | 'pomodoro' | 'bujo' | 'health' | 'tareas' | 'habitos' | 'calendario' | 'documentos' | 'finanzas' | 'shopping' | 'proyectos' | 'actividad' | 'clientes' | 'estadisticas' | 'mensajes' | 'ajustes' | 'band' | 'registro';
 
 interface TransitionContextType {
   currentView: ViewState;

@@ -124,6 +124,11 @@ const MODULE_DEFS: SyncModuleDef[] = [
       { slot: 'source', lsKey: 'quincha_band_source_v2' },
     ],
   },
+  {
+    module: 'registro',
+    serverKey: 'data:registro',
+    keys: [{ slot: 'auditorias', lsKey: 'quincha_auditorias_v2' }],
+  },
 ];
 
 function readJSON(key: string): unknown {

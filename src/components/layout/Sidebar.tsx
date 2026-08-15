@@ -1,6 +1,6 @@
 import React from 'react';
 import { 
-   LayoutDashboard, BarChart3, Mail, FileText, Users, Settings, BookOpen, Wallet
+   LayoutDashboard, BarChart3, Mail, FileText, Users, Settings, BookOpen, Wallet, ScrollText
 } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
 import { PermissionService } from '../../services/PermissionService';
@@ -23,6 +23,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
     { id: 'mensajes', label: 'Mensajes', icon: <Mail size={20} strokeWidth={1.5} fill="currentColor" />, module: 'mensajes' as Module },
     { id: 'documentos', label: 'Documentos', icon: <FileText size={20} strokeWidth={1.5} fill="currentColor" />, module: 'documentos' as Module },
     { id: 'finanzas', label: 'Finanzas', icon: <Wallet size={20} strokeWidth={1.5} fill="currentColor" />, module: 'finanzas' as Module },
+    { id: 'registro', label: 'Registro', icon: <ScrollText size={20} strokeWidth={1.5} fill="currentColor" />, module: 'registro' as Module },
     { id: 'clientes', label: 'Clientes', icon: <Users size={20} strokeWidth={1.5} fill="currentColor" />, module: 'clientes' as Module },
     { id: 'ajustes', label: 'Ajustes', icon: <Settings size={20} strokeWidth={1.5} fill="currentColor" />, module: 'ajustes' as Module }
   ];
