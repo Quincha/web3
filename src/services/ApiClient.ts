@@ -11,6 +11,22 @@ export interface AuthUser {
   name: string;
 }
 
+export interface SavedDesign {
+  id: string;
+  name: string;
+  format: string;
+  stitches: number;
+  colorCount?: number;
+  colors?: { hex: string }[];
+  createdAt?: number;
+}
+
+export interface DesignPreview {
+  dataUrl: string;
+  width: number;
+  height: number;
+}
+
 function getToken(): string | null {
   return storage.getItem(TOKEN_KEY);
 }
@@ -71,6 +87,34 @@ async function request<T>(path: string, options: RequestInit = {}, withAuth = tr
   }
 
   if (res.status === 204) return undefined as T;
+  return res.json() as Promise<T>;
+}
+
+/** Upload multipart (campo "file"). No fija Content-Type: el boundary lo pone el runtime. */
+async function requestUpload<T>(path: string, file: File): Promise<T> {
+  const body = new FormData();
+  body.append('file', file, file.name);
+  const headers: Record<string, string> = {};
+  const token = getToken();
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  let res: Response;
+  try {
+    res = await httpFetch(`${API_BASE}${path}`, { method: 'POST', body, headers });
+  } catch {
+    throw new ApiError(0, 'Error de conexión: no se pudo conectar con el servidor');
+  }
+
+  if (!res.ok) {
+    let message = `Error ${res.status}`;
+    try {
+      const b = await res.json();
+      if (b && b.error) message = b.error;
+    } catch {
+      /* ignore parse errors */
+    }
+    throw new ApiError(res.status, message);
+  }
   return res.json() as Promise<T>;
 }
 
@@ -193,6 +237,48 @@ export const Api = {
 
   async gcalClear(prefix = ''): Promise<{ ok: boolean; removed?: number }> {
     return request('/gcal/clear', { method: 'POST', body: JSON.stringify({ prefix }) });
+  },
+
+  // Diseños de bordado (JEF / DST / PES)
+  async designMeta(file: File): Promise<{ ok: boolean; name: string; format: string; stitches: number; colorCount: number; colors: { hex: string }[] }> {
+    return requestUpload('/design/meta', file);
+  },
+
+  async designPreview(file: File, size = 512, mode: 'bordado' | 'puntos' = 'puntos'): Promise<DesignPreview> {
+    return requestUpload(`/design/preview?size=${size}&mode=${mode}`, file);
+  },
+
+  async designSave(file: File): Promise<{ ok: boolean; design: SavedDesign; preview: DesignPreview }> {
+    return requestUpload('/design/save', file);
+  },
+
+  async designList(): Promise<{ ok: boolean; designs: SavedDesign[] }> {
+    return request('/designs');
+  },
+
+  async designGet(id: string, size = 512, mode: 'bordado' | 'puntos' = 'puntos'): Promise<{ ok: boolean; design: SavedDesign } & DesignPreview> {
+    return request(`/design/${encodeURIComponent(id)}?size=${size}&mode=${mode}`);
+  },
+
+  async designDelete(id: string): Promise<{ ok: boolean }> {
+    return request(`/design/${encodeURIComponent(id)}`, { method: 'DELETE' });
+  },
+
+  async designDownload(id: string, filename: string): Promise<void> {
+    const headers: Record<string, string> = {};
+    const token = getToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await httpFetch(`${API_BASE}/design/${encodeURIComponent(id)}/download`, { headers });
+    if (!res.ok) throw new ApiError(res.status, `Error ${res.status} al descargar`);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename || 'diseno';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   },
 };
 
