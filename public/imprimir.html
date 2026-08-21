@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Imprimir Pantallas del Sistema - Quincha</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #e0e4e8;
+    }
+    
+    .toolbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      background: #111821;
+      color: #fff;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .toolbar button {
+      background: #16F0B5;
+      color: #06080B;
+      border: none;
+      padding: 10px 20px;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    
+    .toolbar button:hover {
+      background: #10d4a0;
+    }
+    
+    .pages-container {
+      margin-top: 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      padding-bottom: 40px;
+    }
+
+    /* Carta size is 8.5 x 11 inches, which is 21.59 x 27.94 cm. */
+    .page {
+      width: 21.59cm;
+      min-height: 27.94cm;
+      background: white;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      padding: 1cm;
+      box-sizing: border-box;
+      display: grid;
+      /* 2x2 grid for 4 per page */
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 10px;
+      page-break-after: always;
+    }
+
+    .frame-wrapper {
+      position: relative;
+      border: 1px solid #ccc;
+      background: #000;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .frame-title {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      background: rgba(0,0,0,0.8);
+      color: #16F0B5;
+      font-size: 12px;
+      padding: 4px 8px;
+      z-index: 10;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* We need to show the full app inside a small box. 
+       We will make the iframe large and scale it down. */
+    .frame-wrapper iframe {
+      width: 1280px;
+      height: 800px;
+      border: none;
+      transform-origin: top left;
+      /* The container width is roughly (21.59cm - 2cm padding - 1cm gap) / 2 = 9.29cm = ~350px.
+         So scale = 350 / 1280 = 0.27 */
+      transform: scale(0.28);
+    }
+    
+    /* When printing, hide the toolbar and shadows */
+    @media print {
+      body {
+        background: transparent;
+      }
+      .toolbar {
+        display: none;
+      }
+      .pages-container {
+        margin-top: 0;
+        gap: 0;
+      }
+      .page {
+        box-shadow: none;
+        margin: 0;
+        padding: 0.5cm;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="toolbar">
+    <div>
+      <h2 style="margin: 0; font-size: 18px; color: #16F0B5;">Quincha Systems - Visor de Pantallas</h2>
+      <p style="margin: 4px 0 0 0; font-size: 13px; color: #94A3B8;">Cargando las vistas del sistema en iframes para impresión...</p>
+    </div>
+    <button onclick="window.print()">🖨️ Imprimir a PDF / Papel</button>
+  </div>
+
+  <div class="pages-container" id="pages"></div>
+
+  <script>
+    const views = [
+      'login',
+      'dashboard', 'pomodoro', 'bujo', 'health', 
+      'tareas', 'habitos', 'calendario', 'finanzas', 
+      'actividad', 'estadisticas', 'mensajes', 'ajustes'
+    ];
+
+    const pagesContainer = document.getElementById('pages');
+    
+    function chunkArray(array, size) {
+      const result = [];
+      for (let i = 0; i < array.length; i += size) {
+        result.push(array.slice(i, i + size));
+      }
+      return result;
+    }
+
+    const chunks = chunkArray(views, 4);
+
+    chunks.forEach((chunk, pageIndex) => {
+      const pageEl = document.createElement('div');
+      pageEl.className = 'page';
+      
+      chunk.forEach((view, viewIndex) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'frame-wrapper';
+        
+        const title = document.createElement('div');
+        title.className = 'frame-title';
+        title.textContent = `Pantalla: ${view.toUpperCase()}`;
+        
+        const iframe = document.createElement('iframe');
+        // Pointing to the main app URL. It will load App.tsx.
+        iframe.src = '/';
+        iframe.id = `iframe-${view}`;
+        
+        iframe.onload = () => {
+          setTimeout(() => {
+            try {
+              const win = iframe.contentWindow;
+              if (!win) return;
+              
+              if (view !== 'login') {
+                // Authenticate and navigate inside the iframe
+                win.dispatchEvent(new Event('quincha-auth'));
+                win.dispatchEvent(new CustomEvent('change-view', { detail: view }));
+              }
+            } catch (e) {
+              console.error('Error dispatching to iframe', view, e);
+            }
+          }, 800); // Wait a bit for the app to initialize inside the iframe
+        };
+
+        wrapper.appendChild(title);
+        wrapper.appendChild(iframe);
+        pageEl.appendChild(wrapper);
+      });
+      
+      pagesContainer.appendChild(pageEl);
+    });
+  </script>
+</body>
+</html>

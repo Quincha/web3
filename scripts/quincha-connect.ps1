@@ -111,6 +111,8 @@ switch ($Action.ToLower()) {
     Assert-QuinchaOk 'subir gcal.js'
     & $pscp -P $port -batch -hostkey $hostkey -pw $pass 'server\src\db.js' "${user}@${hostName}:/home/serverpi/quincha-systems/server/src/db.js"
     Assert-QuinchaOk 'subir db.js'
+    & $pscp -P $port -batch -hostkey $hostkey -pw $pass 'server\src\design.js' "${user}@${hostName}:/home/serverpi/quincha-systems/server/src/design.js"
+    Assert-QuinchaOk 'subir design.js'
 
     Write-Host '5) Reiniciando servicio' -ForegroundColor Cyan
     Invoke-QuinchaSsh 'sudo systemctl restart quincha-systems && systemctl is-active quincha-systems'

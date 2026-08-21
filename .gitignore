@@ -1,5 +1,9 @@
 # Credenciales de despliegue remotas (nunca commitees)
 scripts/quincha-creds.env
+scripts/mail-creds.env
+
+# Script con contraseña de Gmail hardcodeada (solo local)
+scripts/gmail-apppassword.cjs
 
 # Logs
 logs
