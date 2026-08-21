@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Diccionario de Datos - Quincha Systems</title>
+  <style>
+    :root {
+      --bg: #F8FAFC;
+      --card: #FFFFFF;
+      --text: #1E293B;
+      --text-muted: #64748B;
+      --border: #E2E8F0;
+      --primary: #0F172A;
+      --accent: #16F0B5;
+      --pk-bg: #FEF3C7;
+      --pk-text: #D97706;
+      --fk-bg: #E0E7FF;
+      --fk-text: #4F46E5;
+      --type-text: #0EA5E9;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      color: var(--text);
+    }
+    .toolbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      background: var(--primary);
+      color: #fff;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .toolbar button {
+      background: var(--accent);
+      color: var(--primary);
+      border: none;
+      padding: 10px 20px;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: opacity 0.2s;
+    }
+    .toolbar button:hover { opacity: 0.8; }
+    
+    .print-area {
+      margin-top: 80px;
+      padding-bottom: 40px;
+      display: flex;
+      justify-content: center;
+    }
+    
+    .page {
+      /* Tamaño Carta Horizontal (Landscape) */
+      width: 27.94cm;
+      min-height: 21.59cm;
+      padding: 1.5cm;
+      background: white;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+      box-sizing: border-box;
+      border: 1px solid var(--border);
+    }
+
+    .header {
+      border-bottom: 3px solid var(--accent);
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 28px;
+      color: var(--primary);
+      letter-spacing: -0.5px;
+    }
+    .header p {
+      margin: 4px 0 0 0;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+    .header .meta {
+      text-align: right;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: monospace;
+    }
+
+    /* Grid para que entren las tablas como tarjetas horizontalmente */
+    .tables-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+
+    /* Estilo de Tarjeta por Tabla */
+    .table-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      break-inside: avoid;
+    }
+    .table-header {
+      background: var(--primary);
+      color: white;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .table-header h2 {
+      margin: 0;
+      font-size: 16px;
+      font-family: monospace;
+      letter-spacing: 0.5px;
+    }
+    .table-desc {
+      background: #F1F5F9;
+      padding: 10px 16px;
+      font-size: 13px;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+      font-style: italic;
+    }
+
+    /* Columnas de la tabla */
+    .col-row {
+      display: flex;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .col-row:last-child { border-bottom: none; }
+    
+    .col-name {
+      font-family: monospace;
+      font-weight: 600;
+      font-size: 14px;
+      width: 140px;
+      flex-shrink: 0;
+    }
+    .col-type {
+      font-size: 12px;
+      color: var(--type-text);
+      font-weight: 600;
+      width: 65px;
+      flex-shrink: 0;
+    }
+    .col-badges {
+      display: flex;
+      gap: 6px;
+      width: 60px;
+      flex-shrink: 0;
+    }
+    .badge {
+      font-size: 10px;
+      font-weight: bold;
+      padding: 2px 6px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    .badge.pk { background: var(--pk-bg); color: var(--pk-text); }
+    .badge.fk { background: var(--fk-bg); color: var(--fk-text); }
+    
+    .col-info {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.4;
+      flex-grow: 1;
+    }
+    .col-info strong {
+      color: var(--text);
+    }
+
+    @media print {
+      @page { size: landscape; margin: 0; }
+      body { background: transparent; }
+      .toolbar { display: none; }
+      .print-area { margin: 0; padding: 0; }
+      .page {
+        width: 100%;
+        box-shadow: none;
+        border: none;
+        padding: 1.2cm;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="toolbar">
+    <div>
+      <h2 style="margin: 0; font-size: 18px; color: #16F0B5;">Diccionario Detallado de Base de Datos</h2>
+      <p style="margin: 4px 0 0 0; font-size: 13px; color: #94A3B8;">Visor detallado optimizado para impresión apaisada (Carta).</p>
+    </div>
+    <button onclick="window.print()">🖨️ Imprimir Hoja (Landscape)</button>
+  </div>
+
+  <div class="print-area">
+    <div class="page">
+      
+      <div class="header">
+        <div>
+          <h1>Diccionario de Datos: <code>quincha.db</code></h1>
+          <p>Estructura relacional de SQLite, tipos de datos, restricciones y comentarios.</p>
+        </div>
+        <div class="meta">
+          Motor: SQLite 3<br>
+          Generado: Automático<br>
+          Total Tablas: 7
+        </div>
+      </div>
+
+      <div class="tables-grid">
+
+        <!-- Tabla: users -->
+        <div class="table-card">
+          <div class="table-header"><h2>users</h2></div>
+          <div class="table-desc">Tabla central del sistema. Almacena credenciales y perfil básico del usuario.</div>
+          
+          <div class="col-row">
+            <div class="col-name">id</div>
+            <div class="col-type">INTEGER</div>
+            <div class="col-badges"><span class="badge pk">PK</span></div>
+            <div class="col-info">Identificador único. <strong>[AUTOINCREMENT]</strong></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">username</div>
+            <div class="col-type">TEXT</div>
+            <div class="col-badges"></div>
+            <div class="col-info">Nombre de usuario o correo. <strong>[NOT NULL UNIQUE]</strong></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">password_hash</div>
+            <div class="col-type">TEXT</div>
+            <div class="col-badges"></div>
+            <div class="col-info">Hash cifrado de la contraseña. <strong>[NOT NULL]</strong></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">role</div>
+            <div class="col-type">TEXT</div>
+            <div class="col-badges"></div>
+            <div class="col-info">Nivel de privilegios. <strong>[DEFAULT 'user']</strong></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">name</div>
+            <div class="col-type">TEXT</div>
+            <div class="col-badges"></div>
+            <div class="col-info">Nombre visible en la interfaz.</div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">created_at</div>
+            <div class="col-type">TEXT</div>
+            <div class="col-badges"></div>
+            <div class="col-info">Fecha de creación de la cuenta.</div>
+          </div>
+        </div>
+
+        <!-- Tabla: store -->
+        <div class="table-card">
+          <div class="table-header"><h2>store</h2></div>
+          <div class="table-desc">Almacén genérico Clave-Valor. Aquí reside el JSON dinámico de la interfaz (Tareas, Bujo, Finanzas, Hábitos). Es la base del SyncQueue.</div>
+          
+          <div class="col-row">
+            <div class="col-name">user_id</div>
+            <div class="col-type">INTEGER</div>
+            <div class="col-badges"><span class="badge pk">PK</span><span class="badge fk">FK</span></div>
+            <div class="col-info">Propietario de los datos. <strong>[Ref: users(id)] [CASCADE]</strong></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">key</div>
+            <div class="col-type">TEXT</div>
+            <div class="col-badges"><span class="badge pk">PK</span></div>
+            <div class="col-info">Clave del módulo (ej: <code>quincha_tasks</code>). Forma PK compuesta con user_id.</div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">data</div>
+            <div class="col-type">TEXT</div>
+            <div class="col-badges"></div>
+            <div class="col-info">Contenido JSON serializado (Array de objetos).</div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">updated_at</div>
+            <div class="col-type">INTEGER</div>
+            <div class="col-badges"></div>
+            <div class="col-info">Timestamp de la última modificación para control de versiones.</div>
+          </div>
+        </div>
+
+        <!-- Tabla: configs -->
+        <div class="table-card">
+          <div class="table-header"><h2>configs</h2></div>
+          <div class="table-desc">Configuración global, apariencia visual y preferencias del sistema para cada usuario.</div>
+          
+          <div class="col-row">
+            <div class="col-name">user_id</div>
+            <div class="col-type">INTEGER</div>
+            <div class="col-badges"><span class="badge pk">PK</span><span class="badge fk">FK</span></div>
+            <div class="col-info">Dueño de la configuración. <strong>[Ref: users(id)] [CASCADE]</strong></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">data</div>
+            <div class="col-type">TEXT</div>
+            <div class="col-badges"></div>
+            <div class="col-info">Objeto JSON con los ajustes (tema oscuro/claro, módulos activos).</div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">updated_at</div>
+            <div class="col-type">TEXT</div>
+            <div class="col-badges"></div>
+            <div class="col-info">Fecha del último cambio.</div>
+          </div>
+        </div>
+
+        <!-- Tabla: sessions -->
+        <div class="table-card">
+          <div class="table-header"><h2>sessions</h2></div>
+          <div class="table-desc">Gestor de sesiones activas. Permite mantener a los usuarios logueados o revocar acceso.</div>
+          
+          <div class="col-row">
+            <div class="col-name">token</div>
+            <div class="col-type">TEXT</div>
+            <div class="col-badges"><span class="badge pk">PK</span></div>
+            <div class="col-info">Token único de autenticación provisto al frontend.</div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">user_id</div>
+            <div class="col-type">INTEGER</div>
+            <div class="col-badges"><span class="badge fk">FK</span></div>
+            <div class="col-info">Usuario dueño de la sesión. <strong>[Ref: users(id)] [CASCADE]</strong></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">created_at</div>
+            <div class="col-type">TEXT</div>
+            <div class="col-badges"></div>
+            <div class="col-info">Timestamp de inicio de la sesión.</div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">expires_at</div>
+            <div class="col-type">INTEGER</div>
+            <div class="col-badges"></div>
+            <div class="col-info">Opcional. Fecha en que el token pierde validez.</div>
+          </div>
+        </div>
+
+        <!-- Tabla: gcal_tokens -->
+        <div class="table-card">
+          <div class="table-header"><h2>gcal_tokens</h2></div>
+          <div class="table-desc">Credenciales OAuth necesarias para sincronizar bidireccionalmente con Google Calendar.</div>
+          
+          <div class="col-row">
+            <div class="col-name">user_id</div>
+            <div class="col-type">INTEGER</div>
+            <div class="col-badges"><span class="badge pk">PK</span><span class="badge fk">FK</span></div>
+            <div class="col-info">Dueño del token. <strong>[Ref: users(id)] [CASCADE]</strong></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">access_token</div>
+            <div class="col-type">TEXT</div>
+            <div class="col-badges"></div>
+            <div class="col-info">Token activo para llamadas al API de Google.</div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">refresh_token</div>
+            <div class="col-type">TEXT</div>
+            <div class="col-badges"></div>
+            <div class="col-info">Token de larga duración para renovar sesión.</div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">expires_at</div>
+            <div class="col-type">INTEGER</div>
+            <div class="col-badges"></div>
+            <div class="col-info">Timestamp de caducidad del access_token.</div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">cal_id</div>
+            <div class="col-type">TEXT</div>
+            <div class="col-badges"></div>
+            <div class="col-info">ID interno de Google del calendario sincronizado (default 'primary').</div>
+          </div>
+        </div>
+
+        <!-- Tabla: gcal_watch -->
+        <div class="table-card">
+          <div class="table-header"><h2>gcal_watch</h2></div>
+          <div class="table-desc">Maneja las suscripciones activas a los Webhooks de Google (Notificaciones Push).</div>
+          
+          <div class="col-row">
+            <div class="col-name">user_id</div>
+            <div class="col-type">INTEGER</div>
+            <div class="col-badges"><span class="badge pk">PK</span><span class="badge fk">FK</span></div>
+            <div class="col-info">Usuario suscrito. <strong>[Ref: users(id)]</strong></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">channel_id</div>
+            <div class="col-type">TEXT</div>
+            <div class="col-badges"></div>
+            <div class="col-info">Identificador del canal receptor del webhook.</div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">resource_id</div>
+            <div class="col-type">TEXT</div>
+            <div class="col-badges"></div>
+            <div class="col-info">ID del recurso que Google está vigilando.</div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">expires_at</div>
+            <div class="col-type">INTEGER</div>
+            <div class="col-badges"></div>
+            <div class="col-info">Momento límite del webhook antes de renovar.</div>
+          </div>
+        </div>
+
+        <!-- Tabla: designs -->
+        <div class="table-card" style="grid-column: span 2;">
+          <div class="table-header"><h2>designs</h2></div>
+          <div class="table-desc">Módulo específico para Bordados y Costuras. Registra metadatos de archivos de diseño (.pes, .dst).</div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr;">
+            <div>
+              <div class="col-row">
+                <div class="col-name">id</div>
+                <div class="col-type">TEXT</div>
+                <div class="col-badges"><span class="badge pk">PK</span></div>
+                <div class="col-info">UUID único del diseño.</div>
+              </div>
+              <div class="col-row">
+                <div class="col-name">user_id</div>
+                <div class="col-type">INTEGER</div>
+                <div class="col-badges"><span class="badge fk">FK</span></div>
+                <div class="col-info">Autor / Creador. <strong>[Ref: users(id)]</strong></div>
+              </div>
+              <div class="col-row">
+                <div class="col-name">name</div>
+                <div class="col-type">TEXT</div>
+                <div class="col-badges"></div>
+                <div class="col-info">Nombre descriptivo o comercial.</div>
+              </div>
+              <div class="col-row">
+                <div class="col-name">format</div>
+                <div class="col-type">TEXT</div>
+                <div class="col-badges"></div>
+                <div class="col-info">Extensión (DST, EXP, PES).</div>
+              </div>
+            </div>
+            <div>
+              <div class="col-row">
+                <div class="col-name">stitches</div>
+                <div class="col-type">INTEGER</div>
+                <div class="col-badges"></div>
+                <div class="col-info">Cantidad total de puntadas.</div>
+              </div>
+              <div class="col-row">
+                <div class="col-name">color_count</div>
+                <div class="col-type">INTEGER</div>
+                <div class="col-badges"></div>
+                <div class="col-info">Número total de paradas de color.</div>
+              </div>
+              <div class="col-row">
+                <div class="col-name">colors</div>
+                <div class="col-type">TEXT</div>
+                <div class="col-badges"></div>
+                <div class="col-info">Array serializado JSON de los códigos de hilo.</div>
+              </div>
+              <div class="col-row">
+                <div class="col-name">created_at</div>
+                <div class="col-type">INTEGER</div>
+                <div class="col-badges"></div>
+                <div class="col-info">Fecha de ingreso a la base de datos.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</body>
+</html>

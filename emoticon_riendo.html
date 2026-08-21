@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>¡Jajaja!</title>
+  <style>
+    body {
+      margin: 0; padding: 0; height: 100vh;
+      display: flex; justify-content: center; align-items: center;
+      background: #111821;
+      font-family: sans-serif;
+      overflow: hidden;
+    }
+    .container {
+      text-align: center;
+    }
+    h1 {
+      color: #16F0B5;
+      margin-bottom: 50px;
+      animation: pulse 1s infinite alternate;
+    }
+    .face {
+      width: 250px; height: 250px;
+      background: radial-gradient(circle at 30% 30%, #FFE854, #FFB300);
+      border-radius: 50%;
+      position: relative;
+      margin: 0 auto;
+      animation: shake 2s infinite alternate ease-in-out;
+      box-shadow: 0 10px 40px rgba(255,179,0,0.5), inset -10px -10px 30px rgba(210,120,0,0.4);
+    }
+    
+    /* Ojos arrugados de la risa */
+    .eyes {
+      position: absolute; top: 70px; left: 40px; right: 40px;
+      display: flex; justify-content: space-between;
+    }
+    .eye {
+      width: 50px; height: 20px;
+      border: 8px solid #5C3A21;
+      border-color: #5C3A21 transparent transparent transparent;
+      border-radius: 50%/25px 25px 0 0;
+      position: relative;
+      animation: squint 0.5s infinite alternate;
+    }
+    
+    /* Lágrimas de alegría */
+    .tear {
+      position: absolute;
+      width: 25px; height: 35px;
+      background: #00BFFF;
+      border-radius: 0 50% 50% 50%;
+      top: 15px;
+      box-shadow: inset -5px -5px 10px rgba(0,100,200,0.5);
+      animation: drop 1.2s infinite ease-in;
+      opacity: 0;
+    }
+    .tear.left { left: -10px; transform: rotate(45deg); animation: dropLeft 1s infinite ease-in; }
+    .tear.right { right: -10px; transform: rotate(45deg); animation: dropRight 1.5s infinite ease-in; }
+    
+    /* Boca riendo a carcajadas */
+    .mouth {
+      position: absolute;
+      bottom: 45px; left: 60px;
+      width: 130px; height: 80px;
+      background: #5C3A21;
+      border-radius: 10px 10px 100px 100px;
+      overflow: hidden;
+      animation: laugh 0.2s infinite alternate;
+      border: 4px solid #4A2E1A;
+      box-shadow: inset 0 20px 20px rgba(0,0,0,0.6);
+    }
+    /* Dientes */
+    .teeth {
+      position: absolute; top: 0; left: 10px; right: 10px; height: 20px;
+      background: #fff;
+      border-radius: 0 0 10px 10px;
+    }
+    /* Lengua */
+    .tongue {
+      position: absolute;
+      bottom: -15px; left: 25px;
+      width: 80px; height: 60px;
+      background: #FF6347;
+      border-radius: 50%;
+      box-shadow: inset 0 10px 10px rgba(200,0,0,0.4);
+    }
+    
+    /* Animaciones */
+    @keyframes shake {
+      0%, 100% { transform: rotate(0) scale(1); }
+      25% { transform: rotate(-12deg) scale(1.05); }
+      75% { transform: rotate(12deg) scale(1.05); }
+    }
+    @keyframes laugh {
+      0% { height: 70px; bottom: 50px; }
+      100% { height: 85px; bottom: 42px; }
+    }
+    @keyframes dropLeft {
+      0% { transform: translate(0, 0) rotate(45deg) scale(0.5); opacity: 1; }
+      100% { transform: translate(-10px, 40px) rotate(45deg) scale(1.2); opacity: 0; }
+    }
+    @keyframes dropRight {
+      0% { transform: translate(0, 0) rotate(45deg) scale(0.5); opacity: 1; }
+      100% { transform: translate(10px, 40px) rotate(45deg) scale(1.2); opacity: 0; }
+    }
+    @keyframes squint {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(4px); }
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.8; }
+      100% { transform: scale(1.1); opacity: 1; text-shadow: 0 0 15px #16F0B5; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>¡Listos para imprimir!</h1>
+    <div class="face">
+      <div class="eyes">
+        <div class="eye"><div class="tear left"></div></div>
+        <div class="eye"><div class="tear right"></div></div>
+      </div>
+      <div class="mouth">
+        <div class="teeth"></div>
+        <div class="tongue"></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

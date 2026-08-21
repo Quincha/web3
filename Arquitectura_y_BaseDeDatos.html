@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Arquitectura y Esquema - Quincha Systems</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f0f0f0;
+      font-family: sans-serif;
+    }
+    .toolbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      background: #111821;
+      color: #fff;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .toolbar button {
+      background: #16F0B5;
+      color: #06080B;
+      border: none;
+      padding: 10px 20px;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .toolbar button:hover {
+      background: #10d4a0;
+    }
+    .pages-container {
+      margin-top: 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      padding-bottom: 40px;
+    }
+    .page {
+      width: 27.94cm;
+      min-height: 21.59cm;
+      padding: 2cm;
+      background: white;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      box-sizing: border-box;
+      page-break-after: always;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 { text-align: center; color: #111821; border-bottom: 3px solid #16F0B5; padding-bottom: 10px; width: 100%; }
+    p.desc { color: #64748B; font-size: 14px; text-align: center; margin-bottom: 30px; }
+    .mermaid {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .mermaid svg {
+      width: 100%;
+      height: auto;
+    }
+
+    @media print {
+      @page { size: landscape; }
+      body {
+        background: transparent;
+      }
+      .toolbar {
+        display: none;
+      }
+      .pages-container {
+        margin-top: 0;
+        gap: 0;
+      }
+      .page {
+        box-shadow: none;
+        margin: 0;
+        padding: 1cm;
+      }
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({ 
+      startOnLoad: true, 
+      theme: 'default',
+      themeVariables: {
+        fontSize: '18px',
+        fontFamily: 'sans-serif'
+      }
+    });
+  </script>
+</head>
+<body>
+
+  <div class="toolbar">
+    <div>
+      <h2 style="margin: 0; font-size: 18px; color: #16F0B5;">Quincha Systems - Visor de Arquitectura</h2>
+      <p style="margin: 4px 0 0 0; font-size: 13px; color: #94A3B8;">Diagramas técnicos listos para impresión.</p>
+    </div>
+    <button onclick="window.print()">🖨️ Imprimir a PDF / Papel</button>
+  </div>
+
+  <div class="pages-container">
+    
+    <!-- Página 1: Base de Datos -->
+    <div class="page">
+      <h1>Diagrama Entidad-Relación (Base de Datos)</h1>
+      <p class="desc">Esquema visual de las tablas SQLite y sus relaciones.</p>
+      <div class="mermaid">
+erDiagram
+    users {
+        INTEGER id PK "AUTOINCREMENT"
+        TEXT username "NOT NULL UNIQUE"
+        TEXT password_hash "NOT NULL"
+        TEXT role "NOT NULL DEFAULT 'user'"
+        TEXT name "NOT NULL DEFAULT ''"
+    }
+    sessions {
+        TEXT token PK
+        INTEGER user_id FK "NOT NULL ON DELETE CASCADE"
+    }
+    configs {
+        INTEGER user_id PK, FK "ON DELETE CASCADE"
+        TEXT data "NOT NULL DEFAULT '{}'"
+    }
+    store {
+        INTEGER user_id PK, FK "NOT NULL ON DELETE CASCADE"
+        TEXT key PK "NOT NULL"
+        TEXT data "NOT NULL"
+    }
+    gcal_tokens {
+        INTEGER user_id PK, FK "ON DELETE CASCADE"
+        TEXT access_token "NOT NULL"
+    }
+    gcal_watch {
+        INTEGER user_id PK, FK "ON DELETE CASCADE"
+        TEXT channel_id "NOT NULL"
+    }
+    designs {
+        TEXT id PK
+        INTEGER user_id FK "NOT NULL ON DELETE CASCADE"
+        TEXT format "NOT NULL"
+        TEXT colors "NOT NULL"
+    }
+
+    users ||--o{ sessions : "tiene"
+    users ||--o| configs : "posee configuración"
+    users ||--o{ store : "guarda items en store"
+    users ||--o| gcal_tokens : "vincula token"
+    users ||--o| gcal_watch : "mantiene suscripción"
+    users ||--o{ designs : "crea diseños"
+      </div>
+    </div>
+
+    <!-- Página 2: Modelo Vista Controlador -->
+    <div class="page" style="padding-top: 1cm;">
+      <h1>Arquitectura Modelo-Vista-Controlador (MVC)</h1>
+      <p class="desc">Mapeo del patrón arquitectónico en el sistema distribuido (React + Express).</p>
+      <div class="mermaid">
+flowchart LR
+    subgraph View ["Vista (View) - Frontend React"]
+        UI[Componentes UI<br>Widgets y Módulos]
+        Layout[DashboardLayout<br>y App.tsx]
+    end
+
+    subgraph Controller ["Controlador (Controller) - Lógica y Gestión"]
+        Contexts[React Contexts<br>Gestión de Estado]
+        Sync[DataSyncService<br>y SyncQueueService]
+        Express[Servidor Express<br>Rutas de API]
+    end
+
+    subgraph Model ["Modelo (Model) - Persistencia"]
+        LocalCache[(LocalStorage<br>Cache Offline)]
+        SQLite[(Base de Datos SQLite<br>quincha.db)]
+    end
+
+    UI -->|Interacción del Usuario| Contexts
+    Layout -->|Monta/Renderiza| UI
+    
+    Contexts -->|Actualiza Estado| UI
+    Contexts <-->|Lee/Guarda Offline| LocalCache
+    Contexts -->|Despacha Cambios| Sync
+    
+    Sync -->|Peticiones HTTP| Express
+    Express -->|Consultas SQL| SQLite
+    SQLite -->|Resultados| Express
+    Express -->|Respuesta JSON| Sync
+    Sync -->|Resuelve cola| Contexts
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

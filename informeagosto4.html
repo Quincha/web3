@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Informe de Auditoría y Estado del Sistema — Quincha Systems · Revisión 5</title>
+<style>
+  :root {
+    --bg: #06080B;
+    --card: #0C1117;
+    --card-hover: #121824;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-accent: rgba(22, 240, 181, 0.2);
+    --text: #F8FAFC;
+    --text2: #94A3B8;
+    --muted: #64748B;
+    --green: #16F0B5;
+    --cyan: #3ACDFF;
+    --warning: #FFB84D;
+    --danger: #FF5F73;
+    --purple: #A78BFA;
+    --accent: #3EFCDB;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.6;
+    padding-bottom: 80px;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
+  header.hero {
+    padding: 64px 0 44px;
+    background: radial-gradient(ellipse at top, rgba(22, 240, 181, 0.1), transparent 60%),
+                radial-gradient(ellipse at top right, rgba(58, 205, 255, 0.06), transparent 50%);
+    border-bottom: 1px solid var(--border);
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--green);
+    border: 1px solid rgba(22, 240, 181, 0.35);
+    border-radius: 999px;
+    padding: 4px 14px;
+    margin-bottom: 18px;
+    background: rgba(22, 240, 181, 0.06);
+    box-shadow: 0 0 12px rgba(22, 240, 181, 0.15);
+  }
+  .badge .dot { width: 7px; height: 7px; background: var(--green); border-radius: 50%; box-shadow: 0 0 8px var(--green); }
+  h1 { font-size: clamp(30px, 5vw, 44px); line-height: 1.15; letter-spacing: -.02em; font-weight: 800; }
+  h1 em { font-style: normal; color: var(--accent); background: linear-gradient(135deg, var(--green), var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .sub { color: var(--text2); margin-top: 14px; max-width: 720px; font-size: 15px; }
+  .meta {
+    margin-top: 24px;
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: var(--muted);
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    padding: 12px 18px;
+    border-radius: 10px;
+  }
+  .meta span { display: flex; align-items: center; gap: 6px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin: 36px 0; }
+  .kpi {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .kpi:hover { transform: translateY(-2px); border-color: var(--border-accent); }
+  .kpi .num { font-size: 34px; font-weight: 800; letter-spacing: -.03em; line-height: 1; }
+  .kpi .lbl { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-top: 8px; }
+  .kpi .sub-num { font-size: 11px; color: var(--text2); margin-top: 4px; }
+  .kpi.danger .num { color: var(--danger); }
+  .kpi.warn .num { color: var(--warning); }
+  .kpi.ok .num { color: var(--green); }
+  .kpi.cy .num { color: var(--cyan); }
+  .kpi.purp .num { color: var(--purple); }
+
+  h2 { font-size: 22px; margin: 44px 0 16px; letter-spacing: -.01em; display: flex; align-items: center; gap: 10px; font-weight: 700; }
+  h2 .tag { font-size: 11px; font-weight: 600; border-radius: 6px; padding: 2px 8px; letter-spacing: 0.05em; text-transform: uppercase; }
+  h2 .t-critical { background: rgba(255,95,115,.12); color: var(--danger); }
+  h2 .t-high { background: rgba(255,184,77,.12); color: var(--warning); }
+  h2 .t-med { background: rgba(58,205,255,.12); color: var(--cyan); }
+  h2 .t-low { background: rgba(22,240,181,.12); color: var(--green); }
+  h2 .t-purple { background: rgba(167,139,250,.12); color: var(--purple); }
+
+  .lead { color: var(--text2); margin-bottom: 20px; font-size: 15px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px 24px;
+    margin-bottom: 18px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  }
+  .card h3 { font-size: 16px; margin-bottom: 10px; font-weight: 700; color: var(--text); display: flex; align-items: center; justify-content: space-between; }
+  .sev { display: inline-block; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 3px 9px; }
+  .sev.critical { background: rgba(255,95,115,.15); color: var(--danger); }
+  .sev.high { background: rgba(255,184,77,.15); color: var(--warning); }
+  .sev.medium { background: rgba(58,205,255,.15); color: var(--cyan); }
+  .sev.ok { background: rgba(22,240,181,.15); color: var(--green); }
+  .sev.purple { background: rgba(167,139,250,.15); color: var(--purple); }
+
+  .card p, .card li { color: var(--text2); font-size: 14px; line-height: 1.6; }
+  .card ul { margin: 10px 0 0 20px; }
+  .card li { margin-bottom: 8px; }
+  code {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px 7px;
+    font-size: 12.5px;
+    color: var(--accent);
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  }
+  .file { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 13px; color: var(--cyan); }
+  
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 10px; }
+  th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--border); color: var(--text2); }
+  th { color: var(--text); font-size: 12px; text-transform: uppercase; letter-spacing: .07em; font-weight: 700; background: rgba(255,255,255,0.02); }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr:hover td { background: rgba(255,255,255,0.015); color: var(--text); }
+  .up { color: var(--green); font-weight: 600; }
+  .down { color: var(--danger); font-weight: 600; }
+  .flat { color: var(--warning); font-weight: 600; }
+
+  .module-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-top: 16px; }
+  .module-card {
+    background: rgba(12, 17, 23, 0.7);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    backdrop-filter: blur(10px);
+  }
+  .module-card h4 { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+  .module-card p { font-size: 13px; color: var(--text2); }
+
+  .footer { text-align: center; color: var(--muted); font-size: 13px; margin-top: 60px; border-top: 1px solid var(--border); padding-top: 28px; }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="badge"><span class="dot"></span> Auditoría Integral · Revisión 5 · Agosto 2026</div>
+    <h1>Informe de Sistema & Performance<br /><em>Quincha Systems</em></h1>
+    <p class="sub">Quinta revisión oficial (12/13 de agosto de 2026). Análisis exhaustivo de frontend, backend SQLite nativo, motor de renderizado Wilcom TrueView, subsistema de finanzas y estado de compilación.</p>
+    <div class="meta">
+      <span>📅 Fecha: 12-13 Agosto 2026</span>
+      <span>⚡ Servidor: https://quincha.cl (Raspberry Pi)</span>
+      <span>📦 Stack: React 19 · TS 6.0 · Vite 8 · Express (Node 24 + node:sqlite)</span>
+      <span>🔧 Estado Git: 19 archivos pendientes de commit</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="kpis">
+    <div class="kpi ok">
+      <div class="num">0</div>
+      <div class="lbl">Errores TypeScript</div>
+      <div class="sub-num">Build clean (tsc -b)</div>
+    </div>
+    <div class="kpi cy">
+      <div class="num">31</div>
+      <div class="lbl">Warnings oxlint</div>
+      <div class="sub-num">↓ Reducido de 41 en Rev4</div>
+    </div>
+    <div class="kpi purp">
+      <div class="num">15/15</div>
+      <div class="lbl">Tests Backend</div>
+      <div class="sub-num">design-smoke & api pass</div>
+    </div>
+    <div class="kpi ok">
+      <div class="num">~300ms</div>
+      <div class="lbl">Render TrueView</div>
+      <div class="sub-num">Fix Cloudflare 524 despl.</div>
+    </div>
+    <div class="kpi warn">
+      <div class="num">19</div>
+      <div class="lbl">Archivos x Commit</div>
+      <div class="sub-num">Diseños, finanzas, UI</div>
+    </div>
+  </div>
+
+  <h2>1. Evolución Histórica de Auditorías <span class="tag t-low">Métricas</span></h2>
+  <div class="card">
+    <h3>Comparativa de Calidad y Rendimiento (Rev 1 → Rev 5)</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Métrica / Indicador</th>
+          <th class="num">Rev 1</th>
+          <th class="num">Rev 2</th>
+          <th class="num">Rev 3</th>
+          <th class="num">Rev 4</th>
+          <th class="num">Rev 5 (Actual)</th>
+          <th>Estado / Tendencia</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Errores TypeScript (Build)</td>
+          <td class="num">126</td>
+          <td class="num">126</td>
+          <td class="num">0</td>
+          <td class="num">0</td>
+          <td class="num"><b>0</b></td>
+          <td><span class="up">✅ 100% Limpio</span></td>
+        </tr>
+        <tr>
+          <td>Warnings Oxlint</td>
+          <td class="num">111</td>
+          <td class="num">111</td>
+          <td class="num">94</td>
+          <td class="num">41</td>
+          <td class="num"><b>31</b></td>
+          <td><span class="up">✅ -24% Mejora</span></td>
+        </tr>
+        <tr>
+          <td>Tests Unitarios / Integración</td>
+          <td class="num">0</td>
+          <td class="num">0</td>
+          <td class="num">0</td>
+          <td class="num">0</td>
+          <td class="num"><b>15</b></td>
+          <td><span class="up">✅ Suite Activa</span></td>
+        </tr>
+        <tr>
+          <td>Renderizado Bordados (100k pts)</td>
+          <td class="num">—</td>
+          <td class="num">—</td>
+          <td class="num">—</td>
+          <td class="num">&gt;100s (524)</td>
+          <td class="num"><b>~300ms</b></td>
+          <td><span class="up">⚡ 300x más rápido</span></td>
+        </tr>
+        <tr>
+          <td>Stack Backend SQLite</td>
+          <td class="num">v18</td>
+          <td class="num">v18</td>
+          <td class="num">v20</td>
+          <td class="num">v22</td>
+          <td class="num"><b>v24 (node:sqlite)</b></td>
+          <td><span class="up">✅ Nativo Zero-Deps</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>2. Desglose de Módulos Recientes & Features <span class="tag t-purple">Desplegado</span></h2>
+  
+  <div class="card">
+    <h3>🎨 Módulo Diseños / Bordados (Wilcom TrueView) <span class="sev purple">Completo</span></h3>
+    <p>Catálogo fotorrealista de bordados con soporte multinativo para archivos de máquinas industriales y domésticas:</p>
+    <ul>
+      <li><b>Parser Multi-formato Nulo Dependencias:</b> Parsea binary <code>.JEF</code>, <code>.DST</code> y <code>.PES</code> respetando códigos de salto, corte de hilo y paletas de color con precisión pyembroidery.</li>
+      <li><b>Renderizado TrueView en 1 Pasada:</b> Simulación fotorrealista de hilo con iluminación difusa y antialiasing analítico por capsula. Se eliminó el supersampling 2× eliminando los <b>Error 524 de Cloudflare</b>.</li>
+      <li><b>Persistencia & API REST:</b> Endpoints integrados en Express con persistencia en <code>DATA_DIR/designs/</code> y metadatos relacionales en la base SQLite del servidor.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>💳 Módulo Finanzas & Deudas (Caso Covili & Abonos) <span class="sev ok">Producción</span></h3>
+    <p>Gestión completa de saldos, cuentas por cobrar/pagar y registros contables:</p>
+    <ul>
+      <li><b>Sincronización Directa BD Producción:</b> Deuda cargada por $1.300.000 (abonado $107.000, saldo $1.193.000). Preservadas deudas previas.</li>
+      <li><b>Historial de Abonos Granular:</b> Modelo ampliado con <code>payments?: Abono[]</code>, helper <code>addPago()</code> en <code>FinanceContext</code> y modal UI dedicado en <code>DebtsBalanceView.tsx</code> (eliminando la ventana modal de navegador <code>prompt</code>).</li>
+    </ul>
+  </div>
+
+  <h2>3. Arquitectura del Sistema <span class="tag t-med">Infraestructura</span></h2>
+  
+  <div class="module-grid">
+    <div class="module-card">
+      <h4>💻 Frontend Application</h4>
+      <p>React 19 + TypeScript. Modulares React Contexts para salud, hábitos, finanzas, tareas y smartband. Diseño UI ultra-oscuro con estética futurista.</p>
+    </div>
+    <div class="module-card">
+      <h4>⚙️ Express Backend Server</h4>
+      <p>Node.js v24 con SQLite nativo. Sin bibliotecas C++ nativas externas como <code>sqlite3</code> o <code>better-sqlite3</code>, garantizando cero fallos de binarios en ARM/Raspberry Pi.</p>
+    </div>
+    <div class="module-card">
+      <h4>🌐 Despliegue & SSH Proxy</h4>
+      <p>Pipeline directo vía PowerShell (<code>quincha-connect.ps1</code>) sobre SSH/PSCP y túnel seguro Cloudflare. Reinicio transparente del servicio systemd <code>quincha-systems</code>.</p>
+    </div>
+  </div>
+
+  <h2>4. Diagnóstico de Calidad y Próximos Commits <span class="tag t-high">Acciones</span></h2>
+  <div class="card">
+    <h3>Estado de Archivos Modificados (19 Archivos Pendientes)</h3>
+    <p>Los cambios actuales en el entorno local están listos y validados sin romper tipado ni tests. Se sugiere organizar el commit en los siguientes 3 bloques:</p>
+    <ul>
+      <li><code>feat(design):</code> Módulo de diseños de bordado (Wilcom TrueView render, endpoints, tests smoke y componente <code>DesignsModule.tsx</code>).</li>
+      <li><code>feat(finance):</code> Soporte de historial de abonos en deudas, tipos <code>Abono[]</code> y modal <code>DebtsBalanceView</code>.</li>
+      <li><code>fix(calendar):</code> Ajuste de días en lunes y ventana semanal fija para el temporizador Pomodoro.</li>
+    </ul>
+  </div>
+
+  <div class="footer">
+    <p>Quincha Systems © 2026 · Informe generado autónomamente · <code>https://quincha.cl</code></p>
+  </div>
+
+</div>
+
+</body>
+</html>
