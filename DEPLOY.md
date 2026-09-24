@@ -7,53 +7,62 @@ Cómo conectar y desplegar a https://quincha.cl desde este equipo (Windows).
 | Dato        | Valor                                              |
 |-------------|----------------------------------------------------|
 | Dominio     | https://quincha.cl / ssh.quincha.cl                 |
-| Puerta SSH  | localhost:2222 (vía túnel Cloudflare)               |
+| Puerta SSH  | 127.0.0.1:2222 (vía túnel Cloudflare, forzar IPv4)  |
 | Usuario     | serverpi                                            |
+| Auth        | Clave SSH `~/.ssh/id_ed25519_quincha` (OpenSSH)     |
 | Proyecto    | `/home/serverpi/quincha-systems`                    |
-| Servicio    | `quincha-systems` (systemd, `sudo systemctl restart quincha-systems`) |
-| Puerto app  | 5173 (interno)                                      |
+| Servicio    | `quincha-systems` (systemd, NOPASSWD para systemctl)|
+| Node remoto | `/home/serverpi/.local/node24/bin/node` (v24)       |
 | Error común | 404 sin build → falta `dist/` en el server          |
 
-Las credenciales reales están en `scripts/quincha-creds.env` (gitignoreado),
-nunca commiteadas. Referencia de valores en `scripts/quincha-creds.env.example`.
+Credenciales: `scripts/quincha-creds.env` (gitignoreado). Plantilla: `scripts/quincha-creds.env.example`.
+
+**Importante:** usar `127.0.0.1` (no `localhost`): OpenSSH resuelve `localhost` a `::1` y cloudflared solo escucha en IPv4.
 
 ## 1) Abrir túnel Cloudflare (lo hace el usuario)
 
-El túnel lo levanta el dueño del equipo en su terminal:
-
-    cloudflared access tcp --hostname ssh.quincha.cl --url localhost:2222
-
-No lanzarlo yo desde opencode (puede bloquear la consola). Confirmar que
-`Get-NetTCPConnection -LocalPort 2222 -State Listen` responde antes de conectar.
-
-## 2) Conectarme / verificar
-
 ```
-./scripts/quincha-connect.ps1         # ping
-./scripts/quincha-connect.ps1 -Action status
-./scripts/quincha-connect.ps1 -RemoteCmd "systemctl status quincha-systems --no-pager | head"
+cloudflared access tcp --hostname ssh.quincha.cl --url localhost:2222
 ```
 
-## 3) Desplegar (build + subida + reinicio)
+Confirmar: `Get-NetTCPConnection -LocalPort 2222 -State Listen`.
+
+## 2) Conectar / verificar
 
 ```
-./scripts/quincha-connect.ps1 -Action deploy
+./scripts/quincha-connect.ps1                  # ping
+./scripts/quincha-connect.ps1 status           # servicio + assets + node
+./scripts/quincha-connect.ps1 run "whoami"     # comando remoto
+./scripts/quincha-connect.ps1 sync-check       # comparar local vs remoto (md5)
 ```
 
-Qué hace el script:
-1. `npm run build` local.
+## 3) Flujo de trabajo local → producción
+
+1. **Dev local:**
+   - Front: `npm run dev` (Vite, proxy `/api` → `localhost:3000`)
+   - Backend: `npm run dev:server` (Express, puerto 3000)
+2. **Verificar:** `npx tsc -b` y `npx oxlint src/...` (o `npm run lint`)
+3. **Comparar (opcional):** `./scripts/quincha-connect.ps1 sync-check`
+4. **Desplegar:**
+   ```
+   ./scripts/quincha-connect.ps1 deploy
+   ```
+
+Qué hace `deploy`:
+1. `npm run build` local (`tsc -b && vite build`).
 2. Backup remoto: `cp -r dist dist_backup`.
-3. Limpia `dist/assets` viejos y sube el nuevo `dist/` con `pscp`.
-4. `sudo systemctl restart quincha-systems`.
+3. Limpia `dist/assets/*` y sube el nuevo `dist/` con `scp`.
+4. Sube backend: `index.js`, `gcal.js`, `db.js`, `add_audit.js`.
+5. `sudo -n systemctl restart quincha-systems` (NOPASSWD).
 
 ## Verificación post-deploy
 
-- `curl https://quincha.cl` (PHP 200 + referencia al hash del JS nuevo).
-- Comparar tamaño del bundle servido vs local:
-  `(Get-Item dist\assets\index-*.js).Length` contra el remoto.
+- `./scripts/quincha-connect.ps1 sync-check` → `dist/` debe quedar sincronizado.
+- Abrir https://quincha.cl y comprobar el hash del JS en el HTML.
 
-## Notas históricas
+## Notas
 
-- El server NO es repo git: se despliega por SFTP/pscp.
-- Dashboard y calendario usan contextos locales (localStorage); el deploy
-  solo reemplaza el frontend en `dist/`, no toca `server/data` (cuentas/sesiones).
+- El server **sí** tiene un repo git parcial (solo `dist/` y `server/`); no tiene `src/` frontend. El código fuente vive en este equipo.
+- `server/data/` (DB, sesiones) **no se toca** en deploy.
+- Backend local y remoto deben ser idénticos salvo CRLF; `sync-check` usa md5 (CRLF local puede marcar “distinto” aunque el contenido sea el mismo).
+- Archivos `.bak_*` en el remoto son basura de mantenimiento; se ignoran.

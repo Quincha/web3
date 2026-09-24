@@ -77,8 +77,10 @@
 /* Dashboard Shell Layout */
 .dashboard-root-layout {
   display: flex;
-  width: 100vw;
+  width: 100%;
+  max-width: 100vw;
   height: 100vh;
+  overflow: hidden;
   background-color: var(--bg-primary);
   color: var(--text-primary);
 }
@@ -634,6 +636,25 @@
   gap: 24px;
 }
 
+/* Skeleton: alinear columnas con el grid real del dashboard */
+.skeleton-main-layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+@media (min-width: 1536px) {
+  .skeleton-main-layout {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .skeleton-main-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
 .skeleton-stats-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -647,10 +668,16 @@
   padding: 24px;
 }
 
-.skeleton-main-layout {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
+@media (max-width: 1100px) {
+  .skeleton-stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .skeleton-stats-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 .mt-12 { margin-top: 12px; }
@@ -881,6 +908,18 @@
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
   width: 100%;
+}
+
+@media (max-width: 1100px) {
+  .stats-widget-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .stats-widget-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .stat-card {
@@ -1138,6 +1177,18 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
+}
+
+@media (max-width: 1100px) {
+  .projects-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .projects-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .project-card {
@@ -1495,6 +1546,12 @@
   display: grid;
   grid-template-columns: 1.2fr 0.8fr;
   gap: 24px;
+}
+
+@media (max-width: 900px) {
+  .pomodoro-two-col-layout {
+    grid-template-columns: 1fr;
+  }
 }
 
 .active-session-live-card {
@@ -2738,6 +2795,12 @@
   align-items: start;
 }
 
+@media (max-width: 900px) {
+  .health-info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .health-info-card {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -3722,12 +3785,28 @@
    RESPONSIVE LAYOUT & CONTAINERS
    ============================ */
 
-/* Main dashboard widget grid: 2 per row by default */
+/* Main dashboard widget grid:
+   - ≥1536px (1080p y escritorios grandes): 3 columnas
+   - por defecto (laptops/tablets): 2 columnas
+   - ≤768px (móvil/tablet vertical): 1 columna */
 .dashboard-main-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 24px;
   width: 100%;
+}
+
+@media (min-width: 1536px) {
+  .dashboard-main-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-main-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
 }
 
 .dashboard-main-grid > * {
@@ -3755,6 +3834,24 @@
   box-sizing: border-box;
   padding-left: 28px;
   padding-right: 28px;
+}
+
+/* En 1080p+ aprovechar más el ancho disponible para las 3 columnas */
+@media (min-width: 1536px) {
+  .bujo-module-container,
+  .finance-module-container,
+  .habits-module-container,
+  .tasks-module-container,
+  .calendar-module-container,
+  .documents-module-container,
+  .health-module-container,
+  .pomodoro-module-container,
+  .goals-module-container,
+  .registro-module-container,
+  .module-container,
+  .dashboard-content-area {
+    max-width: 1600px;
+  }
 }
 
 .dashboard-hero-responsive {
@@ -3812,6 +3909,19 @@
     flex-wrap: wrap;
     gap: 20px;
   }
+
+  .hero-zone-welcome,
+  .hero-zone-stats,
+  .hero-weather-zone {
+    min-width: min(240px, 100%);
+  }
+}
+
+/* 1080p y escritorios grandes: ancho extra para el Hero */
+@media (min-width: 1536px) {
+  .dashboard-hero-responsive {
+    padding: 28px 40px 36px 40px;
+  }
 }
 
 /* Finance Summary Banner (Dashboard Bottom Container) */
@@ -3842,7 +3952,7 @@
   display: flex;
   align-items: center;
   gap: 20px;
-  min-width: 260px;
+  min-width: min(260px, 100%);
 }
 
 .finance-summary-banner-stats {
@@ -3902,6 +4012,10 @@
   .dashboard-hero-responsive {
     padding: 22px 24px 28px 24px;
   }
+
+  .dashboard-body-scroller {
+    padding: 16px;
+  }
 }
 
 /* Small screens (<= 768px) */
@@ -3921,13 +4035,20 @@
     min-width: 100%;
     width: 100%;
   }
-}
 
-/* Mobile & extra small screens (<= 640px) */
-@media (max-width: 640px) {
-  .dashboard-main-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
+  /* Sidebar colapsada: liberar ancho en pantallas chicas */
+  .dashboard-main-frame {
+    padding-left: 72px;
+  }
+
+  .dashboard-body-scroller {
+    padding: 12px;
+  }
+
+  .app-sidebar {
+    top: 12px;
+    left: 12px;
+    height: calc(100% - 24px);
   }
 
   .bujo-module-container,
@@ -3946,8 +4067,32 @@
     padding-right: 12px;
   }
 
+  .finance-summary-banner-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .finance-summary-banner-card {
+    padding: 16px;
+  }
+
+  .finance-summary-banner-header {
+    min-width: unset;
+  }
+}
+
+/* Mobile & extra small screens (<= 640px) */
+@media (max-width: 640px) {
+  .dashboard-main-grid {
+    gap: 16px;
+  }
+
   .dashboard-body-scroller {
-    padding: 16px 12px;
+    padding: 12px 8px;
+  }
+
+  .dashboard-main-frame {
+    padding-left: 64px;
   }
 
   .finance-summary-banner-stats {
@@ -3957,6 +4102,14 @@
 
   .finance-summary-banner-card {
     padding: 16px;
+  }
+
+  .dashboard-hero-responsive {
+    padding: 16px 12px 20px 12px;
+  }
+
+  .hero-content-row {
+    gap: 12px;
   }
 }
 

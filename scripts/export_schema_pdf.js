@@ -35,19 +35,12 @@ erDiagram
         INTEGER user_id PK, FK "ON DELETE CASCADE"
         TEXT channel_id "NOT NULL"
     }
-    designs {
-        TEXT id PK
-        INTEGER user_id FK "NOT NULL ON DELETE CASCADE"
-        TEXT format "NOT NULL"
-        TEXT colors "NOT NULL"
-    }
 
     users ||--o{ sessions : "tiene"
     users ||--o| configs : "posee configuración"
     users ||--o{ store : "guarda items en store"
     users ||--o| gcal_tokens : "vincula token"
     users ||--o| gcal_watch : "mantiene suscripción"
-    users ||--o{ designs : "crea diseños"
   `;
 
   const mvcDiagram = `

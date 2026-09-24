@@ -2,6 +2,7 @@ import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Sidebar } from './Sidebar';
 import { DashboardSkeleton } from '../ui/SkeletonLoader';
 import { DashboardHero } from '../dashboard/DashboardHero';
+import { DashboardHomeV2 } from '../dashboard/DashboardHomeV2';
 import { FinanceSummaryBanner } from '../finance/dashboard/FinanceSummaryBanner';
 import '../../Dashboard.css';
 
@@ -37,6 +38,11 @@ import { useTransition } from '../../context/TransitionContext';
 export const DashboardLayout: React.FC = () => {
   const { currentView: activeView, navigateTo } = useTransition();
   const [isLoading, setIsLoading] = useState(true);
+  // Variante de diseño: ?dash=v2 activa el Dashboard V2 sin tocar V1.
+  const [dashVariant] = useState(() => {
+    if (typeof window === 'undefined') return 'v1';
+    return new URLSearchParams(window.location.search).get('dash') === 'v2' ? 'v2' : 'v1';
+  });
 
   useEffect(() => {
     if (!isLoading && activeView === 'dashboard') {
@@ -63,9 +69,17 @@ export const DashboardLayout: React.FC = () => {
       return <DashboardSkeleton />;
     }
 
+    if (dashVariant === 'v2') {
+      return (
+        <div className="dashboard-content-area" style={{ display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
+          <DashboardHomeV2 />
+        </div>
+      );
+    }
+
     return (
       <div className="dashboard-content-area" style={{ display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
-        
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginBottom: '24px' }}>
           {/* Hero Section */}
           <div className="gsap-stagger-item">
@@ -97,7 +111,7 @@ export const DashboardLayout: React.FC = () => {
             </div>
           </div>
         </div>
-        
+
         {/* Full-width sticky-style (but static) footer */}
         <div style={{ width: '100%', margin: '0 0 8px 0', flexShrink: 0 }} className="gsap-stagger-item">
           <FinanceSummaryBanner />

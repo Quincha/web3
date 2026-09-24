@@ -31,6 +31,21 @@
   align-items: flex-start; /* Permite que cada columna crezca según su contenido */
 }
 
+/* Pantallas chicas: el tablero scrollea en horizontal en vez de apretar las 3 columnas */
+@media (max-width: 900px) {
+  .kanban-wrapper {
+    overflow-x: auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .kanban-board {
+    grid-template-columns: repeat(3, minmax(260px, 1fr));
+    min-width: max-content;
+    width: max-content;
+  }
+}
+
 .kanban-column {
   background-color: #090E14;
   border: 1px solid #1B2632;

@@ -53,7 +53,11 @@ export class ConfigService {
     const cached = storage.getItem(CACHE_KEY);
     if (cached) {
       try {
-        return JSON.parse(cached);
+        const parsed = JSON.parse(cached) as Partial<UserConfig>;
+        const widgets = Array.isArray(parsed.widgets) && parsed.widgets.length > 0
+          ? parsed.widgets
+          : DEFAULT_WIDGETS;
+        return { ...DEFAULT_CONFIG, ...parsed, widgets };
       } catch (e) {
         console.error('Failed to parse cached configuration', e);
       }

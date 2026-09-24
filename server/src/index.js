@@ -8,7 +8,6 @@ import {
   createSession, destroySession, getUserByToken,
   getConfig, saveConfig, putStore, getAllStore,
   getStoreSince, pruneStore, updatePassword, pruneExpiredSessions,
-  insertDesign, getDesign, listDesigns, deleteDesign,
   DATA_DIR,
 } from './db.js';
 import {
@@ -17,7 +16,6 @@ import {
   gcalListEvents, gcalCreateEvent, gcalUpdateEvent, gcalDeleteEvent, gcalClearEvents,
   gcalEnsureWatch, gcalStopWatch, gcalChannelValid,
 } from './gcal.js';
-import { parseDesign, preview, parseMultipart } from './design.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DIST_DIR = path.join(__dirname, '..', '..', 'dist');
@@ -567,139 +565,6 @@ app.delete('/api/gcal/event/:eventId', requireAuth, async (req, res) => {
     console.error('[gcal] delete:', err);
     res.status(500).json({ error: err.message });
   }
-});
-
-// --------------------------------------------------------------------------
-// Diseños de bordado: metadatos y vista previa (JEF / DST / PES)
-// --------------------------------------------------------------------------
-
-// Máximo de bytes que aceptamos para un diseño de bordado.
-const DESIGN_MAX_BYTES = 8 * 1024 * 1024;
-
-// El server no usa librería de uploads: para range de archivos leemos el body
-// binario crudo con un límite propio y luego lo parseamos como multipart.
-function bufferedUpload(req, res, next) {
-  const chunks = [];
-  let size = 0;
-  let tooBig = false;
-  req.on('data', (chunk) => {
-    size += chunk.length;
-    if (size > DESIGN_MAX_BYTES) { tooBig = true; req.destroy(); return; }
-    chunks.push(chunk);
-  });
-  req.on('end', () => {
-    if (tooBig) { req.tooBig = true; return next(); }
-    const buf = Buffer.concat(chunks);
-    req.upload = parseMultipart(buf, req.headers['content-type']);
-    next();
-  });
-  req.on('error', () => { if (!res.headersSent) res.status(400).json({ error: 'Cuerpo inválido' }); });
-  req.setTimeout(30000, () => req.destroy());
-}
-
-function uploadPayload(req, res) {
-  if (req.tooBig) return res.status(413).json({ error: 'Archivo demasiado grande' });
-  if (!req.upload) return res.status(400).json({ error: 'No se subió ningún archivo' });
-  return null;
-}
-
-app.post('/api/design/meta', requireAuth, bufferedUpload, (req, res) => {
-  const bad = uploadPayload(req, res);
-  if (bad) return bad;
-  try {
-    const meta = parseDesign(req.upload.buf, req.upload.name);
-    res.json({ ok: true, name: req.upload.name, ...meta });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
-app.post('/api/design/preview', requireAuth, bufferedUpload, (req, res) => {
-  const bad = uploadPayload(req, res);
-  if (bad) return bad;
-  const size = Math.min(Number(req.query.size) || 512, 1024);
-  const mode = req.query.mode === 'bordado' ? 'bordado' : 'puntos';
-  try {
-    const img = preview(req.upload.buf, req.upload.name, size, mode);
-    res.json({ ok: true, ...img });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
-// --------------------------------------------------------------------------
-// Diseños guardados: guardar / listar / ver / eliminar (persistencia en disco)
-// --------------------------------------------------------------------------
-
-const DESIGN_FILES_DIR = path.join(DATA_DIR, 'designs');
-
-function designFilePath(userId, design) {
-  const ext = String(design.format || '').toLowerCase() || 'jef';
-  return path.join(DESIGN_FILES_DIR, String(userId), `${design.id}.${ext}`);
-}
-
-app.post('/api/design/save', requireAuth, bufferedUpload, (req, res) => {
-  const bad = uploadPayload(req, res);
-  if (bad) return bad;
-  try {
-    const meta = parseDesign(req.upload.buf, req.upload.name);
-    const id = crypto.randomUUID();
-    const design = {
-      id,
-      name: req.upload.name,
-      format: meta.format,
-      stitches: meta.stitches,
-      colorCount: meta.colorCount,
-      colors: meta.colors,
-      createdAt: Date.now(),
-    };
-    const dir = path.join(DESIGN_FILES_DIR, String(req.user.id));
-    fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(designFilePath(req.user.id, design), req.upload.buf);
-    insertDesign(req.user.id, design);
-    const pv = preview(req.upload.buf, req.upload.name, 480, 'bordado');
-    res.json({ ok: true, design, preview: pv });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
-app.get('/api/designs', requireAuth, (req, res) => {
-  res.json({ ok: true, designs: listDesigns(req.user.id) });
-});
-
-app.get('/api/design/:id', requireAuth, (req, res) => {
-  const design = getDesign(req.user.id, req.params.id);
-  if (!design) return res.status(404).json({ error: 'Diseño no encontrado' });
-  const file = designFilePath(req.user.id, design);
-  if (!fs.existsSync(file)) return res.status(404).json({ error: 'Archivo del diseño no encontrado' });
-  const size = Math.min(Number(req.query.size) || 512, 1024);
-  const mode = req.query.mode === 'bordado' ? 'bordado' : 'puntos';
-  try {
-    const buf = fs.readFileSync(file);
-    const pv = preview(buf, design.name, size, mode);
-    res.json({ ok: true, design, ...pv });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
-app.delete('/api/design/:id', requireAuth, (req, res) => {
-  const design = getDesign(req.user.id, req.params.id);
-  if (!design) return res.status(404).json({ error: 'Diseño no encontrado' });
-  const file = designFilePath(req.user.id, design);
-  if (fs.existsSync(file)) fs.unlinkSync(file);
-  deleteDesign(req.user.id, req.params.id);
-  res.json({ ok: true });
-});
-
-// Descarga el archivo original del diseño (.jef/.dst/.pes).
-app.get('/api/design/:id/download', requireAuth, (req, res) => {
-  const design = getDesign(req.user.id, req.params.id);
-  if (!design) return res.status(404).json({ error: 'Diseño no encontrado' });
-  const file = designFilePath(req.user.id, design);
-  if (!fs.existsSync(file)) return res.status(404).json({ error: 'Archivo del diseño no encontrado' });
-  res.download(file, design.name);
 });
 
 // --------------------------------------------------------------------------

@@ -103,7 +103,8 @@ export const AjustesModule: React.FC = () => {
   };
 
   const toggleWidget = (id: string) => {
-    const updated = userConfig.widgets.map(w => w.id === id ? { ...w, visible: !w.visible } : w);
+    const list = Array.isArray(userConfig.widgets) ? userConfig.widgets : [];
+    const updated = list.map(w => w.id === id ? { ...w, visible: !w.visible } : w);
     updateConfig({ widgets: updated });
   };
 
@@ -364,7 +365,7 @@ export const AjustesModule: React.FC = () => {
           Muestra u oculta los módulos que aparecen en tu página de inicio.
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '10px' }}>
-          {[...userConfig.widgets]
+          {[...(Array.isArray(userConfig.widgets) ? userConfig.widgets : [])]
             .sort((a, b) => a.order - b.order)
             .map(w => {
               const meta = WidgetRegistry.get(w.id);
