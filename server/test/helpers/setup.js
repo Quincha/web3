@@ -4,8 +4,13 @@ import path from 'node:path';
 import os from 'node:os';
 import fs from 'node:fs';
 
-const tmpDb = path.join(os.tmpdir(), `quincha-test-${process.pid}-${Date.now()}.db`);
+const tmpData = path.join(os.tmpdir(), `quincha-test-data-${process.pid}-${Date.now()}`);
+fs.mkdirSync(tmpData, { recursive: true });
+const tmpDb = path.join(tmpData, 'quincha.db');
+process.env.QUINCHA_DATA_DIR = tmpData;
 process.env.QUINCHA_DB_PATH = tmpDb;
+// El worker de jobs de grabaciones se prueba directamente vía helpers de db.
+process.env.QUINCHA_RECORDINGS_WORKER = '0';
 
 export const { app } = await import('../../src/index.js');
 export const { db } = await import('../../src/db.js');
@@ -20,11 +25,11 @@ export async function start() {
 }
 
 export function cleanupDb() {
-  for (const suffix of ['', '-wal', '-shm']) {
-    try {
-      fs.unlinkSync(tmpDb + suffix);
-    } catch {
-      /* ya no existe */
-    }
+  // Windows no permite borrar la DB mientras node:sqlite mantiene el archivo
+  // abierto; se intenta borrar el directorio y, si falla, se deja en /tmp.
+  try {
+    fs.rmSync(tmpData, { recursive: true, force: true });
+  } catch {
+    /* handle aún abierto en Windows */
   }
 }

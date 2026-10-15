@@ -22,7 +22,7 @@ export const PomodoroModule: React.FC = () => {
     updateNotes
   } = usePomodoro();
 
-  const { getPendingTasks, projects, incrementTaskPomodoro } = useTasks();
+  const { getPendingTasks, projects, incrementTaskPomodoro, setTaskInProgress } = useTasks();
   const [selectedTaskId, setSelectedTaskId] = useState<string>('');
   const [inputProject, setInputProject] = useState('General');
   const [inputTask, setInputTask] = useState('Sesión de enfoque rápido');
@@ -44,6 +44,7 @@ export const PomodoroModule: React.FC = () => {
       setSelectedTaskId(taskId);
       setInputTask(taskTitle);
       setInputProject(projectName);
+      setTaskInProgress(taskId);
       startSession('work', projectName, taskTitle, 25, taskId);
     };
 
@@ -58,7 +59,7 @@ export const PomodoroModule: React.FC = () => {
       window.removeEventListener('start-pomodoro-for-task', handleLaunch);
       window.removeEventListener('pomodoro-completed-for-task', handleCompleted);
     };
-  }, [startSession, incrementTaskPomodoro]);
+  }, [startSession, incrementTaskPomodoro, setTaskInProgress]);
 
   const handleTaskChange = (taskId: string) => {
     setSelectedTaskId(taskId);
@@ -90,6 +91,8 @@ export const PomodoroModule: React.FC = () => {
   };
 
   const handleStart = (type: SessionType) => {
+    // Toda sesión de enfoque asociada a una tarea deja la tarea "en proceso".
+    if (type === 'work' && selectedTaskId) setTaskInProgress(selectedTaskId);
     startSession(type, inputProject, inputTask, type === 'work' ? customMinutes : undefined, selectedTaskId || undefined);
   };
 

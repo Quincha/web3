@@ -1,6 +1,6 @@
 import React from 'react';
 import { 
-   LayoutDashboard, BarChart3, Mail, FileText, Users, Settings, BookOpen, Wallet, ScrollText
+   LayoutDashboard, BarChart3, Mail, FileText, Users, Settings, BookOpen, Wallet, ScrollText, Mic
 } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
 import { PermissionService } from '../../services/PermissionService';
@@ -22,6 +22,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
     { id: 'estadisticas', label: 'Estadísticas', icon: <BarChart3 size={20} strokeWidth={1.5} fill="currentColor" />, module: 'estadisticas' as Module },
     { id: 'mensajes', label: 'Mensajes', icon: <Mail size={20} strokeWidth={1.5} fill="currentColor" />, module: 'mensajes' as Module },
     { id: 'documentos', label: 'Documentos', icon: <FileText size={20} strokeWidth={1.5} fill="currentColor" />, module: 'documentos' as Module },
+    { id: 'grabaciones', label: 'Grabaciones', icon: <Mic size={20} strokeWidth={1.5} fill="currentColor" />, module: 'grabaciones' as Module },
     { id: 'finanzas', label: 'Finanzas', icon: <Wallet size={20} strokeWidth={1.5} fill="currentColor" />, module: 'finanzas' as Module },
     { id: 'registro', label: 'Registro', icon: <ScrollText size={20} strokeWidth={1.5} fill="currentColor" />, module: 'registro' as Module },
     { id: 'clientes', label: 'Clientes', icon: <Users size={20} strokeWidth={1.5} fill="currentColor" />, module: 'clientes' as Module },

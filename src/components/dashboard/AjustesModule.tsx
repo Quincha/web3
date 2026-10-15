@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, User, Shield, LayoutDashboard, Settings, Moon, Sun, Sparkles, Check, CalendarDays, Link2, Unlink, Loader2, KeyRound } from 'lucide-react';
+import { ArrowLeft, User, Shield, LayoutDashboard, Settings, Moon, Sun, Sparkles, Check, CalendarDays, Link2, Unlink, Loader2, KeyRound, Database, HelpCircle, Users, RotateCcw } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
 import { useTheme } from '../../context/ThemeContext';
 import type { Theme } from '../../context/ThemeContext';
@@ -7,6 +7,7 @@ import { PermissionService } from '../../services/PermissionService';
 import type { Role } from '../../services/PermissionService';
 import { WidgetRegistry } from '../../widgets/WidgetRegistry';
 import { getProfile, Api } from '../../services/ApiClient';
+import { loadDemoData } from '../../services/demoSeed';
 
 export const AjustesModule: React.FC = () => {
   const { userConfig, updateConfig, isSyncing } = useUser();
@@ -22,6 +23,63 @@ export const AjustesModule: React.FC = () => {
   const [pwNext, setPwNext] = useState('');
   const [pwBusy, setPwBusy] = useState(false);
   const [pwMsg, setPwMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  // Preguntas de seguridad
+  const [secQuestions, setSecQuestions] = useState<{ question: string; answer: string }[]>([
+    { question: '', answer: '' },
+    { question: '', answer: '' },
+  ]);
+  const [secBusy, setSecBusy] = useState(false);
+  const [secMsg, setSecMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  // Gestión de usuarios (super-admin)
+  const [users, setUsers] = useState<{ id: number; username: string; role: string; name: string }[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [resetTarget, setResetTarget] = useState<{ id: number; username: string } | null>(null);
+  const [resetPassword, setResetPassword] = useState('');
+  const [resetBusy, setResetBusy] = useState(false);
+  const [resetMsg, setResetMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  const loadUsers = async () => {
+    setUsersLoading(true);
+    try {
+      const res = await fetch('/api/users', {
+        headers: { Authorization: `Bearer ${localStorage.getItem('q_token') || ''}` },
+      });
+      const data = await res.json();
+      if (data.ok) setUsers(data.users);
+    } catch { /* noop */ } finally { setUsersLoading(false); }
+  };
+
+  useEffect(() => { if (isSuperAdmin) loadUsers(); }, [isSuperAdmin]);
+
+  const handleSaveSecurityQuestions = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (secQuestions.some(q => !q.question.trim() || !q.answer.trim())) return;
+    setSecBusy(true);
+    setSecMsg(null);
+    try {
+      await Api.saveSecurityQuestions(secQuestions);
+      setSecMsg({ ok: true, text: 'Preguntas guardadas ✓' });
+    } catch (err) {
+      setSecMsg({ ok: false, text: err instanceof Error ? err.message : 'No se pudieron guardar' });
+    } finally { setSecBusy(false); }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetTarget || resetPassword.length < 8) return;
+    setResetBusy(true);
+    setResetMsg(null);
+    try {
+      await Api.adminResetPassword(resetTarget.id, resetPassword);
+      setResetMsg({ ok: true, text: `Contraseña de "${resetTarget.username}" actualizada ✓` });
+      setResetTarget(null);
+      setResetPassword('');
+    } catch (err) {
+      setResetMsg({ ok: false, text: err instanceof Error ? err.message : 'No se pudo resetear' });
+    } finally { setResetBusy(false); }
+  };
 
   const changePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,6 +164,13 @@ export const AjustesModule: React.FC = () => {
     const list = Array.isArray(userConfig.widgets) ? userConfig.widgets : [];
     const updated = list.map(w => w.id === id ? { ...w, visible: !w.visible } : w);
     updateConfig({ widgets: updated });
+  };
+
+  const loadDemo = () => {
+    const ok = window.confirm(
+      'Se reemplazarán los datos locales por información de prueba en todos los módulos (tareas, finanzas, salud, calendario, mensajes, registro, banda). ¿Continuar?'
+    );
+    if (ok) loadDemoData();
   };
 
   const themeOptions: { id: Theme; label: string; icon: React.ReactNode }[] = [
@@ -202,6 +267,73 @@ export const AjustesModule: React.FC = () => {
         </form>
         {pwMsg && (
           <p style={{ margin: '12px 0 0', fontSize: '12px', color: pwMsg.ok ? '#16F0B5' : '#F87171' }}>{pwMsg.text}</p>
+        )}
+      </section>
+
+      {/* Preguntas de seguridad */}
+      <section style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '14px', padding: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+          <HelpCircle size={16} color="#F59E0B" />
+          <h3 style={{ margin: 0, fontSize: '0.95rem', color: 'white' }}>Preguntas de seguridad</h3>
+        </div>
+        <p style={{ margin: '0 0 16px', fontSize: '12px', color: 'var(--text-subtle)' }}>
+          Configurá 2-3 preguntas para poder recuperar tu contraseña desde la pantalla de inicio si la olvidás.
+        </p>
+        <form onSubmit={handleSaveSecurityQuestions} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {secQuestions.map((sq, i) => (
+            <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <input
+                type="text"
+                value={sq.question}
+                onChange={e => {
+                  const next = [...secQuestions];
+                  next[i] = { ...next[i], question: e.target.value };
+                  setSecQuestions(next);
+                }}
+                placeholder={`Pregunta ${i + 1} (ej: ¿Nombre de tu primera mascota?)`}
+                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '10px 12px', color: 'white', fontSize: '13px' }}
+              />
+              <input
+                type="text"
+                value={sq.answer}
+                onChange={e => {
+                  const next = [...secQuestions];
+                  next[i] = { ...next[i], answer: e.target.value };
+                  setSecQuestions(next);
+                }}
+                placeholder="Respuesta"
+                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '10px 12px', color: 'white', fontSize: '13px' }}
+              />
+            </div>
+          ))}
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <button
+              type="button"
+              onClick={() => setSecQuestions([...secQuestions, { question: '', answer: '' }])}
+              disabled={secQuestions.length >= 3}
+              style={{
+                background: 'rgba(255,255,255,0.06)', color: 'var(--text-subtle)', border: '1px solid var(--border-color)',
+                borderRadius: '10px', padding: '8px 14px', cursor: secQuestions.length >= 3 ? 'default' : 'pointer',
+                fontSize: '12px', fontWeight: 600, opacity: secQuestions.length >= 3 ? 0.4 : 1
+              }}
+            >
+              + Agregar pregunta
+            </button>
+            <button
+              type="submit"
+              disabled={secBusy || secQuestions.some(q => !q.question.trim() || !q.answer.trim())}
+              style={{
+                background: '#F59E0B', color: '#111', borderRadius: '10px', padding: '10px 16px',
+                border: 'none', cursor: secBusy ? 'default' : 'pointer', fontSize: '13px', fontWeight: 700,
+                opacity: secBusy ? 0.6 : 1, marginLeft: 'auto'
+              }}
+            >
+              {secBusy ? 'Guardando...' : 'Guardar preguntas'}
+            </button>
+          </div>
+        </form>
+        {secMsg && (
+          <p style={{ margin: '12px 0 0', fontSize: '12px', color: secMsg.ok ? '#16F0B5' : '#F87171' }}>{secMsg.text}</p>
         )}
       </section>
 
@@ -311,6 +443,80 @@ export const AjustesModule: React.FC = () => {
       </section>
       )}
 
+      {/* Gestión de usuarios — solo super-admin */}
+      {isSuperAdmin && (
+      <section style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '14px', padding: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+          <Users size={16} color="#38BDF8" />
+          <h3 style={{ margin: 0, fontSize: '0.95rem', color: 'white' }}>Gestión de usuarios</h3>
+        </div>
+        {usersLoading ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-subtle)', fontSize: '13px' }}>
+            <Loader2 size={16} className="sync-spinner" /> Cargando usuarios...
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {users.map(u => (
+              <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '13px', color: 'white', fontWeight: 600 }}>{u.name || u.username}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-subtle)' }}>{u.username} · {u.role}</div>
+                </div>
+                <button
+                  onClick={() => { setResetTarget({ id: u.id, username: u.username }); setResetMsg(null); }}
+                  style={{
+                    background: 'rgba(248,113,113,0.1)', color: '#F87171', border: '1px solid rgba(248,113,113,0.25)',
+                    borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', fontSize: '12px', fontWeight: 600,
+                    display: 'flex', alignItems: 'center', gap: '4px'
+                  }}
+                >
+                  <RotateCcw size={12} /> Resetear
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        {resetMsg && (
+          <p style={{ margin: '12px 0 0', fontSize: '12px', color: resetMsg.ok ? '#16F0B5' : '#F87171' }}>{resetMsg.text}</p>
+        )}
+      </section>
+      )}
+
+      {/* Modal reset password */}
+      {resetTarget && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '24px', maxWidth: '420px', width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+              <RotateCcw size={20} color="#F87171" />
+              <h3 style={{ margin: 0, fontSize: '1rem', color: 'white' }}>Resetear contraseña</h3>
+            </div>
+            <p style={{ margin: '0 0 16px', fontSize: '13px', color: 'var(--text-subtle)', lineHeight: 1.5 }}>
+              Nueva contraseña para <strong style={{ color: 'white' }}>{resetTarget.username}</strong> (mín. 8 caracteres).
+            </p>
+            <form onSubmit={handleResetPassword}>
+              <input
+                type="text"
+                value={resetPassword}
+                onChange={e => setResetPassword(e.target.value)}
+                placeholder="Nueva contraseña"
+                minLength={8}
+                required
+                autoFocus
+                style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '10px 12px', color: 'white', fontSize: '14px', marginBottom: '16px' }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button type="button" onClick={() => setResetTarget(null)} style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-subtle)', borderRadius: '10px', padding: '10px 16px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>
+                  Cancelar
+                </button>
+                <button type="submit" disabled={resetBusy || resetPassword.length < 8} style={{ background: '#F87171', color: 'white', borderRadius: '10px', padding: '10px 20px', border: 'none', cursor: resetBusy ? 'default' : 'pointer', fontSize: '13px', fontWeight: 700, opacity: resetBusy ? 0.6 : 1 }}>
+                  {resetBusy ? 'Guardando...' : 'Resetear'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Confirmation Modal */}
       {pendingRole && (() => {
         const currentLabel = roles.find(r => r.id === userConfig.userRole)?.label || userConfig.userRole;
@@ -399,6 +605,28 @@ export const AjustesModule: React.FC = () => {
               );
             })}
         </div>
+      </section>
+
+      {/* Datos de demostración */}
+      <section style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '14px', padding: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+          <Database size={16} color="#3ACDFF" />
+          <h3 style={{ margin: 0, fontSize: '0.95rem', color: 'white' }}>Datos de demostración</h3>
+        </div>
+        <p style={{ margin: '0 0 16px', fontSize: '12px', color: 'var(--text-subtle)' }}>
+          Carga información de ejemplo en todas las secciones: tareas, proyectos, hábitos, finanzas, salud,
+          bullet journal, mensajes, clientes, metas, compras, pomodoro, banda y registro de auditorías.
+        </p>
+        <button
+          onClick={loadDemo}
+          style={{
+            background: 'rgba(56, 189, 248, 0.12)', color: '#38BDF8', border: '1px solid rgba(56, 189, 248, 0.35)',
+            borderRadius: '10px', padding: '10px 16px', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+            transition: 'all 0.2s'
+          }}
+        >
+          Cargar datos de prueba
+        </button>
       </section>
     </div>
   );

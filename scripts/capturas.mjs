@@ -39,6 +39,7 @@ const VIEWS = [
   'ajustes',
   'band',
   'registro',
+  'grabaciones',
 ];
 
 /** Selector que confirma que el módulo de la vista ya montó (específico del módulo). */
@@ -61,6 +62,7 @@ const VIEW_SELECTORS = {
   ajustes: '.module-container.fade-in',
   band: '.module-container.fade-in',
   registro: '.registro-module-container',
+  grabaciones: '.module-container.fade-in',
 };
 
 const FINANCE_TABS = ['Dashboard', 'Flujo de Caja', 'Deudas', 'Cuentas', 'Presupuestos', 'Comprobantes'];

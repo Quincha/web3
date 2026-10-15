@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Play, Pause, RotateCcw, Settings, Target, Lightbulb, CheckCircle2, Sun, X, Volume2, VolumeX, Clock, Check, ExternalLink } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Play, Pause, RotateCcw, Settings, Target, Lightbulb, CheckCircle2, Sun, X, Volume2, VolumeX, Clock, Check, ExternalLink, ListTodo } from 'lucide-react';
 import { usePomodoro } from '../context/PomodoroContext';
+import { useTasks } from '../context/TasksContext';
 import { WidgetRegistry } from './WidgetRegistry';
 
 const PRO_TIPS = [
@@ -26,6 +27,34 @@ const PomodoroWidget: React.FC = () => {
   } = usePomodoro();
 
   const [tipIndex] = useState(0);
+
+  const { tasks, projects, getPendingTasks, setTaskInProgress, incrementTaskPomodoro } = useTasks();
+
+  // Tarea asociada a la sesión: toda sesión de enfoque nace de una tarea.
+  const [selectedTaskId, setSelectedTaskId] = useState<string>('');
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [taskWarning, setTaskWarning] = useState<string | null>(null);
+
+  const availableTasks = [...getPendingTasks()].sort((a, b) => {
+    const sOrder: Record<string, number> = { 'in-progress': 0, pending: 1 };
+    const diff = (sOrder[a.status] ?? 1) - (sOrder[b.status] ?? 1);
+    if (diff !== 0) return diff;
+    const pOrder: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 };
+    return (pOrder[a.priority] ?? 3) - (pOrder[b.priority] ?? 3);
+  });
+
+  const selectedTask = tasks.find(t => t.id === selectedTaskId) || null;
+  const selectedProject = selectedTask ? projects.find(p => p.id === selectedTask.project_id) : undefined;
+
+  // Los pomodoros terminados se acumulan en la tarea asociada.
+  useEffect(() => {
+    const handleCompleted = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { taskId?: string } | undefined;
+      if (detail?.taskId) incrementTaskPomodoro(detail.taskId);
+    };
+    window.addEventListener('pomodoro-completed-for-task', handleCompleted);
+    return () => window.removeEventListener('pomodoro-completed-for-task', handleCompleted);
+  }, [incrementTaskPomodoro]);
 
   // Settings State
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -65,21 +94,72 @@ const PomodoroWidget: React.FC = () => {
   const dotX = 90 + radius * Math.cos((angle * Math.PI) / 180);
   const dotY = 90 + radius * Math.sin((angle * Math.PI) / 180);
 
+  // Inicia una sesión SIEMPRE asociada a una tarea (marca la tarea en proceso
+  // para que aparezca con prioridad en "Tareas del día").
+  const startWithTask = (taskId: string) => {
+    const t = tasks.find(x => x.id === taskId);
+    if (!t) {
+      setTaskWarning('La tarea seleccionada ya no existe.');
+      return;
+    }
+    setTaskWarning(null);
+    setTaskInProgress(taskId);
+    startSession('work', selectedProject?.name || 'General', t.title, workMinutes, taskId);
+  };
+
   const handleStart = () => {
-    startSession('work', 'General', 'Enfoque profundo', workMinutes);
+    if (!selectedTaskId) {
+      setTaskWarning('Selecciona una tarea o arrástrala desde "Tareas del día".');
+      return;
+    }
+    startWithTask(selectedTaskId);
   };
 
   const handleSaveSettings = () => {
     setShowSettingsModal(false);
-    if (!isActive) {
-      startSession('work', 'General', 'Enfoque profundo', workMinutes);
+    if (!isActive && selectedTaskId) {
+      startWithTask(selectedTaskId);
     }
   };
 
+  // ── Drag & drop desde el widget "Tareas del día" ──
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    if (!isDragOver) setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const taskId = e.dataTransfer.getData('text/plain');
+    const dropped = tasks.find(t => t.id === taskId);
+    if (!dropped) return;
+    setSelectedTaskId(dropped.id);
+    if (isActive) {
+      setTaskWarning('Hay una sesión en curso: esta tarea se usará en la próxima.');
+      return;
+    }
+    startWithTask(dropped.id);
+  };
+
   return (
-    <div className="dashboard-card" style={{ 
+    <div
+      className="dashboard-card"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      style={{ 
       background: '#0B0F19', 
       border: '1px solid rgba(255, 255, 255, 0.08)',
+      outline: isDragOver ? '2px dashed #00E5D9' : 'none',
+      outlineOffset: '-4px',
+      boxShadow: isDragOver ? '0 0 0 4px rgba(0, 229, 217, 0.18), 0 12px 36px rgba(0, 0, 0, 0.4)' : '0 12px 36px rgba(0, 0, 0, 0.4)',
       borderRadius: '20px',
       padding: '24px',
       display: 'flex',
@@ -87,8 +167,7 @@ const PomodoroWidget: React.FC = () => {
       justifyContent: 'space-between',
       position: 'relative',
       overflow: 'hidden',
-      color: '#fff',
-      boxShadow: '0 12px 36px rgba(0, 0, 0, 0.4)'
+      color: '#fff'
     }}>
       
       {/* ── Settings Modal Overlay ────────────────────────────── */}
@@ -326,8 +405,31 @@ const PomodoroWidget: React.FC = () => {
         </div>
       )}
 
+      {/* ── Drop overlay: suelta la tarea aquí ─────────────────── */}
+      {isDragOver && (
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          zIndex: 40,
+          background: 'rgba(0, 229, 217, 0.10)',
+          backdropFilter: 'blur(2px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '10px',
+          color: '#00E5D9',
+          fontSize: '14px',
+          fontWeight: 800,
+          letterSpacing: '0.04em',
+          pointerEvents: 'none'
+        }}>
+          <ListTodo size={20} />
+          SUELTA AQUÍ LA TAREA PARA CRONOMETRARLA
+        </div>
+      )}
+
       {/* ── Header ────────────────────────────────────────────── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '20px' }}>
         <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#FFFFFF', margin: 0, letterSpacing: '-0.01em' }}>
           Pomodoro
         </h3>
@@ -348,7 +450,7 @@ const PomodoroWidget: React.FC = () => {
       </div>
 
       {/* ── Main Body (Left Dial + Right Details) ──────────────── */}
-      <div style={{ display: 'flex', gap: '28px', alignItems: 'center', flex: 1, marginBottom: '20px' }}>
+      <div style={{ display: 'flex', gap: '28px', alignItems: 'center', flexWrap: 'wrap', flex: 1, marginBottom: '20px' }}>
         
         {/* Left Side: High-Tech Dial Timer */}
         <div style={{ position: 'relative', width: '180px', height: '180px', flexShrink: 0 }}>
@@ -461,7 +563,7 @@ const PomodoroWidget: React.FC = () => {
         {/* Right Side: Details, Stepper, Buttons & Pro Tip */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '14px' }}>
           
-          {/* SESIÓN ACTUAL Box */}
+          {/* SESIÓN ACTUAL Box — tarea asociada (obligatoria) */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ 
               width: '42px', 
@@ -477,16 +579,56 @@ const PomodoroWidget: React.FC = () => {
             }}>
               <Target size={22} />
             </div>
-            <div>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                SESIÓN ACTUAL
+                TAREA DE LA SESIÓN
               </div>
-              <div style={{ fontSize: '15px', color: '#fff', fontWeight: 700, marginTop: '1px' }}>
-                {currentTaskTitle || 'Enfoque profundo'}
+              <select
+                className="pomodoro-task-select"
+                value={selectedTaskId}
+                disabled={isActive}
+                onChange={(e) => { setSelectedTaskId(e.target.value); setTaskWarning(null); }}
+                title={isActive ? 'Sesión en curso: no se puede cambiar la tarea' : 'Selecciona la tarea a cronometrar'}
+                style={{
+                  width: '100%',
+                  marginTop: '3px',
+                  background: 'rgba(0,0,0,0.45)',
+                  border: `1px solid ${selectedTaskId ? 'rgba(0, 229, 217, 0.4)' : 'rgba(255,255,255,0.14)'}`,
+                  borderRadius: '8px',
+                  padding: '6px 8px',
+                  color: selectedTaskId ? '#fff' : 'rgba(255,255,255,0.55)',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  outline: 'none',
+                  cursor: isActive ? 'not-allowed' : 'pointer',
+                  maxWidth: '100%'
+                }}
+              >
+                <option value="">
+                  {availableTasks.length === 0 ? 'Sin tareas pendientes' : '— Selecciona una tarea —'}
+                </option>
+                {selectedTaskId && !selectedTask && (
+                  <option value={selectedTaskId}>{currentTaskTitle || 'Tarea de la sesión'}</option>
+                )}
+                {availableTasks.map(t => (
+                  <option key={t.id} value={t.id}>
+                    {t.status === 'in-progress' ? '▸ ' : ''}{t.title}
+                  </option>
+                ))}
+              </select>
+              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '3px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                <span>{selectedProject?.name || 'Sin proyecto'}</span>
+                {selectedTask && (
+                  <span style={{ color: '#00E5D9', fontWeight: 700 }}>
+                    · {selectedTask.completedPomodoros}/{selectedTask.estimatedPomodoros} pomos
+                  </span>
+                )}
               </div>
-              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '1px' }}>
-                Distrae menos, crea más.
-              </div>
+              {taskWarning && (
+                <div style={{ fontSize: '11px', color: '#FBBF24', marginTop: '4px', fontWeight: 600 }}>
+                  {taskWarning}
+                </div>
+              )}
             </div>
           </div>
 
@@ -497,7 +639,7 @@ const PomodoroWidget: React.FC = () => {
             </div>
 
             {/* Stepper Node Labels */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: '2px 0', fontSize: '9px', letterSpacing: '-0.03em', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>
               <span style={{ color: '#00E5D9', fontWeight: 700 }}>Pomodoro 1</span>
               <span>Descanso corto</span>
               <span>Pomodoro 2</span>
@@ -516,7 +658,7 @@ const PomodoroWidget: React.FC = () => {
           </div>
 
           {/* Action Buttons Row */}
-          <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '4px' }}>
             {/* Primary Action: INICIAR when inactive, PAUSAR / REANUDAR when active */}
             {!isActive ? (
               <button
@@ -643,12 +785,9 @@ const PomodoroWidget: React.FC = () => {
       </div>
 
       {/* ── Footer Metrics (3 Columns) ─────────────────────────── */}
-      <div style={{ 
+      <div className="pomodoro-widget-footer" style={{ 
         borderTop: '1px solid rgba(255, 255, 255, 0.06)', 
-        paddingTop: '14px', 
-        display: 'grid', 
-        gridTemplateColumns: '1fr 1fr 1fr',
-        gap: '16px'
+        paddingTop: '14px'
       }}>
         
         {/* Col 1: Sesiones Hoy */}

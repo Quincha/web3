@@ -33,6 +33,7 @@ interface MessagesContextType {
   markAllMessagesRead: () => void;
   addMessage: (text: string, sender?: string, company?: string) => void;
   markNotificationRead: (id: string) => void;
+  markAllNotificationsRead: () => void;
 }
 
 const MessagesContext = createContext<MessagesContextType | undefined>(undefined);
@@ -202,13 +203,17 @@ export const MessagesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   const markNotificationRead = useCallback((id: string) => {
-    setReadNotifIds(prev => [...prev, id]);
+    setReadNotifIds(prev => (prev.includes(id) ? prev : [...prev, id]));
   }, []);
+
+  const markAllNotificationsRead = useCallback(() => {
+    setReadNotifIds(prev => [...new Set([...prev, ...derivedNotifications.map(n => n.id)])]);
+  }, [derivedNotifications]);
 
   return (
     <MessagesContext.Provider value={{
       messages, notifications, unreadMessages,
-      markMessageRead, markAllMessagesRead, addMessage, markNotificationRead,
+      markMessageRead, markAllMessagesRead, addMessage, markNotificationRead, markAllNotificationsRead,
     }}>
       {children}
     </MessagesContext.Provider>

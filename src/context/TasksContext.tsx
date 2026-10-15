@@ -407,9 +407,15 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       .filter(task =>
         task.status !== 'completed' &&
         task.status !== 'cancelled' &&
-        (task.dueDate === null || task.dueDate <= t)
+        // Una tarea iniciada (en proceso) siempre se muestra, aunque su fecha sea futura.
+        (task.status === 'in-progress' || task.dueDate === null || task.dueDate <= t)
       )
       .sort((a, b) => {
+        // Prioridad 1: las tareas iniciadas (en proceso) van primero en la lista.
+        const sOrder: Record<string, number> = { 'in-progress': 0, pending: 1, migrated: 2 };
+        const sa = sOrder[a.status] ?? 1;
+        const sb = sOrder[b.status] ?? 1;
+        if (sa !== sb) return sa - sb;
         const pOrder: Record<Priority, number> = { urgent: 0, high: 1, medium: 2, low: 3 };
         return pOrder[a.priority] - pOrder[b.priority];
       });

@@ -212,14 +212,24 @@ const TasksWidget: React.FC = () => {
             return (
               <div 
                 key={task.id} 
+                className="task-row-drag"
+                draggable={!isConfirming}
+                onDragStart={(e) => {
+                  e.dataTransfer.setData('text/plain', task.id);
+                  e.dataTransfer.effectAllowed = 'copy';
+                  e.currentTarget.style.opacity = '0.45';
+                }}
+                onDragEnd={(e) => { e.currentTarget.style.opacity = '1'; }}
+                title="Arrástrala al widget Pomodoro para cronometrarla"
                 style={{ 
                   background: isConfirming ? 'rgba(16, 185, 129, 0.08)' : 'rgba(255, 255, 255, 0.02)',
-                  border: `1px solid ${isConfirming ? 'rgba(16, 185, 129, 0.3)' : 'rgba(255, 255, 255, 0.06)'}`,
+                  border: `1px solid ${isConfirming ? 'rgba(16, 185, 129, 0.3)' : task.status === 'in-progress' ? 'rgba(0, 229, 217, 0.35)' : 'rgba(255, 255, 255, 0.06)'}`,
                   borderRadius: '12px',
                   padding: '12px 14px',
                   display: 'flex', 
                   flexDirection: 'column',
                   gap: '8px',
+                  cursor: isConfirming ? 'default' : 'grab',
                   transition: 'all 0.2s ease'
                 }}
               >
@@ -298,6 +308,20 @@ const TasksWidget: React.FC = () => {
 
                         {/* Badges Row */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px', flexWrap: 'wrap' }}>
+                          {task.status === 'in-progress' && (
+                            <span style={{
+                              fontSize: '10px',
+                              fontWeight: 800,
+                              color: '#00E5D9',
+                              background: 'rgba(0, 229, 217, 0.12)',
+                              border: '1px solid rgba(0, 229, 217, 0.35)',
+                              borderRadius: '6px',
+                              padding: '1px 6px',
+                              letterSpacing: '0.04em'
+                            }}>
+                              EN PROCESO
+                            </span>
+                          )}
                           {projName && (
                             <span style={{ 
                               fontSize: '10px', 
@@ -355,7 +379,12 @@ const TasksWidget: React.FC = () => {
       </div>
 
       {/* Footer link */}
-      <div style={{ marginTop: '16px', borderTop: '1px solid rgba(255, 255, 255, 0.06)', paddingTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ marginTop: '16px', borderTop: '1px solid rgba(255, 255, 255, 0.06)', paddingTop: '12px' }}>
+        <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <Clock size={11} color="#00E5D9" />
+          Arrastra una tarea al widget Pomodoro para cronometrarla
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <a 
           href="#" 
           onClick={e => { 
@@ -376,7 +405,8 @@ const TasksWidget: React.FC = () => {
         >
           <span>Ver todas las tareas</span>
           <ArrowRight size={14} />
-        </a>
+          </a>
+        </div>
       </div>
     </div>
   );

@@ -178,7 +178,7 @@ switch ($Action.ToLower()) {
     }
 
     Write-Host '4b) Subir backend server/src/*.js' -ForegroundColor Cyan
-    foreach ($f in @('index.js','gcal.js','db.js','add_audit.js')) {
+    foreach ($f in @('index.js','gcal.js','db.js','add_audit.js','auth.js','recordings.js','recordingsAi.js')) {
       Invoke-QuinchaScp @("server\src\$f") "$remoteRoot/server/src/$f"
       Assert-QuinchaOk "subir $f"
     }

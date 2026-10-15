@@ -112,6 +112,22 @@ export const Api = {
     await request('/password', { method: 'POST', body: JSON.stringify({ current, next }) });
   },
 
+  async saveSecurityQuestions(questions: { question: string; answer: string }[]): Promise<void> {
+    await request('/security-questions', { method: 'POST', body: JSON.stringify({ questions }) });
+  },
+
+  async getSecurityQuestions(username: string): Promise<{ questions: { id: number; question: string }[] }> {
+    return request(`/security-questions?username=${encodeURIComponent(username)}`, {}, false);
+  },
+
+  async forgotPassword(username: string, answers: string[], newPassword: string): Promise<void> {
+    await request('/forgot-password', { method: 'POST', body: JSON.stringify({ username, answers, newPassword }) }, false);
+  },
+
+  async adminResetPassword(userId: number, newPassword: string): Promise<void> {
+    await request('/admin/reset-password', { method: 'POST', body: JSON.stringify({ userId, newPassword }) });
+  },
+
   async logout(): Promise<void> {
     try {
       await request('/logout', { method: 'POST' });

@@ -11,7 +11,7 @@ const NOTIF_COLORS: Record<Notification['type'], { color: string; bg: string }> 
 };
 
 export const MessagesModule: React.FC = () => {
-  const { messages, notifications, unreadMessages, markMessageRead, addMessage, markNotificationRead } = useMessages();
+  const { messages, notifications, unreadMessages, markMessageRead, addMessage, markNotificationRead, markAllNotificationsRead } = useMessages();
   const [tab, setTab] = useState<'mensajes' | 'notificaciones'>('mensajes');
   const [draft, setDraft] = useState('');
   const [showCompose, setShowCompose] = useState(false);
@@ -163,7 +163,7 @@ export const MessagesModule: React.FC = () => {
         <>
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
             <button
-              onClick={() => notifications.forEach(n => markNotificationRead(n.id))}
+              onClick={markAllNotificationsRead}
               style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: '10px', padding: '8px 14px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
             >
               Marcar todas como leídas

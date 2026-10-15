@@ -52,7 +52,7 @@ Qué hace `deploy`:
 1. `npm run build` local (`tsc -b && vite build`).
 2. Backup remoto: `cp -r dist dist_backup`.
 3. Limpia `dist/assets/*` y sube el nuevo `dist/` con `scp`.
-4. Sube backend: `index.js`, `gcal.js`, `db.js`, `add_audit.js`.
+4. Sube backend: `index.js`, `gcal.js`, `db.js`, `add_audit.js`, `auth.js`, `recordings.js`, `recordingsAi.js`.
 5. `sudo -n systemctl restart quincha-systems` (NOPASSWD).
 
 ## Verificación post-deploy
@@ -66,3 +66,4 @@ Qué hace `deploy`:
 - `server/data/` (DB, sesiones) **no se toca** en deploy.
 - Backend local y remoto deben ser idénticos salvo CRLF; `sync-check` usa md5 (CRLF local puede marcar “distinto” aunque el contenido sea el mismo).
 - Archivos `.bak_*` en el remoto son basura de mantenimiento; se ignoran.
+- **Grabaciones Colaborativas (IA):** para transcripción, resumen y cuestionario automáticos, definir `GEMINI_API_KEY` (y opcional `GEMINI_MODEL`, por defecto `gemini-2.5-flash`) en el entorno del servicio `quincha-systems` (systemd `Environment=` / `EnvironmentFile=`). Sin la clave el módulo sigue funcionando con transcripción manual.

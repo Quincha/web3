@@ -30,6 +30,7 @@ const MessagesModule = lazy(() => import('../dashboard/MessagesModule').then(m =
 const AjustesModule = lazy(() => import('../dashboard/AjustesModule').then(m => ({ default: m.AjustesModule })));
 const BandModule = lazy(() => import('../dashboard/BandModule').then(m => ({ default: m.BandModule })));
 const RegistroModule = lazy(() => import('../dashboard/RegistroModule').then(m => ({ default: m.RegistroModule })));
+const RecordingsModule = lazy(() => import('../dashboard/RecordingsModule').then(m => ({ default: m.RecordingsModule })));
 import { CommandPalette } from './CommandPalette';
 import gsap from 'gsap';
 
@@ -164,6 +165,7 @@ export const DashboardLayout: React.FC = () => {
              activeView === 'ajustes' ? <AjustesModule /> :
              activeView === 'band' ? <BandModule /> :
              activeView === 'registro' ? <RegistroModule /> :
+             activeView === 'grabaciones' ? <RecordingsModule /> :
              renderModulePlaceholder(activeView)}
           </Suspense>
         </main>

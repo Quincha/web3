@@ -6,7 +6,6 @@ import { useBujo } from '../../context/BujoContext';
 import { useTasks } from '../../context/TasksContext';
 import { useInsights } from '../../context/InsightsContext';
 import { useFinance } from '../../context/FinanceContext';
-import { useHabits } from '../../context/HabitsContext';
 import { useMessages } from '../../context/MessagesContext';
 import { SyncStatusBar } from '../layout/SyncStatusBar';
 import { WeatherWidget } from './WeatherWidget';
@@ -19,23 +18,8 @@ export const DashboardHero: React.FC = () => {
   const { tasks, updateTask } = useTasks();
   const { insights: _insights } = useInsights();
   const { stats: financeStats } = useFinance();
-  const { habitsWithStats } = useHabits();
-  const { messages, notifications, unreadMessages } = useMessages();
+  const { messages, notifications, unreadMessages, markAllNotificationsRead } = useMessages();
   const firstName = userConfig.userName.split(' ')[0];
-
-  // Dynamic calculations for Progress Ring
-  const healthHabits = habitsWithStats || [];
-  const healthPercentage = healthHabits.length > 0 
-    ? Math.round(healthHabits.reduce((acc, h) => acc + h.completionRate30d, 0) / healthHabits.length)
-    : 0;
-
-  const totalTasksCount = (tasks || []).length;
-  const completedTasksCount = (tasks || []).filter(t => t.status === 'completed').length;
-  const devPercentage = totalTasksCount > 0
-    ? Math.round((completedTasksCount / totalTasksCount) * 100)
-    : 0;
-
-  const overallProgress = Math.round((healthPercentage + devPercentage) / 2);
 
   // Compute dynamic AI recommendations combining high priority tasks and insights
   const priorityScore = (p: string) => (p === 'urgent' ? 4 : p === 'high' ? 3 : p === 'medium' ? 2 : 1);
@@ -258,7 +242,7 @@ export const DashboardHero: React.FC = () => {
                 ))}
 
                 <button 
-                  onClick={() => setShowBellMenu(false)}
+                  onClick={() => { markAllNotificationsRead(); setShowBellMenu(false); }}
                   style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '8px', color: '#fff', fontSize: '11px', fontWeight: 600, cursor: 'pointer', textAlign: 'center', marginTop: '4px' }}
                 >
                   Marcar todas como leídas
@@ -463,60 +447,6 @@ export const DashboardHero: React.FC = () => {
       {/* ZONA 3: Tiempo y Pronóstico Interactivo */}
       <div className="hero-weather-zone" style={{ position: 'relative', zIndex: 3 }}>
         <WeatherWidget />
-      </div>
-
-      {/* ZONA 4: Multi-Ring Progress */}
-      <div className="hero-progress-ring" style={{ position: 'relative', zIndex: 3 }}>
-        <div style={{ position: 'relative', width: '200px', height: '200px' }}>
-          
-          <svg width="200" height="200" viewBox="0 0 200 200" style={{ transform: 'rotate(-90deg)' }}>
-            
-            {/* Outer Ring Background (Aprendizaje) */}
-            <circle cx="100" cy="100" r="90" fill="none" stroke="rgba(251, 191, 36, 0.05)" strokeWidth="6" strokeDasharray="10 5" />
-            {/* Outer Ring Progress (Aprendizaje y Desarrollo) */}
-            <circle cx="100" cy="100" r="90" fill="none" stroke="#D97706" strokeWidth="6" strokeLinecap="round" 
-              strokeDasharray="565.48" strokeDashoffset={565.48 - (565.48 * (devPercentage / 100))} style={{ transition: 'stroke-dashoffset 1s ease-out' }} />
-
-            {/* Middle Ring Background (Salud) */}
-            <circle cx="100" cy="100" r="74" fill="none" stroke="rgba(45, 212, 191, 0.05)" strokeWidth="8" strokeDasharray="10 5" />
-            {/* Middle Ring Progress (Salud y Bienestar) */}
-            <circle cx="100" cy="100" r="74" fill="none" stroke="#2DD4BF" strokeWidth="8" strokeLinecap="round" 
-              strokeDasharray="464.96" strokeDashoffset={464.96 - (464.96 * (healthPercentage / 100))} style={{ transition: 'stroke-dashoffset 1s ease-out', filter: 'drop-shadow(0 0 6px rgba(45, 212, 191, 0.4))' }} />
-
-            {/* Inner Ring Background (Progreso Semanal) */}
-            <circle cx="100" cy="100" r="56" fill="none" stroke="rgba(251, 191, 36, 0.15)" strokeWidth="10" />
-            {/* Inner Ring Progress (Progreso General) */}
-            <circle cx="100" cy="100" r="56" fill="none" stroke="#FBBF24" strokeWidth="10" strokeLinecap="round" 
-              strokeDasharray="351.86" strokeDashoffset={351.86 - (351.86 * (overallProgress / 100))} style={{ transition: 'stroke-dashoffset 1s ease-out', filter: 'drop-shadow(0 0 8px rgba(251, 191, 36, 0.5))' }} />
-              
-          </svg>
-
-          {/* Inner Label (Overall Progress) */}
-          <div className="outfit" style={{ 
-            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, 
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '32px', fontWeight: 700, color: '#FBBF24', letterSpacing: '-0.02em',
-            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))'
-          }}>
-            {overallProgress}<span style={{ fontSize: '16px', color: 'rgba(251, 191, 36, 0.7)', marginLeft: '2px' }}>%</span>
-          </div>
-
-          {/* Top Label */}
-          <div style={{ position: 'absolute', top: '-12px', left: 0, right: 0, textAlign: 'center', fontSize: '10px', color: 'rgba(255,255,255,0.7)', fontWeight: 600, letterSpacing: '0.05em' }}>
-            PROGRESO SEMANAL
-          </div>
-          
-          {/* Bottom Left Label */}
-          <div style={{ position: 'absolute', bottom: '-4px', left: '-12px', textAlign: 'center', fontSize: '10px', color: '#2DD4BF', fontWeight: 700, lineHeight: 1.2 }}>
-            ({healthPercentage}%)<br/><span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '8px', fontWeight: 600 }}>SALUD Y<br/>BIENESTAR</span>
-          </div>
-          
-          {/* Bottom Right Label */}
-          <div style={{ position: 'absolute', bottom: '-4px', right: '-16px', textAlign: 'center', fontSize: '10px', color: '#D97706', fontWeight: 700, lineHeight: 1.2 }}>
-            ({devPercentage}%)<br/><span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '8px', fontWeight: 600 }}>APRENDIZAJE Y<br/>DESARROLLO</span>
-          </div>
-
-        </div>
       </div>
 
       </div>

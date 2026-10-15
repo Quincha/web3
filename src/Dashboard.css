@@ -1393,6 +1393,18 @@
   height: 100%;
 }
 
+.pomodoro-widget-footer {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 640px) {
+  .pomodoro-widget-footer {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+}
+
 .pomodoro-timer-content {
   display: flex;
   align-items: center;
@@ -1548,6 +1560,11 @@
   gap: 24px;
 }
 
+.pomodoro-column-left,
+.pomodoro-column-right {
+  min-width: 0;
+}
+
 @media (max-width: 900px) {
   .pomodoro-two-col-layout {
     grid-template-columns: 1fr;
@@ -1626,6 +1643,7 @@
 
 .timer-large-controls {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   margin-top: 24px;
   width: 100%;
@@ -1668,6 +1686,7 @@
 
 .subtask-input-field {
   flex: 1;
+  min-width: 0;
   height: 36px;
   background-color: var(--bg-primary);
   border: 1px solid var(--border-color);
@@ -1867,8 +1886,10 @@
 
 .log-row-footer {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
+  gap: 4px 12px;
   font-size: 0.7rem;
   color: var(--text-subtle);
   margin-top: 4px;
@@ -3887,22 +3908,6 @@
   max-width: 100%;
 }
 
-/* Hero Weekly Progress Ring: Oculto por defecto en pantallas pequeñas, medianas y laptops (< 1680px) */
-.hero-progress-ring {
-  display: none !important;
-}
-
-/* Solo se muestra en pantallas grandes de escritorio (1080p completo o superior: >= 1680px) */
-@media (min-width: 1680px) {
-  .hero-progress-ring {
-    display: flex !important;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-}
-
 /* En pantallas menores a 1680px permitir que el contenido del Hero se ajuste con fluidez */
 @media (max-width: 1679px) {
   .hero-content-row {
@@ -4067,6 +4072,15 @@
     padding-right: 12px;
   }
 
+  .pomodoro-module-container .active-session-live-card,
+  .pomodoro-module-container .pomodoro-setup-card {
+    padding: 20px 16px;
+  }
+
+  .pomodoro-module-container .historical-logs-card {
+    padding: 16px;
+  }
+
   .finance-summary-banner-stats {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
@@ -4115,3 +4129,22 @@
 
 
 
+
+/* -- Grabaciones Colaborativas --------------------------- */
+.recordings-rec-dot {
+  animation: recordingsPulse 1s ease-in-out infinite;
+}
+
+@keyframes recordingsPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.recordings-spin {
+  animation: recordingsRotate 1s linear infinite;
+}
+
+@keyframes recordingsRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

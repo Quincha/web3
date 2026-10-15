@@ -8,7 +8,8 @@ import {
   createSession, destroySession, getUserByToken,
   getConfig, saveConfig, putStore, getAllStore,
   getStoreSince, pruneStore, updatePassword, pruneExpiredSessions,
-  DATA_DIR,
+  setSecurityQuestions, getSecurityQuestions, verifySecurityAnswers,
+  getUserById,
 } from './db.js';
 import {
   gcalConfigured, buildAuthUrl, exchangeCodeForTokens,
@@ -16,6 +17,8 @@ import {
   gcalListEvents, gcalCreateEvent, gcalUpdateEvent, gcalDeleteEvent, gcalClearEvents,
   gcalEnsureWatch, gcalStopWatch, gcalChannelValid,
 } from './gcal.js';
+import { requireAuth } from './auth.js';
+import { recordingsRouter } from './recordings.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DIST_DIR = path.join(__dirname, '..', '..', 'dist');
@@ -31,27 +34,14 @@ const DIST_DIR = path.join(__dirname, '..', '..', 'dist');
    res.setHeader('X-Content-Type-Options', 'nosniff');
    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-   res.setHeader(
-     'Content-Security-Policy',
-     "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://images.unsplash.com https://s3.amazonaws.com; font-src 'self' data:; connect-src 'self' https://api.open-meteo.com https://s3.amazonaws.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'"
-   );
+    // microphone=(self): necesario para Grabaciones Colaborativas (MediaRecorder).
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(self), geolocation=()');
+    res.setHeader(
+      'Content-Security-Policy',
+      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://images.unsplash.com https://s3.amazonaws.com; font-src 'self' data:; connect-src 'self' https://api.open-meteo.com https://s3.amazonaws.com; media-src 'self' blob:; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'"
+    );
    next();
  });
-
-// --------------------------------------------------------------------------
-// Auth middleware
-// --------------------------------------------------------------------------
-function requireAuth(req, res, next) {
-  const header = req.headers.authorization || '';
-  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
-  if (!token) return res.status(401).json({ error: 'No autorizado' });
-  const user = getUserByToken(token);
-  if (!user) return res.status(401).json({ error: 'Sesión inválida' });
-  req.user = user;
-  req.token = token;
-  next();
-}
 
 // --------------------------------------------------------------------------
 // Rate limiting (en memoria, sin dependencias) — protege login/install de
@@ -187,6 +177,54 @@ app.post('/api/password', requireAuth, (req, res) => {
 });
 
 // --------------------------------------------------------------------------
+// Preguntas de seguridad (recuperación de contraseña)
+// --------------------------------------------------------------------------
+app.post('/api/security-questions', requireAuth, (req, res) => {
+  const { questions } = req.body || {};
+  if (!Array.isArray(questions) || questions.length < 2 || questions.length > 3) {
+    return res.status(400).json({ error: 'Debes guardar entre 2 y 3 preguntas' });
+  }
+  for (const q of questions) {
+    if (!q?.question?.trim() || !q?.answer?.trim()) {
+      return res.status(400).json({ error: 'Cada pregunta y respuesta debe tener contenido' });
+    }
+    if (q.question.trim().length > 200 || q.answer.trim().length > 100) {
+      return res.status(400).json({ error: 'Pregunta o respuesta demasiado larga' });
+    }
+  }
+  setSecurityQuestions(req.user.id, questions);
+  res.json({ ok: true });
+});
+
+app.get('/api/security-questions', (req, res) => {
+  const username = String(req.query.username || '').trim();
+  if (!username) return res.status(400).json({ error: 'Falta el usuario' });
+  const result = getSecurityQuestions(username);
+  if (!result || result.questions.length === 0) {
+    return res.status(404).json({ error: 'No hay preguntas de seguridad para este usuario' });
+  }
+  // No exponer el userId al cliente no autenticado
+  res.json({ ok: true, questions: result.questions.map((q) => ({ id: q.id, question: q.question })) });
+});
+
+app.post('/api/forgot-password', rateLimitGuard(5, 10 * 60 * 1000), (req, res) => {
+  const { username, answers, newPassword } = req.body || {};
+  const user = getUserByUsername(String(username || '').trim());
+  if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+  if (!Array.isArray(answers) || answers.length === 0) {
+    return res.status(400).json({ error: 'Debes responder todas las preguntas' });
+  }
+  if (typeof newPassword !== 'string' || newPassword.length < 8) {
+    return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 8 caracteres' });
+  }
+  if (!verifySecurityAnswers(user.id, answers)) {
+    return res.status(403).json({ error: 'Respuestas incorrectas' });
+  }
+  updatePassword(user.username, newPassword);
+  res.json({ ok: true });
+});
+
+// --------------------------------------------------------------------------
 // Usuarios (solo super-admin): listar y crear
 // --------------------------------------------------------------------------
 function requireSuperAdmin(req, res, next) {
@@ -228,6 +266,17 @@ app.post('/api/users', requireAuth, requireSuperAdmin, (req, res) => {
     console.error('[users] create:', err);
     res.status(500).json({ error: 'Error al crear el usuario' });
   }
+});
+
+app.post('/api/admin/reset-password', requireAuth, requireSuperAdmin, (req, res) => {
+  const { userId, newPassword } = req.body || {};
+  const user = getUserById(Number(userId));
+  if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+  if (typeof newPassword !== 'string' || newPassword.length < 8) {
+    return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 8 caracteres' });
+  }
+  updatePassword(user.username, newPassword);
+  res.json({ ok: true });
 });
 
 // --------------------------------------------------------------------------
@@ -566,6 +615,11 @@ app.delete('/api/gcal/event/:eventId', requireAuth, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// --------------------------------------------------------------------------
+// Grabaciones colaborativas (grupos, assets, contribuciones, SSE)
+// --------------------------------------------------------------------------
+app.use('/api/recordings', recordingsRouter);
 
 // --------------------------------------------------------------------------
 // Static SPA (dist/) with history fallback
